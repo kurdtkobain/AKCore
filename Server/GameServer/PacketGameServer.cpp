@@ -26,6 +26,10 @@ void CClientSession::SendGameEnterReq(CNtlPacket * pPacket, CGameServer * app)
 	this->plr->pcProfile->charId = req->charId;
 	this->plr->SetAccountID(req->accountId);
 	this->plr->setMyAPP(app);
+	avatarHandle = AcquireSerialId();
+
+	this->plr->StoreHandle(avatarHandle);
+	this->plr->StoreSession(this->GetHandle());
 	CNtlPacket packet(sizeof(sGU_GAME_ENTER_RES));
 	sGU_GAME_ENTER_RES * res = (sGU_GAME_ENTER_RES *)packet.GetPacketData();
 
@@ -76,17 +80,12 @@ void CClientSession::CheckPlayerStat(CGameServer * app, sPC_TBLDAT *pTblData, in
 }
 void CClientSession::SendAvatarCharInfo(CNtlPacket * pPacket, CGameServer * app)
 {
-	avatarHandle = AcquireSerialId();
-
-	this->plr->StoreHandle(avatarHandle);
-	this->plr->StoreSession(this->GetHandle());
-
 	printf("--- LOAD CHARACTER INFO FOR GAMESERVER --- \n");
 	CNtlPacket packet(sizeof(sGU_AVATAR_CHAR_INFO));
 	sGU_AVATAR_CHAR_INFO * res = (sGU_AVATAR_CHAR_INFO *)packet.GetPacketData();
 
 	app->db->prepare("UPDATE characters SET OnlineID = ? WHERE CharID = ?");
-	app->db->setInt(1, avatarHandle);
+	app->db->setInt(1, this->plr->GetAvatarandle());
 	app->db->setInt(2,  this->plr->pcProfile->charId);
 	app->db->execute();
 
@@ -105,7 +104,7 @@ void CClientSession::SendAvatarCharInfo(CNtlPacket * pPacket, CGameServer * app)
 	app->db->fetch();
 
 	res->wOpCode = GU_AVATAR_CHAR_INFO;
-	res->handle = avatarHandle;
+	res->handle = this->plr->GetAvatarandle();
 	res->sPcProfile.tblidx = pTblData->tblidx;
 	res->sPcProfile.bIsAdult = app->db->getBoolean("Adult");
 	res->sPcProfile.charId = app->db->getInt("CharID");

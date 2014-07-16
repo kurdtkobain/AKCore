@@ -58,6 +58,7 @@ public:
 	void		calculeMyStat(CGameServer * app);
 	void		setZero();
 	void		StoreHandle(const RwUInt32 _avatarHandle){this->avatarHandle = _avatarHandle;};
+	RwUInt32	GetAvatarandle(){return this->avatarHandle;};
 private:
 	MySQLConnWrapper			*db;
 public:
