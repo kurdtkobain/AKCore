@@ -118,6 +118,7 @@ public:
 	void						CheckPlayerStat(CGameServer * app, sPC_TBLDAT *pTblData, int level);
 	void						SendAvatarItemInfo(CNtlPacket * pPacket, CGameServer * app);
 	void						SendAvatarSkillInfo(CNtlPacket * pPacket, CGameServer * app);
+	void						SendSlotInfo(CNtlPacket * pPacket, CGameServer * app);
 	void						SendAvatarInfoEnd(CNtlPacket * pPacket);
 	void						SendAuthCommunityServer(CNtlPacket * pPacket, CGameServer * app);
 
@@ -218,6 +219,8 @@ public:
 	void						SendBankEndReq(CNtlPacket * pPacket, CGameServer * app);
 	void						SendBankBuyReq(CNtlPacket * pPacket, CGameServer * app);
 	void						SendBankLoadReq(CNtlPacket * pPacket, CGameServer * app);
+	// LOOT
+	void						SendMobLoot(CNtlPacket * pPacket, CGameServer * app, RwUInt32 m_uiTargetSerialId);
 	//Game Server functions
 	sGU_OBJECT_CREATE			characterspawnInfo;
 	//

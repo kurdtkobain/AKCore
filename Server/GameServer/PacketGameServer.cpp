@@ -97,7 +97,7 @@ void CClientSession::SendAvatarCharInfo(CNtlPacket * pPacket, CGameServer * app)
 
 	CPCTable *pPcTable = app->g_pTableContainer->GetPcTable();
 	sPC_TBLDAT *pTblData = (sPC_TBLDAT*)pPcTable->GetPcTbldat(app->db->getInt("Race"),app->db->getInt("Class"),app->db->getInt("Gender"));
-	CClientSession::CheckPlayerStat(app, pTblData, app->db->getInt("Level"));
+	CClientSession::CheckPlayerStat(app, pTblData, app->db->getInt("Level") - 1);
 	
 	app->db->prepare("SELECT * FROM characters WHERE CharID = ?");
 	app->db->setInt(1,  this->plr->pcProfile->charId);
@@ -231,7 +231,43 @@ void CClientSession::SendAvatarItemInfo(CNtlPacket * pPacket, CGameServer * app)
 		i++;
 	}
 }
+void CClientSession::SendSlotInfo(CNtlPacket * pPacket, CGameServer * app)
+{
+	app->db->prepare("SELECT * FROM quickslot WHERE charId = ?");
+	app->db->setInt(1, this->plr->pcProfile->charId);
+	app->db->execute();
 
+	CNtlPacket packet(sizeof(sGU_QUICK_SLOT_INFO));
+	sGU_QUICK_SLOT_INFO * res = (sGU_QUICK_SLOT_INFO *)packet.GetPacketData();
+	res->wOpCode = GU_QUICK_SLOT_INFO;
+	res->byQuickSlotCount = NTL_CHAR_QUICK_SLOT_MAX_COUNT;
+	app->db->fetch();
+	int i = 0;
+	int skill= 0;
+	for (i = 0; i <= 32 ; i++)
+	{
+		std::string query = "slotId_" + std::to_string((long double)(i));
+		printf("LOading slot %s\n", query.c_str());
+		skill = app->db->getInt(query.c_str());
+		if (skill == 0);
+		/*{
+			res->asQuickSlotData->bySlot = i;
+			res->asQuickSlotData->byType = -1;//QUICK_SLOT_TYPE_SKILL;
+			res->asQuickSlotData->hItem = -1;
+			res->asQuickSlotData->tblidx = -1;//app->db->getInt("pkQuick");
+		}*/
+		else
+		{
+			res->asQuickSlotData->bySlot = i;
+			res->asQuickSlotData->byType = QUICK_SLOT_TYPE_SKILL;
+			res->asQuickSlotData->hItem = skill;
+			res->asQuickSlotData->tblidx = i;
+		}
+	}
+	res->byQuickSlotCount = i;
+	packet.AdjustPacketLen(sizeof(sGU_QUICK_SLOT_INFO));
+	g_pApp->Send( this->GetHandle() , &packet );
+}
 //--------------------------------------------------------------------------------------//
 //		Send Avatar Skillinfo
 //--------------------------------------------------------------------------------------//
@@ -2015,7 +2051,10 @@ void CClientSession::SendCharActionAttack(RwUInt32 uiSerialId, RwUInt32 m_uiTarg
 	{
 		m_iCurrentHp -= m_iCurrentHp;
 		if(m_iCurrentHp <= 0)
+		{
 			m_iCurrentHp = 0;
+			CClientSession::SendMobLoot(&packet, app, m_uiTargetSerialId);
+		}
 
 		SendCharUpdateLp(pPacket, app, m_iCurrentHp, m_uiTargetSerialId);
 	}
@@ -2041,7 +2080,27 @@ void CClientSession::SendCharUpdateLp(CNtlPacket * pPacket, CGameServer * app, R
 	app->UserBroadcastothers(&packet, this);
 	g_pApp->Send( this->GetHandle() , &packet );
 }
+void	CClientSession::SendMobLoot(CNtlPacket * pPacket, CGameServer * app, RwUInt32 m_uiTargetSerialId)
+{
+	int mobid = 0;
 
+	if ((mobid = IsMonsterIDInsideList(m_uiTargetSerialId)) != 0)
+	{
+		sMOB_TBLDAT* mob = (sMOB_TBLDAT*)app->g_pTableContainer->GetMobTable()->FindData(mobid);
+		printf("%d\n", mob->byDropEachRateControl);
+		printf("%d\n", mob->byDropEItemRateControl);
+		printf("%d\n", mob->byDropLItemRateControl);
+		printf("%d\n", mob->byDropNItemRateControl);
+		printf("%d\n", mob->byDropSItemRateControl);
+		printf("%d\n", mob->byDropTypeRateControl);
+		printf("%d\n", mob->dropEachTblidx);
+		printf("%d\n", mob->dropQuestTblidx);
+		printf("%d\n", mob->dropTypeTblidx);
+		printf("%d\n", mob->drop_Item_Tblidx);
+		printf("%d\n", mob->dwDrop_Zenny);
+		printf("%d\n", mob->fDrop_Zenny_Rate);
+	}
+}
 void CClientSession::SendCharUpdateFaintingState(CNtlPacket * pPacket, CGameServer * app, RwUInt32 uiSerialId, RwUInt32 m_uiTargetSerialId)
 {
 	//printf("char die: %i \n", m_uiTargetSerialId);
