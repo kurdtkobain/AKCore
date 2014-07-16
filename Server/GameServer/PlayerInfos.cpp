@@ -8,7 +8,7 @@ void		PlayerInfos::SavePlayerData()
 	this->db->connect();
 	this->db->switchDb(this->app->GetConfigFileDatabase());
 
-	char* save_query = "UPDATE characters SET CurLocX=? , CurLocY=? , CurLocZ=? , CurDirX=? , CurDirZ=? , level=?, exp=?, WorldTable=?, WorldID=?, money=?, MoneyBank=?, reputation=?, MudosaPoint=?, SpPoint=?, BaseStr=?, LastStr=?, BaseCon=?, LastCon=?, BaseFoc=?, LastFoc=?, BaseDex=?, LastDex=?, BaseSol=?, LastSol=?, BaseEng=?, LastEng=?, BaseMaxLP=?, LastMaxLP=?, BaseMaxRp=?, LastMaxRP=? WHERE CharID = ?";
+	char* save_query = "UPDATE characters SET CurLocX=? , CurLocY=? , CurLocZ=? , CurDirX=? , CurDirZ=? , level=?, exp=?, MaxExpInThisLevel=?,WorldTable=?, WorldID=?, money=?, MoneyBank=?, reputation=?, MudosaPoint=?, SpPoint=?, BaseStr=?, LastStr=?, BaseCon=?, LastCon=?, BaseFoc=?, LastFoc=?, BaseDex=?, LastDex=?, BaseSol=?, LastSol=?, BaseEng=?, LastEng=?, BaseMaxLP=?, LastMaxLP=?, BaseMaxRp=?, LastMaxRP=? WHERE CharID = ?";
 	char* save_query2 = "UPDATE characters SET BaseLpRegen=?, LastLpRegen=?, BaseLpSitdownRegen=?, LastLpSitdownRegen=?, BaseLpBattleRegen=?, LastLpBattleRegen=?, BaseEpRegen=?, LastEpRegen=?, BaseEpSitdownRegen=?, LastEpSitdownRegen=?, BaseEpBattleRegen=?, LastEpBattleRegen=?, BaseRpRegen=?, LastRpRegen=?, LastRpDimimutionRate=?, BasePhysicalOffence=?, LastPhysicalOffence=?, BasePhysicalDefence=? WHERE CharID = ?";
 	char* save_query3 = "UPDATE characters SET LastPhysicalDefence=?, BaseEnergyOffence=?, LastEnergyOffence=?, BaseEnergyDefence=?, LastEnergyDefence=?, BaseAttackRate=?, LastAttackRate=?,  BaseDodgeRate=?, LastDodgeRate=?, BaseBlockRate=?, BaseBlockRate=?, LastBlockRate=?, BaseCurseSuccessRate=?, LastCurseSuccessRate=?, BaseCurseToleranceRate=?, LastCurseToleranceRate=?, BasePhysicalCriticalRate=?, LastPhysicalCriticalRate=? WHERE CharID = ?";
 	char* save_query4 = "UPDATE characters SET BaseEnergyCriticalRate=?, LastEnergyCriticalRate=?, LastRunSpeed=?, BaseAttackSpeedRate=?, BaseAttackRange=?, LastAttackRange=?, CastingTimeChangePercent=?, CoolTimeChangePercent=?, KeepTimeChangePercent=?, DotValueChangePercent=?, DotTimeChangeAbsolute=?, RequiredEpChangePercent=?, HonestOffence=?, HonestDefence=?, StrangeOffence=?, StrangeDefence=?, WildOffence=?, WildDefence=? WHERE CharID = ?";
@@ -23,30 +23,31 @@ void		PlayerInfos::SavePlayerData()
 	this->db->setInt(5, this->vCurDir.z);
 	this->db->setInt(6, this->pcProfile->byLevel);
 	this->db->setInt(7, this->pcProfile->dwCurExp);
-	this->db->setInt(8, this->WorldTableID);
-	this->db->setInt(9, this->WorldID);
-	this->db->setInt(10, this->pcProfile->dwZenny);
-	this->db->setInt(11, this->pcProfile->dwZenny);//bank
-	this->db->setInt(12, this->pcProfile->dwReputation);
-	this->db->setInt(13, this->pcProfile->dwMudosaPoint);
-	this->db->setInt(14, this->pcProfile->dwSpPoint);
-	this->db->setInt(15, this->pcProfile->avatarAttribute.byBaseStr);
-	this->db->setInt(16, this->pcProfile->avatarAttribute.byLastStr);
-	this->db->setInt(17, this->pcProfile->avatarAttribute.byBaseCon);
-	this->db->setInt(18, this->pcProfile->avatarAttribute.byLastCon);
-	this->db->setInt(19, this->pcProfile->avatarAttribute.byBaseFoc);
-	this->db->setInt(20, this->pcProfile->avatarAttribute.byLastFoc);
-	this->db->setInt(21, this->pcProfile->avatarAttribute.byBaseDex);
-	this->db->setInt(22, this->pcProfile->avatarAttribute.byLastDex);
-	this->db->setInt(23, this->pcProfile->avatarAttribute.byBaseSol);
-	this->db->setInt(24, this->pcProfile->avatarAttribute.byLastSol);
-	this->db->setInt(25, this->pcProfile->avatarAttribute.byBaseEng);
-	this->db->setInt(26, this->pcProfile->avatarAttribute.byLastEng);
-	this->db->setInt(27, this->pcProfile->avatarAttribute.wBaseMaxLP);
-	this->db->setInt(28, this->pcProfile->avatarAttribute.wLastMaxLP);
-	this->db->setInt(29, this->pcProfile->avatarAttribute.wBaseMaxRP);
-	this->db->setInt(30, this->pcProfile->avatarAttribute.wLastMaxRP);
-	this->db->setInt(31, this->pcProfile->charId);
+	this->db->setInt(8, this->pcProfile->dwMaxExpInThisLevel);
+	this->db->setInt(9, this->WorldTableID);
+	this->db->setInt(10, this->WorldID);
+	this->db->setInt(11, this->pcProfile->dwZenny);
+	this->db->setInt(12, this->pcProfile->dwZenny);//bank
+	this->db->setInt(13, this->pcProfile->dwReputation);
+	this->db->setInt(14, this->pcProfile->dwMudosaPoint);
+	this->db->setInt(15, this->pcProfile->dwSpPoint);
+	this->db->setInt(16, this->pcProfile->avatarAttribute.byBaseStr);
+	this->db->setInt(17, this->pcProfile->avatarAttribute.byLastStr);
+	this->db->setInt(18, this->pcProfile->avatarAttribute.byBaseCon);
+	this->db->setInt(19, this->pcProfile->avatarAttribute.byLastCon);
+	this->db->setInt(20, this->pcProfile->avatarAttribute.byBaseFoc);
+	this->db->setInt(21, this->pcProfile->avatarAttribute.byLastFoc);
+	this->db->setInt(22, this->pcProfile->avatarAttribute.byBaseDex);
+	this->db->setInt(23, this->pcProfile->avatarAttribute.byLastDex);
+	this->db->setInt(24, this->pcProfile->avatarAttribute.byBaseSol);
+	this->db->setInt(25, this->pcProfile->avatarAttribute.byLastSol);
+	this->db->setInt(26, this->pcProfile->avatarAttribute.byBaseEng);
+	this->db->setInt(27, this->pcProfile->avatarAttribute.byLastEng);
+	this->db->setInt(28, this->pcProfile->avatarAttribute.wBaseMaxLP);
+	this->db->setInt(29, this->pcProfile->avatarAttribute.wLastMaxLP);
+	this->db->setInt(30, this->pcProfile->avatarAttribute.wBaseMaxRP);
+	this->db->setInt(31, this->pcProfile->avatarAttribute.wLastMaxRP);
+	this->db->setInt(32, this->pcProfile->charId);
 	this->db->execute();
 
 	// 1 DONE

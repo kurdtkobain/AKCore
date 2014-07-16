@@ -77,6 +77,8 @@ void CClientSession::CheckPlayerStat(CGameServer * app, sPC_TBLDAT *pTblData, in
 	app->db->setInt(8, 10);
 	app->db->setInt(9,  this->plr->pcProfile->charId);
 	app->db->execute();
+
+	this->plr->SetLevelup(pTblData);
 }
 void CClientSession::SendAvatarCharInfo(CNtlPacket * pPacket, CGameServer * app)
 {
@@ -2098,6 +2100,7 @@ void	CClientSession::SendMobLoot(CNtlPacket * pPacket, CGameServer * app, RwUInt
 		printf("%d\n", mob->drop_Item_Tblidx);
 		printf("%d\n", mob->dwDrop_Zenny);
 		printf("%d\n", mob->fDrop_Zenny_Rate);
+		CClientSession::SendPlayerLevelUpCheck(app, mob->wExp);
 	}
 }
 void CClientSession::SendCharUpdateFaintingState(CNtlPacket * pPacket, CGameServer * app, RwUInt32 uiSerialId, RwUInt32 m_uiTargetSerialId)
@@ -3060,5 +3063,43 @@ void CClientSession::SendCharDelQuickSlot(CNtlPacket * pPacket, CGameServer * ap
 	response->wOpCode = GU_QUICK_SLOT_DEL_NFY;
 
 	packet.SetPacketLen(sizeof(sGU_QUICK_SLOT_DEL_NFY));
+	g_pApp->Send(this->GetHandle(), &packet);
+}
+void CClientSession::SendPlayerLevelUpCheck(CGameServer * app, int exp)
+{
+	/*CExpTable *xp = app->g_pTableContainer->GetExpTable();
+	for ( CTable::TABLEIT it = xp->Begin(); it != xp->End(); it++)
+	{
+		sEXP_TBLDAT *_xp = (sEXP_TBLDAT*) it->second;
+		printf("%d = dwexp, %d = need xp, %d = id\n", _xp->dwExp, _xp->dwNeed_Exp, _xp->tblidx);
+	}*/
+	CNtlPacket packet(sizeof(sGU_UPDATE_CHAR_EXP));	
+	sGU_UPDATE_CHAR_EXP * response = (sGU_UPDATE_CHAR_EXP*)packet.GetPacketData();
+	response->dwAcquisitionExp = exp;
+	response->dwCurExp = this->plr->pcProfile->dwCurExp;
+	response->dwIncreasedExp = exp + rand() % this->plr->pcProfile->byLevel;
+	response->dwBonusExp = (exp - response->dwIncreasedExp);
+	response->handle = this->plr->GetAvatarandle();
+	response->wOpCode = GU_UPDATE_CHAR_EXP;
+	this->plr->pcProfile->dwCurExp += response->dwIncreasedExp;
+	if (this->plr->pcProfile->dwCurExp >= this->plr->pcProfile->dwMaxExpInThisLevel)
+	{
+		this->plr->pcProfile->dwMaxExpInThisLevel += this->plr->pcProfile->dwMaxExpInThisLevel;
+		CNtlPacket packet1(sizeof(sGU_UPDATE_CHAR_LEVEL));	
+		sGU_UPDATE_CHAR_LEVEL * response1 = (sGU_UPDATE_CHAR_LEVEL*)packet1.GetPacketData();
+		this->plr->pcProfile->byLevel++;
+		response1->byCurLevel = this->plr->pcProfile->byLevel;
+		response1->byPrevLevel = this->plr->pcProfile->byLevel - 1;
+		response1->dwMaxExpInThisLevel = this->plr->pcProfile->dwMaxExpInThisLevel;
+		response1->handle = this->plr->GetAvatarandle();
+		response1->wOpCode = GU_UPDATE_CHAR_LEVEL;
+		packet1.SetPacketLen(sizeof(sGU_UPDATE_CHAR_LEVEL));
+		g_pApp->Send(this->GetHandle(), &packet1);
+		this->plr->LevelUpPlayer();
+		this->plr->calculeMyStat(app);
+		this->plr->pcProfile->dwCurExp = 1;
+		response->dwCurExp = 1;
+	}
+	packet.SetPacketLen(sizeof(sGU_UPDATE_CHAR_EXP));
 	g_pApp->Send(this->GetHandle(), &packet);
 }

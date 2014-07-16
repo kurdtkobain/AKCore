@@ -60,7 +60,7 @@ CREATE TABLE `characters` (
   `AccountID` int(10) DEFAULT NULL,
   `Level` tinyint(3) DEFAULT '1',
   `Exp` int(10) DEFAULT '0',
-  `MaxExpInThisLevel` int(10) DEFAULT '0',
+  `MaxExpInThisLevel` int(10) DEFAULT '1000',
   `Race` tinyint(1) DEFAULT NULL,
   `Class` tinyint(2) DEFAULT NULL,
   `ChangeClass` bit(1) DEFAULT b'0',

@@ -59,6 +59,40 @@ public:
 	void		setZero();
 	void		StoreHandle(const RwUInt32 _avatarHandle){this->avatarHandle = _avatarHandle;};
 	RwUInt32	GetAvatarandle(){return this->avatarHandle;};
+	void		SetLevelup(sPC_TBLDAT *Data)
+	{
+		this->byLevel_Up_Energy_Defence = Data->byLevel_Up_Energy_Defence;
+		this->byLevel_Up_Energy_Offence = Data->byLevel_Up_Energy_Offence;
+		this->byLevel_Up_EP = Data->byLevel_Up_EP;
+		this->byLevel_Up_LP = Data->byLevel_Up_LP;
+		this->byLevel_Up_Physical_Defence = Data->byLevel_Up_Physical_Defence;
+		this->byLevel_Up_Physical_Offence = Data->byLevel_Up_Physical_Offence;
+		this->byLevel_Up_RP = Data->byLevel_Up_RP;
+		this->fLevel_Up_Con = Data->fLevel_Up_Con;
+		this->fLevel_Up_Dex = Data->fLevel_Up_Dex;
+		this->fLevel_Up_Eng = Data->fLevel_Up_Eng;
+		this->fLevel_Up_Foc = Data->fLevel_Up_Foc;
+		this->fLevel_Up_Sol = Data->fLevel_Up_Sol;
+		this->fLevel_Up_Str = Data->fLevel_Up_Str;
+	};
+	void		LevelUpPlayer()
+	{
+		this->pcProfile->avatarAttribute.wBasePhysicalOffence += this->byLevel_Up_Physical_Offence;
+		this->pcProfile->avatarAttribute.wBasePhysicalDefence += this->byLevel_Up_Physical_Defence;
+		this->pcProfile->avatarAttribute.wBaseEnergyOffence += this->byLevel_Up_Energy_Offence;
+		this->pcProfile->avatarAttribute.wBaseEnergyDefence += this->byLevel_Up_Energy_Defence;
+
+		this->pcProfile->avatarAttribute.byBaseCon += this->fLevel_Up_Con;
+		this->pcProfile->avatarAttribute.byBaseDex += this->fLevel_Up_Dex;
+		this->pcProfile->avatarAttribute.byBaseEng += this->fLevel_Up_Eng;
+		this->pcProfile->avatarAttribute.byBaseFoc += this->fLevel_Up_Foc;
+		this->pcProfile->avatarAttribute.byBaseSol += this->fLevel_Up_Sol;
+		this->pcProfile->avatarAttribute.byBaseStr += this->fLevel_Up_Str;
+
+		this->pcProfile->avatarAttribute.wBaseMaxEP += this->byLevel_Up_EP;
+		this->pcProfile->avatarAttribute.wBaseMaxRP += this->byLevel_Up_RP;
+		this->pcProfile->avatarAttribute.wBaseMaxLP += this->byLevel_Up_LP;
+	}
 private:
 	MySQLConnWrapper			*db;
 public:
@@ -77,4 +111,19 @@ private:
 	sVECTOR3			last_SpawnPos;
 	RwUInt32			avatarHandle;
 	CGameServer *		app;
+public: // THIS NEED BE BE PRIVATE IN THE FUTUR
+	BYTE			byLevel_Up_LP;
+	BYTE			byLevel_Up_EP;
+	BYTE			byLevel_Up_RP;
+	BYTE			byLevel_Up_Physical_Offence;
+	BYTE			byLevel_Up_Physical_Defence;
+	BYTE			byLevel_Up_Energy_Offence;
+	BYTE			byLevel_Up_Energy_Defence;
+
+	float			fLevel_Up_Str;
+	float			fLevel_Up_Con;
+	float			fLevel_Up_Foc;
+	float			fLevel_Up_Dex;
+	float			fLevel_Up_Sol;
+	float			fLevel_Up_Eng;
 };
