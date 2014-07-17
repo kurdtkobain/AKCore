@@ -3103,3 +3103,33 @@ void CClientSession::SendPlayerLevelUpCheck(CGameServer * app, int exp)
 	packet.SetPacketLen(sizeof(sGU_UPDATE_CHAR_EXP));
 	g_pApp->Send(this->GetHandle(), &packet);
 }
+void CClientSession::SendPlayerQuestReq(CNtlPacket * pPacket, CGameServer * app)
+{
+	printf("--- UG_TS_CONFIRM_STEP_REQ --- \n");
+	sUG_TS_CONFIRM_STEP_REQ* req = (sUG_TS_CONFIRM_STEP_REQ *)pPacket->GetPacketData();
+	CNtlPacket packet(sizeof(sGU_TS_CONFIRM_STEP_RES));
+	sGU_TS_CONFIRM_STEP_RES * res = (sGU_TS_CONFIRM_STEP_RES *)packet.GetPacketData();
+
+	req->byEventType;
+
+	res->byTsType = req->byTsType;
+	res->dwParam = req->dwParam;
+	res->tcCurId = req->tcCurId;
+	res->tcNextId = req->tcNextId;
+	res->tId = req->tId;
+	res->wOpCode = GU_TS_CONFIRM_STEP_RES;
+	res->wResultCode = RESULT_SUCCESS;
+
+	if (res->tcNextId == 255)
+	{
+		printf("REWARD NOW\n");
+		// should be the reward because when we rewarsd a quest res->tcNextId is all the time 255
+		// WE NEED THE CORRECT TBLIDX FOR THE REWARD
+
+		/*sQUEST_REWARD_TBLDAT *rew = (sQUEST_REWARD_TBLDAT*)app->g_pTableContainer->GetQuestRewardTable()->FindData(res->tId);
+		printf("%d %d %d %d\n%d %d %d %d\n%d\n",rew->arsDefRwd[0], rew->arsDefRwd[1], rew->arsDefRwd[2], rew->arsDefRwd[3], rew->arsSelRwd[0], rew->arsSelRwd[1], rew->arsSelRwd[2], rew->arsSelRwd[3], rew->tblidx);*/
+	}
+	//printf("res->byTsType = %d, res->dwParam = %d, res->tcCurId = %d, res->tcNextId = %d, res->tId = %d\n",res->byTsType, res->dwParam, res->tcCurId, res->tcNextId, res->tId); 
+	packet.SetPacketLen( sizeof(sGU_TS_CONFIRM_STEP_RES) );
+	g_pApp->Send( this->GetHandle() , &packet );
+}

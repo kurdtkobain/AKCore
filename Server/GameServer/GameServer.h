@@ -36,6 +36,7 @@
 #include "FormulaTable.h"
 #include "ItemMixMachineTable.h"
 #include "ExpTable.h"
+#include "QuestRewardTable.h"
 // END TABLES
 #include "PlayerInfos.h"
 #include "MobActivity.h"
@@ -224,6 +225,8 @@ public:
 	void						SendMobLoot(CNtlPacket * pPacket, CGameServer * app, RwUInt32 m_uiTargetSerialId);
 	// LEVEL UP
 	void						SendPlayerLevelUpCheck(CGameServer * app, int exp);
+	// QUEST
+	void						SendPlayerQuestReq(CNtlPacket * pPacket, CGameServer * app);
 	//Game Server functions
 	sGU_OBJECT_CREATE			characterspawnInfo;
 	//

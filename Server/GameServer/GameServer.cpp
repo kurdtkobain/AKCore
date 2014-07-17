@@ -36,7 +36,8 @@ int CClientSession::OnDispatch(CNtlPacket * pPacket)
 	CGameServer * app = (CGameServer*) NtlSfxGetApp();
 	sNTLPACKETHEADER * pHeader = (sNTLPACKETHEADER *)pPacket->GetPacketData();
 	//printf("~~~ opcode %i received ~~~ \n", pHeader->wOpCode);
-
+	if (pHeader->wOpCode >= 37000)
+		printf("This should be ng gn\n");
 	switch( pHeader->wOpCode )
 	{
 		case UG_GAME_ENTER_REQ:
@@ -560,7 +561,7 @@ int CClientSession::OnDispatch(CNtlPacket * pPacket)
 			break;
 		case UG_TS_CONFIRM_STEP_REQ:
 		{
-			printf("--- UG_TS_CONFIRM_STEP_REQ --- \n");
+			SendPlayerQuestReq(pPacket,app);
 		}
 			break;
 		case UG_TS_UPDATE_STATE:
