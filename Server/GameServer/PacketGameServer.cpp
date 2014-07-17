@@ -196,6 +196,7 @@ void CClientSession::SendAvatarCharInfo(CNtlPacket * pPacket, CGameServer * app)
 	this->plr->setPlayerStat(&res->sPcProfile, &res->sCharState);
 	packet.SetPacketLen( sizeof(sGU_AVATAR_CHAR_INFO) );
 	int rc = g_pApp->Send( this->GetHandle(), &packet );
+	this->plr->SetStartRPBall();
 }
 
 //--------------------------------------------------------------------------------------//
@@ -3084,6 +3085,7 @@ void CClientSession::SendPlayerLevelUpCheck(CGameServer * app, int exp)
 	this->plr->pcProfile->dwCurExp += response->dwIncreasedExp;
 	if (this->plr->pcProfile->dwCurExp >= this->plr->pcProfile->dwMaxExpInThisLevel)
 	{
+		this->plr->pcProfile->dwCurExp -= this->plr->pcProfile->dwMaxExpInThisLevel;
 		this->plr->pcProfile->dwMaxExpInThisLevel += this->plr->pcProfile->dwMaxExpInThisLevel;
 		CNtlPacket packet1(sizeof(sGU_UPDATE_CHAR_LEVEL));	
 		sGU_UPDATE_CHAR_LEVEL * response1 = (sGU_UPDATE_CHAR_LEVEL*)packet1.GetPacketData();
@@ -3097,8 +3099,8 @@ void CClientSession::SendPlayerLevelUpCheck(CGameServer * app, int exp)
 		g_pApp->Send(this->GetHandle(), &packet1);
 		this->plr->LevelUpPlayer();
 		this->plr->calculeMyStat(app);
-		this->plr->pcProfile->dwCurExp = 1;
-		response->dwCurExp = 1;
+		response->dwCurExp = this->plr->pcProfile->dwCurExp;
+		this->plr->UpdateRPBall();
 	}
 	packet.SetPacketLen(sizeof(sGU_UPDATE_CHAR_EXP));
 	g_pApp->Send(this->GetHandle(), &packet);

@@ -15,6 +15,7 @@ public:
 	{
 		this->pcProfile = new sPC_PROFILE;
 		this->sCharState = new sCHARSTATE;
+		this->CurRPBall = 0;
 	};
 	~PlayerInfos(){};
 	sPC_PROFILE		*pcProfile;
@@ -59,6 +60,53 @@ public:
 	void		setZero();
 	void		StoreHandle(const RwUInt32 _avatarHandle){this->avatarHandle = _avatarHandle;};
 	RwUInt32	GetAvatarandle(){return this->avatarHandle;};
+	int			getNumberOfRPBall(){return this->CurRPBall;};
+	void		UpdateRPBall()
+	{
+		CNtlPacket packet5(sizeof(sGU_UPDATE_CHAR_RP_BALL_MAX));	
+		sGU_UPDATE_CHAR_RP_BALL_MAX * maxBall = (sGU_UPDATE_CHAR_RP_BALL_MAX*)packet5.GetPacketData();
+		CNtlPacket packet6(sizeof(sGU_UPDATE_CHAR_RP_BALL));	
+		sGU_UPDATE_CHAR_RP_BALL * ball = (sGU_UPDATE_CHAR_RP_BALL*)packet6.GetPacketData();
+
+		maxBall->byMaxRPBall = this->getNumberOfRPBall();
+		maxBall->handle = this->GetAvatarandle();
+		maxBall->wOpCode = GU_UPDATE_CHAR_RP_BALL_MAX;
+
+		ball->bDropByTime = true;
+		ball->byCurRPBall = this->getNumberOfRPBall();
+		ball->handle = this->GetAvatarandle();
+		ball->wOpCode = GU_UPDATE_CHAR_RP_BALL;
+
+		packet5.SetPacketLen(sizeof(sGU_UPDATE_CHAR_RP_BALL_MAX));
+		g_pApp->Send(this->MySession, &packet5);
+
+		packet6.SetPacketLen(sizeof(sGU_UPDATE_CHAR_RP_BALL));
+		g_pApp->Send(this->MySession, &packet6);
+	};
+	void		SetStartRPBall()
+	{
+		if (this->pcProfile->byLevel >= 5 && this->pcProfile->byLevel <= 10)
+			this->CurRPBall = 1;
+		if (this->pcProfile->byLevel == 10 && this->pcProfile->byLevel <= 15)
+			this->CurRPBall = 2;
+		if (this->pcProfile->byLevel == 15 && this->pcProfile->byLevel <= 20)
+			this->CurRPBall = 3;
+		if (this->pcProfile->byLevel == 20 && this->pcProfile->byLevel <= 25)
+			this->CurRPBall = 4;
+		if (this->pcProfile->byLevel == 25 && this->pcProfile->byLevel <= 30)
+			this->CurRPBall = 5;
+		if (this->pcProfile->byLevel == 30 && this->pcProfile->byLevel <= 35)
+			this->CurRPBall = 6;
+		if (this->pcProfile->byLevel == 35 && this->pcProfile->byLevel <= 40)
+			this->CurRPBall = 7;
+		if (this->pcProfile->byLevel == 40 && this->pcProfile->byLevel <= 45)
+			this->CurRPBall = 8;
+		if (this->pcProfile->byLevel == 45 && this->pcProfile->byLevel <= 50)
+			this->CurRPBall = 9;
+		if (this->pcProfile->byLevel == 50)
+			this->CurRPBall = 10;
+		this->UpdateRPBall();
+	};
 	void		SetLevelup(sPC_TBLDAT *Data)
 	{
 		this->byLevel_Up_Energy_Defence = Data->byLevel_Up_Energy_Defence;
@@ -92,6 +140,27 @@ public:
 		this->pcProfile->avatarAttribute.wBaseMaxEP += this->byLevel_Up_EP;
 		this->pcProfile->avatarAttribute.wBaseMaxRP += this->byLevel_Up_RP;
 		this->pcProfile->avatarAttribute.wBaseMaxLP += this->byLevel_Up_LP;
+
+		if (this->pcProfile->byLevel == 5)
+			this->CurRPBall++;
+		if (this->pcProfile->byLevel == 10)
+			this->CurRPBall++;
+		if (this->pcProfile->byLevel == 15)
+			this->CurRPBall++;
+		if (this->pcProfile->byLevel == 20)
+			this->CurRPBall++;
+		if (this->pcProfile->byLevel == 25)
+			this->CurRPBall++;
+		if (this->pcProfile->byLevel == 30)
+			this->CurRPBall++;
+		if (this->pcProfile->byLevel == 35)
+			this->CurRPBall++;
+		if (this->pcProfile->byLevel == 40)
+			this->CurRPBall++;
+		if (this->pcProfile->byLevel == 45)
+			this->CurRPBall++;
+		if (this->pcProfile->byLevel == 50)
+			this->CurRPBall++;
 	}
 private:
 	MySQLConnWrapper			*db;
@@ -111,6 +180,7 @@ private:
 	sVECTOR3			last_SpawnPos;
 	RwUInt32			avatarHandle;
 	CGameServer *		app;
+	int					CurRPBall;
 public: // THIS NEED BE BE PRIVATE IN THE FUTUR
 	BYTE			byLevel_Up_LP;
 	BYTE			byLevel_Up_EP;
