@@ -31,6 +31,11 @@ void CClientSession::SendGameEnterReq(CNtlPacket * pPacket, CGameServer * app)
 	this->plr->StoreHandle(avatarHandle);
 	this->plr->StoreSession(this->GetHandle());
 	CNtlPacket packet(sizeof(sGU_GAME_ENTER_RES));
+
+	app->db->prepare("UPDATE characters SET IsOnline = 1 WHERE CharID = ?");
+	app->db->setInt(1,  this->plr->pcProfile->charId);
+	app->db->execute();
+
 	sGU_GAME_ENTER_RES * res = (sGU_GAME_ENTER_RES *)packet.GetPacketData();
 
 	res->wOpCode = GU_GAME_ENTER_RES;
@@ -901,7 +906,11 @@ void CClientSession::SendCharTargetInfo(CNtlPacket * pPacket)
 void CClientSession::SendGameLeaveReq(CNtlPacket * pPacket, CGameServer * app)
 {
 	printf("--- CHARACTER REQUEST LEAVE GAME --- \n");
-
+	
+	app->db->prepare("UPDATE characters SET IsOnline = 0 WHERE CharID = ?");
+	app->db->setInt(1,  this->plr->pcProfile->charId);
+	app->db->execute();
+	
 	this->plr->SaveMe();
 	app->RemoveUser( this->plr->GetPlayerName().c_str() );
 	CNtlPacket packet(sizeof(sGU_OBJECT_DESTROY));
@@ -919,6 +928,10 @@ void CClientSession::SendGameLeaveReq(CNtlPacket * pPacket, CGameServer * app)
 void CClientSession::SendCharExitReq(CNtlPacket * pPacket, CGameServer * app)
 {
 	//printf("--- Char exit request --- \n");
+	app->db->prepare("UPDATE characters SET IsOnline = 0 WHERE CharID = ?");
+	app->db->setInt(1,  this->plr->pcProfile->charId);
+	app->db->execute();
+
 	this->plr->SaveMe();
 // log out of game
 	CNtlPacket packet1(sizeof(sGU_OBJECT_DESTROY));

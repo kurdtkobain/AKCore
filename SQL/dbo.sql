@@ -10,7 +10,7 @@ Target Server Type    : MYSQL
 Target Server Version : 50617
 File Encoding         : 65001
 
-Date: 2014-07-16 15:43:19
+Date: 2014-07-17 21:26:41
 */
 
 SET FOREIGN_KEY_CHECKS=0;
@@ -195,6 +195,7 @@ CREATE TABLE `characters` (
   `CurRP` int(10) DEFAULT '100',
   `OnlineID` int(5) DEFAULT '0',
   `MailIsAway` int(10) DEFAULT NULL,
+  `IsOnline` int(10) DEFAULT '0',
   PRIMARY KEY (`CharID`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 

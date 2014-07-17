@@ -10,17 +10,16 @@ void CClientSession::SendEnterChat(CNtlPacket * pPacket, CChatServer * app)
 	sUT_ENTER_CHAT * req = (sUT_ENTER_CHAT *)pPacket->GetPacketData();
 
 	this->accountID = req->accountId;
-	printf("UT_ENTER_CHAT %i \n ", req->accountId);
 
-	app->db->prepare("SELECT CharID,CharName,OnlineID FROM characters WHERE AccountID = ? AND OnlineID = ?");
+	app->db->prepare("SELECT * FROM characters WHERE AccountID = ? AND isOnline = 1");
 	app->db->setInt(1, req->accountId);
-	app->db->setInt(2, this->GetavatarHandle());
 	app->db->execute();
 	app->db->fetch();
 
 	this->characterID = app->db->getInt("CharID");
 	this->charName = app->db->getString("CharName");
-
+	this->avatarHandle = app->db->getInt("OnlineID");
+	printf("ok\n");
 	CNtlPacket packet(sizeof(sTU_ENTER_CHAT_RES));
 	sTU_ENTER_CHAT_RES * res = (sTU_ENTER_CHAT_RES *)packet.GetPacketData();
 

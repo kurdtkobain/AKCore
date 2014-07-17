@@ -8,17 +8,6 @@
 
 using namespace std;
 
-RwUInt32 AcquireSerialId(void)
-{
-	if(m_uiSerialId++)
-	{
-		if(m_uiSerialId == 0xffffffff)//INVALID_SERIAL_ID)
-			m_uiSerialId = 0;
-	}
-
-	return m_uiSerialId;
-}
-
 //-----------------------------------------------------------------------------------
 CClientSession::~CClientSession()
 {
@@ -54,8 +43,8 @@ int CClientSession::OnDispatch(CNtlPacket * pPacket)
 	case UT_ENTER_CHAT:
 	{
 		CClientSession::SendEnterChat(pPacket, app);
-		CClientSession::SendLoadGuildInfo(pPacket, app);
-		CClientSession::SendLoadGuildMember(pPacket, app);
+		/*CClientSession::SendLoadGuildInfo(pPacket, app);
+		CClientSession::SendLoadGuildMember(pPacket, app);*/
 	}
 		break;
 	case UT_CHAT_MESSAGE_SAY:
