@@ -37,6 +37,11 @@
 #include "ItemMixMachineTable.h"
 #include "ExpTable.h"
 #include "QuestRewardTable.h"
+#include "EachDropTable.h"
+#include "ExcellentDropTable.h"
+#include "LegendaryDropTable.h"
+#include "NormalDropTable.h"
+#include "SuperiorDropTable.h"
 // END TABLES
 #include "PlayerInfos.h"
 #include "MobActivity.h"
@@ -223,6 +228,7 @@ public:
 	void						SendBankLoadReq(CNtlPacket * pPacket, CGameServer * app);
 	// LOOT
 	void						SendMobLoot(CNtlPacket * pPacket, CGameServer * app, RwUInt32 m_uiTargetSerialId);
+	void						SendZennyPickUpReq(CNtlPacket * pPacket, CGameServer * app);
 	// LEVEL UP
 	void						SendPlayerLevelUpCheck(CGameServer * app, int exp);
 	// QUEST
@@ -465,7 +471,7 @@ public:
 	int					OnAppStart()
 	{
 
-		if(CreateTableContainer(1))
+		if(CreateTableContainer(2))
 		{
 			return NTL_SUCCESS;
 		}else{

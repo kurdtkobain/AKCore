@@ -178,7 +178,7 @@ void		test(BYTE byAttributeTotalCount, void* pvRawData, sAVATAR_ATTRIBUTE* pAttr
 	for (int i = 0; i <=byAttributeTotalCount; i++)
 	{
 		pbyCurrentPosition[i] = pbyAttributeData[i];
-		printf("pbyCurrentPosition[%d] = %d\n", i, pbyCurrentPosition[i]);
+		//printf("pbyCurrentPosition[%d] = %d\n", i, pbyCurrentPosition[i]);
 	}
 }
 void		PlayerInfos::setZero()

@@ -2067,10 +2067,9 @@ void CClientSession::SendCharActionAttack(RwUInt32 uiSerialId, RwUInt32 m_uiTarg
 		m_iCurrentHp -= m_iCurrentHp;
 		if(m_iCurrentHp <= 0)
 		{
-			m_iCurrentHp = 0;
 			CClientSession::SendMobLoot(&packet, app, m_uiTargetSerialId);
+			m_iCurrentHp = 0;
 		}
-
 		SendCharUpdateLp(pPacket, app, m_iCurrentHp, m_uiTargetSerialId);
 	}
 
@@ -2097,23 +2096,41 @@ void CClientSession::SendCharUpdateLp(CNtlPacket * pPacket, CGameServer * app, R
 }
 void	CClientSession::SendMobLoot(CNtlPacket * pPacket, CGameServer * app, RwUInt32 m_uiTargetSerialId)
 {
+	CNtlPacket packet(sizeof(sGU_OBJECT_CREATE));
+	sGU_OBJECT_CREATE * res = (sGU_OBJECT_CREATE *)packet.GetPacketData();
+
 	int mobid = 0;
 
 	if ((mobid = IsMonsterIDInsideList(m_uiTargetSerialId)) != 0)
 	{
 		sMOB_TBLDAT* mob = (sMOB_TBLDAT*)app->g_pTableContainer->GetMobTable()->FindData(mobid);
-		printf("%d\n", mob->byDropEachRateControl);
-		printf("%d\n", mob->byDropEItemRateControl);
-		printf("%d\n", mob->byDropLItemRateControl);
-		printf("%d\n", mob->byDropNItemRateControl);
-		printf("%d\n", mob->byDropSItemRateControl);
-		printf("%d\n", mob->byDropTypeRateControl);
-		printf("%d\n", mob->dropEachTblidx);
-		printf("%d\n", mob->dropQuestTblidx);
-		printf("%d\n", mob->dropTypeTblidx);
-		printf("%d\n", mob->drop_Item_Tblidx);
-		printf("%d\n", mob->dwDrop_Zenny);
-		printf("%d\n", mob->fDrop_Zenny_Rate);
+		printf("Each rate control %d\n", mob->byDropEachRateControl);
+		printf("Drop Eeach Item %d\n", mob->byDropEItemRateControl);
+		printf("Drop Legendary Item %d\n", mob->byDropLItemRateControl);
+		printf("Drop Normal Item %d\n", mob->byDropNItemRateControl);
+		printf("Drop Superior Item %d\n", mob->byDropSItemRateControl);
+		printf("Drop Type %d\n", mob->byDropTypeRateControl);
+		printf("Drop each tblidx %d\n", mob->dropEachTblidx);
+		printf("Drop Quest tblidx %d\n", mob->dropQuestTblidx);
+		printf("Drop Type TBLIDX %d\n", mob->dropTypeTblidx);
+		printf("Drop Item TBLIDX %d\n", mob->drop_Item_Tblidx);
+		CEachDropTable * edrop = app->g_pTableContainer->GetEachDropTable();
+		CNormalDropTable * ndrop = app->g_pTableContainer->GetNormalDropTable();
+		CSuperiorDropTable * sdrop = app->g_pTableContainer->GetSuperiorDropTable();
+		CLegendaryDropTable * ldrop = app->g_pTableContainer->GetLegendaryDropTable();
+
+		if(rand() >= mob->fDrop_Zenny_Rate)
+		{
+			res->handle = AcquireSerialId();
+			res->sObjectInfo.objType = OBJTYPE_DROPMONEY;
+			res->sObjectInfo.moneyBrief.dwZenny = mob->dwDrop_Zenny;
+			res->sObjectInfo.moneyState.bIsNew = true;
+			res->sObjectInfo.moneyState.vCurLoc = this->plr->GetPosition();
+			res->wOpCode = GU_OBJECT_CREATE;
+		
+			packet.SetPacketLen( sizeof(sGU_OBJECT_CREATE) );
+			g_pApp->Send( this->GetHandle() , &packet );
+		}
 		CClientSession::SendPlayerLevelUpCheck(app, mob->wExp);
 	}
 }
@@ -2901,17 +2918,32 @@ void	CClientSession::SendDragonBallCheckReq(CNtlPacket * pPacket, CGameServer * 
 
 void	CClientSession::SendDragonBallRewardReq(CNtlPacket * pPacket, CGameServer * app) // THIS IS THE FIRST VERSION
 {
-	//printf("--- UG_DRAGONBALL_REWARD_REQ --- \n");
+	printf("--- UG_DRAGONBALL_REWARD_REQ --- \n");
 	sUG_DRAGONBALL_REWARD_REQ * req = (sUG_DRAGONBALL_REWARD_REQ *)pPacket->GetPacketData();
 	CNtlPacket packet(sizeof(sGU_DRAGONBALL_REWARD_RES));
 	sGU_DRAGONBALL_REWARD_RES * res = (sGU_DRAGONBALL_REWARD_RES *)packet.GetPacketData();
-		
+
 	sDRAGONBALL_REWARD_TBLDAT* pDBtData = (sDRAGONBALL_REWARD_TBLDAT*)app->g_pTableContainer->GetDragonBallRewardTable()->FindData(req->rewardTblidx);
-	//printf("Datacontainer = byBallType = %d, byRewardCategoryDepth = %d, rewardType = %d\ndwRewardZenny = %d, catergoryDialogue = %d\nCategoryName = %d, RewardDialog1 = %d, RewardDialog2 = %d\nrewardlinktblidx = %d, rewardname = %d, tdblidx = %d\n",
-	//	pDBtData->byBallType, pDBtData->byRewardCategoryDepth, pDBtData->byRewardType, pDBtData->dwRewardZenny, pDBtData->rewardCategoryDialog,pDBtData->rewardCategoryName,
-	//	pDBtData->rewardDialog1, pDBtData->rewardDialog2,pDBtData->rewardLinkTblidx, pDBtData->rewardName, pDBtData->tblidx);
-	//printf("Reward have been found.\nReward id = %d.\n", req->rewardTblidx);
-				
+	printf("Datacontainer = byBallType = %d, byRewardCategoryDepth = %d, rewardType = %d\ndwRewardZenny = %d, catergoryDialogue = %d\nCategoryName = %d, RewardDialog1 = %d, RewardDialog2 = %d\nrewardlinktblidx = %d, rewardname = %d, tdblidx = %d\n",
+		pDBtData->byBallType, pDBtData->byRewardCategoryDepth, pDBtData->byRewardType, pDBtData->dwRewardZenny, pDBtData->rewardCategoryDialog,pDBtData->rewardCategoryName,
+		pDBtData->rewardDialog1, pDBtData->rewardDialog2,pDBtData->rewardLinkTblidx, pDBtData->rewardName, pDBtData->tblidx);
+	printf("Reward have been found.\nReward id = %d.\n", req->rewardTblidx);
+	//---------------SkillTable Learning-----------------------------------------------------------------------//
+	//This part was made to learn Dragon Buffs Skills or charId
+	CSkillTable* pSkillTable = app->g_pTableContainer->GetSkillTable();
+	sSKILL_TBLDAT* pSkillData = (sSKILL_TBLDAT*)pSkillTable->FindData(pDBtData->rewardLinkTblidx);
+	if (pSkillData->tblidx != INVALID_TBLIDX)
+	{
+		CNtlPacket packet3(sizeof(sGU_SKILL_LEARNED_NFY));
+		sGU_SKILL_LEARNED_NFY * res3 = (sGU_SKILL_LEARNED_NFY *)packet3.GetPacketData();
+		//NEVER SEND SLOTID BECAUSE IF WAS DRAGON BUFF YOUR CLIENT WILL BE CRASH...
+		res3->wOpCode = GU_SKILL_LEARNED_NFY;
+		res3->skillId = pSkillData->tblidx;		
+		app->qry->InsertNewSkill(pSkillData->tblidx, this->plr->pcProfile->charId, pSkillData->bySlot_Index, pSkillData->wKeep_Time, 0);
+		packet3.SetPacketLen(sizeof(sGU_SKILL_LEARNED_NFY));
+		g_pApp->Send(this->GetHandle(), &packet3);
+	}
+	//---------------End Skill Learn---------------------------------------------------------------------------//
 	res->hObject = req->hObject;
 	res->wOpCode = GU_DRAGONBALL_REWARD_RES;
 	res->wResultCode = GAME_SUCCESS;
@@ -3081,12 +3113,12 @@ void CClientSession::SendCharDelQuickSlot(CNtlPacket * pPacket, CGameServer * ap
 }
 void CClientSession::SendPlayerLevelUpCheck(CGameServer * app, int exp)
 {
-	/*CExpTable *xp = app->g_pTableContainer->GetExpTable();
-	for ( CTable::TABLEIT it = xp->Begin(); it != xp->End(); it++)
+	CExpTable *expT = app->g_pTableContainer->GetExpTable();
+	for ( CTable::TABLEIT itNPCSpawn = expT->Begin(); itNPCSpawn != expT->End(); ++itNPCSpawn )
 	{
-		sEXP_TBLDAT *_xp = (sEXP_TBLDAT*) it->second;
-		printf("%d = dwexp, %d = need xp, %d = id\n", _xp->dwExp, _xp->dwNeed_Exp, _xp->tblidx);
-	}*/
+		sEXP_TBLDAT *expTbl = (sEXP_TBLDAT *)itNPCSpawn->second;
+		printf("%d, %d\n",expTbl->dwExp, expTbl->dwNeed_Exp);
+	}
 	CNtlPacket packet(sizeof(sGU_UPDATE_CHAR_EXP));	
 	sGU_UPDATE_CHAR_EXP * response = (sGU_UPDATE_CHAR_EXP*)packet.GetPacketData();
 	response->dwAcquisitionExp = exp;
@@ -3147,4 +3179,18 @@ void CClientSession::SendPlayerQuestReq(CNtlPacket * pPacket, CGameServer * app)
 	//printf("res->byTsType = %d, res->dwParam = %d, res->tcCurId = %d, res->tcNextId = %d, res->tId = %d\n",res->byTsType, res->dwParam, res->tcCurId, res->tcNextId, res->tId); 
 	packet.SetPacketLen( sizeof(sGU_TS_CONFIRM_STEP_RES) );
 	g_pApp->Send( this->GetHandle() , &packet );
+}
+void	CClientSession::SendZennyPickUpReq(CNtlPacket * pPacket, CGameServer * app)
+{
+	sUG_ZENNY_PICK_REQ* req = (sUG_ZENNY_PICK_REQ *)pPacket->GetPacketData();
+	CNtlPacket packet(sizeof(sGU_ZENNY_PICK_RES));
+	sGU_ZENNY_PICK_RES * res = (sGU_ZENNY_PICK_RES *)packet.GetPacketData();
+
+	res->bSharedInParty = false; //this->plr->isInParty();
+	res->dwAcquisitionZenny = 0;
+	res->dwBonusZenny = 0;
+	res->dwOriginalZenny = 0;
+	res->dwZenny = 0;
+	res->wOpCode = GU_ZENNY_PICK_RES;
+	res->wResultCode = ZENNY_CHANGE_TYPE_PICK;	
 }
