@@ -291,12 +291,48 @@ void CClientSession::SendAvatarSkillInfo(CNtlPacket * pPacket, CGameServer * app
 
 	res->wOpCode = GU_AVATAR_SKILL_INFO;
 	res->bySkillCount = app->db->rowsCount();
-
+	CSkillTable * pSkillTable = app->g_pTableContainer->GetSkillTable();
 	while( app->db->fetch() )
 	{
+		//Added because Shenron Buffs and for help to detect type of skills
+		//Note Shenron Buffs does not take ANY SLOTID
+		sSKILL_TBLDAT* pSkillData = reinterpret_cast<sSKILL_TBLDAT*>(pSkillTable->FindData(app->db->getInt("skill_id")));
+		switch (pSkillData->bySkill_Active_Type)
+		{
+		case SKILL_ACTIVE_TYPE_DD:
+			printf("a\n");
+			printf("TBLIDX %i \n", pSkillData->tblidx);
+			break;
+		case SKILL_ACTIVE_TYPE_BB:
+			printf("b\n");
+			printf("TBLIDX %i \n", pSkillData->tblidx);
+			break;
+		case SKILL_ACTIVE_TYPE_CB:
+			printf("c\n");
+			printf("TBLIDX %i \n", pSkillData->tblidx);
+			break;
+		case SKILL_ACTIVE_TYPE_DB:
+			printf("d\n");
+			printf("TBLIDX %i \n", pSkillData->tblidx);
+			break;
+		case SKILL_ACTIVE_TYPE_DC:
+			printf("e");
+			printf("TBLIDX %i \n", pSkillData->tblidx);
+			break;
+		case SKILL_ACTIVE_TYPE_DH:
+			printf("f\n");
+			printf("TBLIDX %i \n", pSkillData->tblidx);
+			break;
+		case SKILL_ACTIVE_TYPE_DOT:
+			printf("g\n");
+			printf("TBLIDX %i \n", pSkillData->tblidx);
+			break;
+		}
+
 		res->aSkillInfo[i].bIsRpBonusAuto = app->db->getBoolean("RpBonusAuto");
-		res->aSkillInfo[i].byRpBonusType = app->db->getInt("RpBonusType");
-		res->aSkillInfo[i].bySlotId = app->db->getInt("SlotID");
+		res->aSkillInfo[i].byRpBonusType = app->db->getInt("RpBonusType");		
+		if (pSkillData->bySkill_Active_Type == SKILL_ACTIVE_TYPE_DB)
+			res->aSkillInfo[i].bySlotId = app->db->getInt("SlotID");		
 		res->aSkillInfo[i].dwTimeRemaining = app->db->getInt("TimeRemaining");
 		res->aSkillInfo[i].nExp = app->db->getInt("Exp");
 		res->aSkillInfo[i].tblidx = app->db->getInt("skill_id");
@@ -306,7 +342,6 @@ void CClientSession::SendAvatarSkillInfo(CNtlPacket * pPacket, CGameServer * app
 
 		i++;
 	}
-
 }
 
 

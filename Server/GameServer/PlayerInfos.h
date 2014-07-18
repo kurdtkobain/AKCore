@@ -87,21 +87,21 @@ public:
 	{
 		if (this->pcProfile->byLevel >= 5 && this->pcProfile->byLevel <= 10)
 			this->CurRPBall = 1;
-		if (this->pcProfile->byLevel == 10 && this->pcProfile->byLevel <= 15)
+		if (this->pcProfile->byLevel >= 10 && this->pcProfile->byLevel <= 15)
 			this->CurRPBall = 2;
-		if (this->pcProfile->byLevel == 15 && this->pcProfile->byLevel <= 20)
+		if (this->pcProfile->byLevel >= 15 && this->pcProfile->byLevel <= 20)
 			this->CurRPBall = 3;
-		if (this->pcProfile->byLevel == 20 && this->pcProfile->byLevel <= 25)
+		if (this->pcProfile->byLevel >= 20 && this->pcProfile->byLevel <= 25)
 			this->CurRPBall = 4;
-		if (this->pcProfile->byLevel == 25 && this->pcProfile->byLevel <= 30)
+		if (this->pcProfile->byLevel >= 25 && this->pcProfile->byLevel <= 30)
 			this->CurRPBall = 5;
-		if (this->pcProfile->byLevel == 30 && this->pcProfile->byLevel <= 35)
+		if (this->pcProfile->byLevel >= 30 && this->pcProfile->byLevel <= 35)
 			this->CurRPBall = 6;
-		if (this->pcProfile->byLevel == 35 && this->pcProfile->byLevel <= 40)
+		if (this->pcProfile->byLevel >= 35 && this->pcProfile->byLevel <= 40)
 			this->CurRPBall = 7;
-		if (this->pcProfile->byLevel == 40 && this->pcProfile->byLevel <= 45)
+		if (this->pcProfile->byLevel >= 40 && this->pcProfile->byLevel <= 45)
 			this->CurRPBall = 8;
-		if (this->pcProfile->byLevel == 45 && this->pcProfile->byLevel <= 50)
+		if (this->pcProfile->byLevel >= 45 && this->pcProfile->byLevel <= 49)
 			this->CurRPBall = 9;
 		if (this->pcProfile->byLevel == 50)
 			this->CurRPBall = 10;
