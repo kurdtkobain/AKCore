@@ -471,7 +471,7 @@ public:
 	int					OnAppStart()
 	{
 
-		if(CreateTableContainer(2))
+		if(CreateTableContainer(1))
 		{
 			return NTL_SUCCESS;
 		}else{
