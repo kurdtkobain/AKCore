@@ -43,14 +43,11 @@ Create your first account by manually entering it in your database.
 Now that you have everything compiled you can setup your server.
 
 Go into the debug folder in the root directory (AKCore) 
-there are 4 files you can edit.
+There is one file to edit
 
-1. AuthServer.ini
-2. CharServer.ini
-3. ChatServer.ini
-4. GameServer.ini
+Server.ini
 
-All you have to do in here is set your ports. If you don't want to that is fine as well.
+All you have to do in here is set your ports and database information. If you don't want to that is fine as well.
 This is an optional step.
 
 
