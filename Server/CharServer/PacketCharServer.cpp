@@ -104,22 +104,16 @@ void CClientSession::SendCharLoadReq(CNtlPacket * pPacket, CCharServer * app)
 	app->db->prepare("SELECT * FROM characters WHERE AccountID = ?");
 	app->db->setInt(1, req->accountId);
 	app->db->execute();
-
 	cout << " TOTAL CHARACTERS: " << app->db->rowsCount() << endl;
-
 // character info
 	CNtlPacket packet(sizeof(sCU_CHARACTER_INFO));
 	sCU_CHARACTER_INFO * res = (sCU_CHARACTER_INFO *)packet.GetPacketData();
-
 	res->wOpCode = CU_CHARACTER_INFO;
 	res->byCount = (int)app->db->rowsCount();
-
-
-	for ( int i = 0; i < (int)app->db->rowsCount(); i++ ) {
-	app->db->fetch();
-
-		memcpy(res->sPcData[i].awchName, s2ws(app->db->getString("CharName")).c_str(), sizeof(wchar_t)* NTL_MAX_SIZE_CHAR_NAME_UNICODE);
-		res->sPcData[i].charId = app->db->getInt("CharID");
+	for ( int i = 0; i < (int)app->db->rowsCount(); i++ )
+	{
+		app->db->fetch();
+		wcscpy_s(res->sPcData[i].awchName, NTL_MAX_SIZE_CHAR_NAME_UNICODE, s2ws(app->db->getString("CharName")).c_str() );res->sPcData[i].charId = app->db->getInt("CharID");
 		res->sPcData[i].byRace = app->db->getInt("Race");
 		res->sPcData[i].byClass = app->db->getInt("Class");
 		res->sPcData[i].bIsAdult = app->db->getBoolean("Adult");
@@ -129,8 +123,14 @@ void CClientSession::SendCharLoadReq(CNtlPacket * pPacket, CCharServer * app)
 		res->sPcData[i].byHairColor = app->db->getInt("HairColor");
 		res->sPcData[i].bySkinColor = app->db->getInt("SkinColor");
 		res->sPcData[i].byLevel = app->db->getInt("Level");
-		res->sPcData[i].bTutorialFlag = app->db->getBoolean("TutorialFlag");
+		res->sPcData[i].bTutorialFlag = false;
 		res->sPcData[i].bNeedNameChange = app->db->getBoolean("NameChange");
+		res->sPcData[i].dwMoney = app->db->getInt("Money");
+		res->sPcData[i].dwMoneyBank = app->db->getInt("MoneyBank");
+		res->sPcData[i].worldId = app->db->getInt("WorldID");
+		res->sPcData[i].worldTblidx = app->db->getInt("WorldTable");
+		res->sPcData[i].dwMapInfoIndex = app->db->getInt("MapInfoIndex");
+
 		for(int j = 0; j < NTL_MAX_EQUIP_ITEM_SLOT; j++)
 		{
 			//Get items which the characters is wearing
@@ -150,18 +150,13 @@ void CClientSession::SendCharLoadReq(CNtlPacket * pPacket, CCharServer * app)
 
 		}
 	}
-
 	packet.SetPacketLen( sizeof(sCU_CHARACTER_INFO) );
 	int rc = g_pApp->Send( this->GetHandle(), &packet );
-
-
 // load characters
 	CNtlPacket packet2(sizeof(sCU_CHARACTER_LOAD_RES));
 	sCU_CHARACTER_LOAD_RES * res2 = (sCU_CHARACTER_LOAD_RES *)packet2.GetPacketData();
-
 	res2->wOpCode = CU_CHARACTER_LOAD_RES;
 	res2->wResultCode = CHARACTER_SUCCESS;
-
 	packet2.SetPacketLen( sizeof(sCU_CHARACTER_LOAD_RES) );
 	rc = g_pApp->Send( this->GetHandle(), &packet2 );
 }

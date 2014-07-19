@@ -3,6 +3,7 @@
 #include "NtlSfx.h"
 #include "NtlPacketEncoder_RandKey.h"
 #include "mysqlconn_wrapper.h"
+
 enum APP_LOG
 {
 	PRINT_APP = 2,
