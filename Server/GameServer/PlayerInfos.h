@@ -81,7 +81,7 @@ public:
 		g_pApp->Send(this->MySession, &packet5);
 
 		packet6.SetPacketLen(sizeof(sGU_UPDATE_CHAR_RP_BALL));
-		g_pApp->Send(this->MySession, &packet6);
+		g_pApp->Send(this->GetAvatarandle(), &packet6);
 	};
 	void		SetStartRPBall()
 	{

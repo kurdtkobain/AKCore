@@ -2134,6 +2134,9 @@ void	CClientSession::SendMobLoot(CNtlPacket * pPacket, CGameServer * app, RwUInt
 	CNtlPacket packet(sizeof(sGU_OBJECT_CREATE));
 	sGU_OBJECT_CREATE * res = (sGU_OBJECT_CREATE *)packet.GetPacketData();
 
+	CNtlPacket packet2(sizeof(sGU_OBJECT_CREATE));
+	sGU_OBJECT_CREATE * res2 = (sGU_OBJECT_CREATE *)packet2.GetPacketData();
+
 	int mobid = 0;
 
 	if ((mobid = IsMonsterIDInsideList(m_uiTargetSerialId)) != 0)
@@ -2154,7 +2157,7 @@ void	CClientSession::SendMobLoot(CNtlPacket * pPacket, CGameServer * app, RwUInt
 		CSuperiorDropTable * sdrop = app->g_pTableContainer->GetSuperiorDropTable();
 		CLegendaryDropTable * ldrop = app->g_pTableContainer->GetLegendaryDropTable();
 
-		if(rand() >= mob->fDrop_Zenny_Rate)
+		if( (rand() % 100)  >= mob->fDrop_Zenny_Rate)
 		{
 			res->handle = AcquireSerialId();
 			res->sObjectInfo.objType = OBJTYPE_DROPMONEY;
@@ -2166,6 +2169,21 @@ void	CClientSession::SendMobLoot(CNtlPacket * pPacket, CGameServer * app, RwUInt
 			packet.SetPacketLen( sizeof(sGU_OBJECT_CREATE) );
 			g_pApp->Send( this->GetHandle() , &packet );
 		}
+
+		
+			res2->handle = AcquireSerialId();
+			res2->sObjectInfo.objType = OBJTYPE_DROPITEM;
+			res2->sObjectInfo.itemBrief.tblidx = mob->drop_Item_Tblidx;
+			res2->sObjectInfo.itemBrief.byGrade = 1;
+			res2->sObjectInfo.itemBrief.byRank = 1;
+			res2->sObjectInfo.itemState.bIsNew = true;
+			res2->sObjectInfo.itemState.vCurLoc = this->plr->GetPosition();
+			res2->wOpCode = GU_OBJECT_CREATE;
+		
+			packet2.SetPacketLen( sizeof(sGU_OBJECT_CREATE) );
+			g_pApp->Send( this->GetHandle() , &packet2 );
+		
+
 		CClientSession::SendPlayerLevelUpCheck(app, mob->wExp);
 	}
 }
@@ -2912,6 +2930,10 @@ void	CClientSession::SendDragonBallCheckReq(CNtlPacket * pPacket, CGameServer * 
 	sUG_DRAGONBALL_CHECK_REQ * req = (sUG_DRAGONBALL_CHECK_REQ *)pPacket->GetPacketData();
 	CNtlPacket packet(sizeof(sGU_DRAGONBALL_CHECK_RES));
 	sGU_DRAGONBALL_CHECK_RES * res = (sGU_DRAGONBALL_CHECK_RES *)packet.GetPacketData();
+	
+	CNtlPacket packet2(sizeof(sGU_OBJECT_CREATE));
+	sGU_OBJECT_CREATE * obj = (sGU_OBJECT_CREATE *)packet2.GetPacketData();
+
 
 	int dragonBall[7] = {9, 9, 9, 9, 9, 9, 9};// 7 because we need loop 0 - 6 because position start to 0 :)
 	int i = 0;
@@ -2943,12 +2965,33 @@ void	CClientSession::SendDragonBallCheckReq(CNtlPacket * pPacket, CGameServer * 
 	}
 	if (i == 7)
 	{
+	
+	obj->handle = this->plr->GetAvatarandle();
+	obj->sObjectInfo.objType = OBJTYPE_NPC;
+	obj->sObjectInfo.npcBrief.tblidx = 90000;
+	obj->sObjectInfo.npcState.sCharStateBase.vCurLoc = this->plr->GetPosition();
+	//obj->sObjectInfo.npcState.sCharStateBase.byStateID = 1;
+	obj->sObjectInfo.npcState.sCharStateDetail.sCharStateSpawning;
+
+	packet2.SetPacketLen( sizeof(sGU_OBJECT_CREATE) );
+	g_pApp->Send( this->GetHandle() , &packet2 );
+
 		res->hObject = req->hObject;
 		res->wResultCode = GAME_SUCCESS;
 		res->wOpCode = GU_DRAGONBALL_CHECK_RES;
 		packet.SetPacketLen( sizeof(sGU_DRAGONBALL_CHECK_RES) );
 		g_pApp->Send( this->GetHandle() , &packet );
 	}
+
+
+
+		
+	/*CNtlPacket packet3(sizeof(sGU_AVATAR_ZONE_INFO));
+	sGU_AVATAR_ZONE_INFO * zone = (sGU_AVATAR_ZONE_INFO *)packet3.GetPacketData();
+	
+	zone->wOpCode = GU_AVATAR_ZONE_INFO;
+	zone->zoneInfo.bIsDark = true;*/
+
 }
 
 void	CClientSession::SendDragonBallRewardReq(CNtlPacket * pPacket, CGameServer * app) // THIS IS THE FIRST VERSION
@@ -2963,22 +3006,95 @@ void	CClientSession::SendDragonBallRewardReq(CNtlPacket * pPacket, CGameServer *
 		pDBtData->byBallType, pDBtData->byRewardCategoryDepth, pDBtData->byRewardType, pDBtData->dwRewardZenny, pDBtData->rewardCategoryDialog,pDBtData->rewardCategoryName,
 		pDBtData->rewardDialog1, pDBtData->rewardDialog2,pDBtData->rewardLinkTblidx, pDBtData->rewardName, pDBtData->tblidx);
 	printf("Reward have been found.\nReward id = %d.\n", req->rewardTblidx);
-	//---------------SkillTable Learning-----------------------------------------------------------------------//
-	//This part was made to learn Dragon Buffs Skills or charId
+	//------------ Wishlist --------//
+
 	CSkillTable* pSkillTable = app->g_pTableContainer->GetSkillTable();
-	sSKILL_TBLDAT* pSkillData = (sSKILL_TBLDAT*)pSkillTable->FindData(pDBtData->rewardLinkTblidx);
-	if (pSkillData->tblidx != INVALID_TBLIDX)
-	{
-		CNtlPacket packet3(sizeof(sGU_SKILL_LEARNED_NFY));
-		sGU_SKILL_LEARNED_NFY * res3 = (sGU_SKILL_LEARNED_NFY *)packet3.GetPacketData();
-		//NEVER SEND SLOTID BECAUSE IF WAS DRAGON BUFF YOUR CLIENT WILL BE CRASH...
-		res3->wOpCode = GU_SKILL_LEARNED_NFY;
-		res3->skillId = pSkillData->tblidx;		
-		app->qry->InsertNewSkill(pSkillData->tblidx, this->plr->pcProfile->charId, pSkillData->bySlot_Index, pSkillData->wKeep_Time, 0);
-		packet3.SetPacketLen(sizeof(sGU_SKILL_LEARNED_NFY));
-		g_pApp->Send(this->GetHandle(), &packet3);
-	}
-	//---------------End Skill Learn---------------------------------------------------------------------------//
+	sSKILL_TBLDAT* pSkillData = (sSKILL_TBLDAT*)pSkillTable->FindData(pDBtData->rewardLinkTblidx);	
+ 
+	CItemTable* pItemTable = app->g_pTableContainer->GetItemTable();
+ 	sITEM_TBLDAT * pItemData = (sITEM_TBLDAT*)pItemTable->FindData(pDBtData->rewardLinkTblidx);
+ 
+ 	switch (pDBtData->byRewardType)
+  	{
+			case DRAGONBALL_REWARD_TYPE_SKILL:{
+ 				CNtlPacket packet3(sizeof(sGU_SKILL_LEARNED_NFY));
+ 				sGU_SKILL_LEARNED_NFY * res3 = (sGU_SKILL_LEARNED_NFY *)packet3.GetPacketData();
+ 				//NEVER SEND SLOTID BECAUSE IF WAS DRAGON BUFF YOUR CLIENT WILL BE CRASH...
+ 				res3->wOpCode = GU_SKILL_LEARNED_NFY;
+ 				res3->skillId = pSkillData->tblidx;
+ 				res3->bySlot = pSkillData->bySlot_Index;
+ 				app->qry->InsertNewSkill(pSkillData->tblidx, this->plr->pcProfile->charId, pSkillData->bySlot_Index, pSkillData->wKeep_Time, 0);
+ 				packet3.SetPacketLen(sizeof(sGU_SKILL_LEARNED_NFY));
+ 				g_pApp->Send(this->GetHandle(), &packet3);
+ 		}
+ 		break;
+ 		case DRAGONBALL_REWARD_TYPE_ITEM:{
+ 				CNtlPacket packet4(sizeof(sGU_ITEM_PICK_RES));
+ 				sGU_ITEM_PICK_RES * res4 = (sGU_ITEM_PICK_RES*)packet4.GetPacketData();
+ 				res4->itemTblidx = pItemData->tblidx;
+ 				res4->wOpCode = GU_ITEM_PICK_RES;
+ 				res4->wResultCode = GAME_SUCCESS;
+ 				int ItemPos = 0;
+ 
+ 				app->db->prepare("SELECT * FROM items WHERE owner_ID = ? AND place=1 ORDER BY pos ASC");
+ 				app->db->setInt(1, this->plr->pcProfile->charId);
+ 				app->db->execute();
+ 				int k = 0;
+ 				//Need a right loop 
+ 				while (app->db->fetch())
+ 				{
+ 					if (app->db->getInt("pos") < NTL_MAX_ITEM_SLOT)
+ 						ItemPos = app->db->getInt("pos") + 1;
+ 					else
+ 						ItemPos = app->db->getInt("pos");
+ 					k++;
+ 				}
+ 				app->db->prepare("CALL BuyItemFromShop (?,?,?,?,?, @unique_iID)");//this basicaly a insert into...
+ 				app->db->setInt(1, pItemData->tblidx);
+ 				app->db->setInt(2, this->plr->pcProfile->charId);
+ 				app->db->setInt(3, ItemPos);
+ 				app->db->setInt(4, pItemData->byRank);
+ 				app->db->setInt(5, pItemData->byDurability);
+ 				app->db->execute();
+ 				app->db->execute("SELECT @unique_iID");
+ 				app->db->fetch();
+ 
+ 				CNtlPacket packet2(sizeof(sGU_ITEM_CREATE));
+ 				sGU_ITEM_CREATE * res2 = (sGU_ITEM_CREATE *)packet2.GetPacketData();
+ 
+ 				res2->bIsNew = true;
+ 				res2->wOpCode = GU_ITEM_CREATE;
+ 				res2->handle = app->db->getInt("@unique_iID");
+ 				res2->sItemData.charId = this->GetavatarHandle();
+ 				res2->sItemData.itemNo = pItemData->tblidx;
+ 				res2->sItemData.byStackcount = pItemData->byMax_Stack;//1 is need to be default,you can use byMaxStack(but if you choose senzubeans the correct is receive 3(like dragon ball Saga) but give you 20
+ 				res2->sItemData.itemId = app->db->getInt("@unique_iID");
+ 				res2->sItemData.byPlace = 1;
+ 				res2->sItemData.byPosition = ItemPos;
+ 				res2->sItemData.byCurrentDurability = pItemData->byDurability;
+ 				res2->sItemData.byRank = pItemData->byRank;
+ 
+ 				packet2.SetPacketLen(sizeof(sGU_ITEM_CREATE));
+ 				packet4.SetPacketLen(sizeof(sGU_ITEM_PICK_RES));
+ 				g_pApp->Send(this->GetHandle(), &packet2);
+ 				g_pApp->Send(this->GetHandle(), &packet4);
+ 		}
+ 		break;
+ 		case DRAGONBALL_REWARD_TYPE_ZENNY:{
+ 				CNtlPacket packet5(sizeof(sGU_UPDATE_CHAR_ZENNY));
+ 				sGU_UPDATE_CHAR_ZENNY * res5 = (sGU_UPDATE_CHAR_ZENNY *)packet5.GetPacketData();
+ 				res5->dwZenny = pDBtData->tblidx;//by analazying this is the ammount....				
+ 				res5->bIsNew = true;
+ 				res5->handle = this->GetavatarHandle();
+ 				res5->byChangeType = 0;//never mind
+ 				res5->wOpCode = GU_UPDATE_CHAR_ZENNY;
+ 				packet5.SetPacketLen(sizeof(sGU_UPDATE_CHAR_ZENNY));
+ 				g_pApp->Send(this->GetHandle(), &packet5);
+ 		}
+ 		break;
+  	}
+	
+	//---------------End Wish Table---------------------------------------------------------------------------//
 	res->hObject = req->hObject;
 	res->wOpCode = GU_DRAGONBALL_REWARD_RES;
 	res->wResultCode = GAME_SUCCESS;
