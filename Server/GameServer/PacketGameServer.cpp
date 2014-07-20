@@ -263,7 +263,7 @@ void CClientSession::SendSlotInfo(CNtlPacket * pPacket, CGameServer * app)
 		 if (pSkillData)
 		 {
 			printf("slotId_%d\n", i);
-			res->asQuickSlotData[i].bySlot = i;
+			res->asQuickSlotData[i].bySlot = app->db->getInt(query.c_str());;
 			res->asQuickSlotData[i].tblidx = pSkillData->tblidx;
 			res->asQuickSlotData[i].byType = QUICK_SLOT_TYPE_SKILL;   
 		 }    
@@ -326,8 +326,8 @@ void CClientSession::SendAvatarSkillInfo(CNtlPacket * pPacket, CGameServer * app
 
 		res->aSkillInfo[i].bIsRpBonusAuto = app->db->getBoolean("RpBonusAuto");
 		res->aSkillInfo[i].byRpBonusType = app->db->getInt("RpBonusType");		
-		//if (pSkillData->bySkill_Active_Type == SKILL_ACTIVE_TYPE_DB) //THIS MAKE THE SKILL NOT LOAD CORRECTLY
-			res->aSkillInfo[i].bySlotId = app->db->getInt("SlotID");		
+		this->gsf->DebugSkillType(pSkillData->bySkill_Active_Type);
+ 		res->aSkillInfo[i].bySlotId = app->db->getInt("SlotID");
 		res->aSkillInfo[i].dwTimeRemaining = app->db->getInt("TimeRemaining");
 		res->aSkillInfo[i].nExp = app->db->getInt("Exp");
 		res->aSkillInfo[i].tblidx = app->db->getInt("skill_id");
@@ -2291,6 +2291,7 @@ void CClientSession::SendCharLearnSkillReq(CNtlPacket * pPacket, CGameServer * a
 	CSkillTable* pSkillTable = app->g_pTableContainer->GetSkillTable();
 	CMerchantTable* pSkillMasterItemTable = app->g_pTableContainer->GetMerchantTable();
 	CNPCTable* pNpcTable = app->g_pTableContainer->GetNpcTable();
+	size_t iSkillCount = this->gsf->GetTotalSlotSkill(this->plr->pcProfile->charId);
 	for ( CTable::TABLEIT itNPCSpawn = pNpcTable->Begin(); itNPCSpawn != pNpcTable->End(); ++itNPCSpawn )
 	{
 		sNPC_TBLDAT* pNPCtData = (sNPC_TBLDAT*) itNPCSpawn->second;
@@ -2325,9 +2326,9 @@ void CClientSession::SendCharLearnSkillReq(CNtlPacket * pPacket, CGameServer * a
 
 										res2->wOpCode = GU_SKILL_LEARNED_NFY;
 										res2->skillId = pSkillData->tblidx;
-										res2->bySlot = pSkillData->bySlot_Index;
+										res2->bySlot = (iSkillCount++);
 
-										app->qry->InsertNewSkill(pSkillData->tblidx, this->plr->pcProfile->charId, pSkillData->bySlot_Index, pSkillData->wKeep_Time, pSkillData->wNext_Skill_Train_Exp);
+										app->qry->InsertNewSkill(pSkillData->tblidx, this->plr->pcProfile->charId, iSkillCount, pSkillData->wKeep_Time, pSkillData->wNext_Skill_Train_Exp);
 										this->plr->pcProfile->dwZenny -= pSkillData->dwRequire_Zenny;
 										this->plr->pcProfile->dwSpPoint -= pSkillData->wRequireSP;
 
@@ -2908,11 +2909,11 @@ void	CClientSession::SendDragonBallRewardReq(CNtlPacket * pPacket, CGameServer *
 			case DRAGONBALL_REWARD_TYPE_SKILL:{
  				CNtlPacket packet3(sizeof(sGU_SKILL_LEARNED_NFY));
  				sGU_SKILL_LEARNED_NFY * res3 = (sGU_SKILL_LEARNED_NFY *)packet3.GetPacketData();
- 				//NEVER SEND SLOTID BECAUSE IF WAS DRAGON BUFF YOUR CLIENT WILL BE CRASH...
+ 				//Fixed Slot Index for Shenron's Buff Skill
  				res3->wOpCode = GU_SKILL_LEARNED_NFY;
  				res3->skillId = pSkillData->tblidx;
- 				res3->bySlot = pSkillData->bySlot_Index;
- 				app->qry->InsertNewSkill(pSkillData->tblidx, this->plr->pcProfile->charId, pSkillData->bySlot_Index, pSkillData->wKeep_Time, 0);
+ 				res3->bySlot = (this->gsf->GetTotalSlotSkill(this->plr->pcProfile->charId)+1);
+ 				app->qry->InsertNewSkill(pSkillData->tblidx, this->plr->pcProfile->charId, res3->bySlot, pSkillData->wKeep_Time, 0);
  				packet3.SetPacketLen(sizeof(sGU_SKILL_LEARNED_NFY));
  				g_pApp->Send(this->GetHandle(), &packet3);
  		}
@@ -3055,7 +3056,7 @@ void CClientSession::SendCharSkillUpgrade(CNtlPacket * pPacket, CGameServer * ap
  		res->wOpCode = GU_SKILL_UPGRADE_RES;
  		res->wResultCode = GAME_SUCCESS;
  		res->skillId = pSkillData->dwNextSkillTblidx;
- 		res->bySlot = pSkillData->bySlot_Index;		
+ 		res->bySlot = app->db->getInt("SlotID");
  		packet.SetPacketLen(sizeof(sGU_SKILL_UPGRADE_RES));
  		g_pApp->Send(this->GetHandle(), &packet);
  		//Skill Level(ID)

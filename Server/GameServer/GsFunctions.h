@@ -52,9 +52,15 @@ public:
 	bool						DeleteItemByUIdPlacePos(CNtlPacket * pPacket, CClientSession * pSession, RwUInt32 UniqueID, RwUInt32 Place, RwUInt32 Pos);
 	bool						UpdateCharMoney(CNtlPacket * pPacket, CClientSession * pSession, RwUInt32 ChangeType, RwUInt32 MoneyAmount, RwUInt32 AvatarHandle);
 	DWORD						CalculePowerLevel(sMOB_TBLDAT* pMOBtData);
+	//System Functions
 	void						printError(const char* err);
 	void						printOk(const char* err);
 	void						printDebug(const char* dbg);
+  	//Items
+  
+  	//Skills Like Debug
+  	void						DebugSkillType(BYTE skillActType);
+	int							GetTotalSlotSkill(int charID);
 };
 
 #endif

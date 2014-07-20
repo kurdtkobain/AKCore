@@ -44,7 +44,14 @@ DWORD	GsFunctionsClass::CalculePowerLevel(sMOB_TBLDAT* pMOBtData)
 		pMOBtData->wAttack_Rate, pMOBtData->wDodge_Rate, pMOBtData->wCurse_Success_Rate, pMOBtData->wCurse_Tolerance_Rate, 5, 
 		5, pMOBtData->wAttack_Speed_Rate,pMOBtData->wBasic_LP,pMOBtData->wBasic_EP, pMOBtData->wBasic_LP, pMOBtData->wBasic_EP,1,pMOBtData->byLevel, pMOBtData->byGrade);
 }
-
+int     GsFunctionsClass::GetTotalSlotSkill(int charID)
+ {
+ 	CGameServer * app = (CGameServer*)NtlSfxGetApp();
+ 	app->db->prepare("SELECT * FROM skills WHERE owner_id = ?");
+ 	app->db->setInt(1, charID);
+ 	app->db->execute();
+ 	return app->db->rowsCount();
+ }
 void	GsFunctionsClass::printError(const char* err)
 {
 	HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -85,4 +92,31 @@ void	GsFunctionsClass::printDebug(const char* dbg)
     printf("%s\n", dbg);
     /* Restore original attributes */
     SetConsoleTextAttribute(hConsole, saved_attributes);
+}
+void	GsFunctionsClass::DebugSkillType(BYTE skillActType)
+{
+	switch (skillActType)
+	{
+	case SKILL_ACTIVE_TYPE_DD:
+		printf("SKILL_ACTIVE_TYPE_DD\n");
+		break;
+	case SKILL_ACTIVE_TYPE_BB:
+		printf("SKILL_ACTIVE_TYPE_BB\n");
+		break;
+	case SKILL_ACTIVE_TYPE_CB:
+		printf("SKILL_ACTIVE_TYPE_CB\n");
+		break;
+	case SKILL_ACTIVE_TYPE_DB:
+		printf("SKILL_ACTIVE_TYPE_DB\n");
+		break;
+	case SKILL_ACTIVE_TYPE_DC:
+		printf("SKILL_ACTIVE_TYPE_DC\n");
+		break;
+	case SKILL_ACTIVE_TYPE_DH:
+		printf("SKILL_ACTIVE_TYPE_DH\n");
+		break;
+	case SKILL_ACTIVE_TYPE_DOT:
+		printf("SKILL_ACTIVE_TYPE_DOT\n");
+		break;
+	}
 }
