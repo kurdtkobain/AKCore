@@ -19,7 +19,6 @@ SSkillData *pSkillData;
 //--------------------------------------------------------------------------------------//
 void CClientSession::SendGameEnterReq(CNtlPacket * pPacket, CGameServer * app)
 {
-	printf("--- LOAD CHAT SERVER --- \n");
 	sUG_GAME_ENTER_REQ * req = (sUG_GAME_ENTER_REQ *)pPacket->GetPacketData();
 
 	this->plr = new PlayerInfos();
@@ -87,7 +86,6 @@ void CClientSession::CheckPlayerStat(CGameServer * app, sPC_TBLDAT *pTblData, in
 }
 void CClientSession::SendAvatarCharInfo(CNtlPacket * pPacket, CGameServer * app)
 {
-	printf("--- LOAD CHARACTER INFO FOR GAMESERVER --- \n");
 	CNtlPacket packet(sizeof(sGU_AVATAR_CHAR_INFO));
 	sGU_AVATAR_CHAR_INFO * res = (sGU_AVATAR_CHAR_INFO *)packet.GetPacketData();
 
@@ -209,7 +207,6 @@ void CClientSession::SendAvatarCharInfo(CNtlPacket * pPacket, CGameServer * app)
 //--------------------------------------------------------------------------------------//
 void CClientSession::SendAvatarItemInfo(CNtlPacket * pPacket, CGameServer * app)
 {
-	printf("Send item info\n");
 	size_t i = 0;
 	app->db->prepare("SELECT * FROM items WHERE owner_id = ? ORDER BY place ASC");
 	app->db->setInt(1, this->plr->pcProfile->charId);
@@ -243,37 +240,34 @@ void CClientSession::SendSlotInfo(CNtlPacket * pPacket, CGameServer * app)
 	app->db->prepare("SELECT * FROM quickslot WHERE charId = ?");
 	app->db->setInt(1, this->plr->pcProfile->charId);
 	app->db->execute();
-
+ 
+	CNtlPacket packetProfile(sizeof(sQUICK_SLOT_PROFILE));
+	sQUICK_SLOT_PROFILE * pProfileQuick = (sQUICK_SLOT_PROFILE*)packetProfile.GetPacketData();
+ 
 	CNtlPacket packet(sizeof(sGU_QUICK_SLOT_INFO));
 	sGU_QUICK_SLOT_INFO * res = (sGU_QUICK_SLOT_INFO *)packet.GetPacketData();
 	res->wOpCode = GU_QUICK_SLOT_INFO;
 	res->byQuickSlotCount = NTL_CHAR_QUICK_SLOT_MAX_COUNT;
 	app->db->fetch();
-	int i = 0;
-	int skill= 0;
-	for (i = 0; i <= 32 ; i++)
+	CSkillTable * pSkillTable = app->g_pTableContainer->GetSkillTable();
+ 
+	for (int i = 0, skill = 0, slotID = 0; i <= 32; i++)
 	{
-		std::string query = "slotId_" + std::to_string((long double)(i));
-		printf("LOading slot %s\n", query.c_str());
-		skill = app->db->getInt(query.c_str());
-		if (skill == 0);
-		/*{
-			res->asQuickSlotData->bySlot = i;
-			res->asQuickSlotData->byType = -1;//QUICK_SLOT_TYPE_SKILL;
-			res->asQuickSlotData->hItem = -1;
-			res->asQuickSlotData->tblidx = -1;//app->db->getInt("pkQuick");
-		}*/
-		else
-		{
-			res->asQuickSlotData->bySlot = i;
-			res->asQuickSlotData->byType = QUICK_SLOT_TYPE_SKILL;
-			res->asQuickSlotData->hItem = skill;
-			res->asQuickSlotData->tblidx = i;
-		}
+		 std::string query = "slotId_" + std::to_string((double long)i);
+		 skill = app->db->getInt(query.c_str());
+		 res->asQuickSlotData[i].bySlot = 255;
+		 res->asQuickSlotData[i].tblidx = 0;
+		 sSKILL_TBLDAT* pSkillData = reinterpret_cast<sSKILL_TBLDAT*>(pSkillTable->FindData(skill));
+		 if (pSkillData)
+		 {
+			printf("slotId_%d\n", i);
+			res->asQuickSlotData[i].bySlot = i;
+			res->asQuickSlotData[i].tblidx = pSkillData->tblidx;
+			res->asQuickSlotData[i].byType = QUICK_SLOT_TYPE_SKILL;   
+		 }    
 	}
-	res->byQuickSlotCount = i;
-	packet.AdjustPacketLen(sizeof(sGU_QUICK_SLOT_INFO));
-	g_pApp->Send( this->GetHandle() , &packet );
+	packet.AdjustPacketLen(sizeof(sNTLPACKETHEADER)+(2 * sizeof(BYTE)) + (res->byQuickSlotCount * sizeof(sQUICK_SLOT_PROFILE)));
+	g_pApp->Send(this->GetHandle(), &packet);
 }
 //--------------------------------------------------------------------------------------//
 //		Send Avatar Skillinfo
@@ -281,7 +275,6 @@ void CClientSession::SendSlotInfo(CNtlPacket * pPacket, CGameServer * app)
 void CClientSession::SendAvatarSkillInfo(CNtlPacket * pPacket, CGameServer * app)
 {
 	size_t i = 0;
-	printf("Send skill info\n");
 	app->db->prepare("SELECT * FROM skills WHERE owner_id = ? ORDER BY SlotID ASC");
 	app->db->setInt(1, this->plr->pcProfile->charId);
 	app->db->execute();
@@ -350,7 +343,6 @@ void CClientSession::SendAvatarSkillInfo(CNtlPacket * pPacket, CGameServer * app
 //--------------------------------------------------------------------------------------//
 void CClientSession::SendAvatarInfoEnd(CNtlPacket * pPacket)
 {
-	printf("--- SendAvatarInfoEnd --- \n");
 	CNtlPacket packet(sizeof(sGU_AVATAR_INFO_END));
 	sGU_AVATAR_INFO_END * res = (sGU_AVATAR_INFO_END *)packet.GetPacketData();
 
@@ -365,8 +357,6 @@ void CClientSession::SendAvatarInfoEnd(CNtlPacket * pPacket)
 //--------------------------------------------------------------------------------------//
 void CClientSession::SendWorldEnterReq(CNtlPacket * pPacket, CGameServer * app)
 {
-	printf("--- sGU_AVATAR_WORLD_INFO --- \n");
-
 	CNtlPacket packet(sizeof(sGU_AVATAR_WORLD_INFO));
 	sGU_AVATAR_WORLD_INFO * res = (sGU_AVATAR_WORLD_INFO *)packet.GetPacketData();
 
@@ -399,7 +389,6 @@ void CClientSession::SendWorldEnterReq(CNtlPacket * pPacket, CGameServer * app)
 //--------------------------------------------------------------------------------------//
 void CClientSession::SendCharReadyReq(CNtlPacket * pPacket, CGameServer * app)
 {
-	printf("--- sGU_OBJECT_CREATE --- \n");
 //SPAN PLAYERS
 	CNtlPacket packet(sizeof(sGU_OBJECT_CREATE));
 	sGU_OBJECT_CREATE * res = (sGU_OBJECT_CREATE *)packet.GetPacketData();
@@ -496,7 +485,6 @@ void CClientSession::SendAuthCommunityServer(CNtlPacket * pPacket, CGameServer *
 //--------------------------------------------------------------------------------------//
 void CClientSession::SendNpcCreate(CNtlPacket * pPacket, CGameServer * app)
 {
-	printf("--- CREATE NPCS --- \n");
 	app->mob->SpawnNpcAtLogin(pPacket, this);
 }
 //--------------------------------------------------------------------------------------//
@@ -504,7 +492,6 @@ void CClientSession::SendNpcCreate(CNtlPacket * pPacket, CGameServer * app)
 //--------------------------------------------------------------------------------------//
 void CClientSession::SendMonsterCreate(CNtlPacket * pPacket, CGameServer * app)
 {
-	printf("--- CREATE MOBS --- \n");
 	app->mob->SpawnMonsterAtLogin(pPacket, this);
 }
 //--------------------------------------------------------------------------------------//
@@ -512,8 +499,6 @@ void CClientSession::SendMonsterCreate(CNtlPacket * pPacket, CGameServer * app)
 //--------------------------------------------------------------------------------------//
 void CClientSession::SendEnterWorldComplete(CNtlPacket * pPacket)
 {
-	printf("--- SendEnterWorldComplete --- \n");
-
 	CNtlPacket packet(sizeof(sGU_ENTER_WORLD_COMPLETE));
 	sGU_ENTER_WORLD_COMPLETE * res = (sGU_ENTER_WORLD_COMPLETE *)packet.GetPacketData();
 
@@ -530,7 +515,6 @@ void CClientSession::SendTutorialHintReq(CNtlPacket * pPacket, CGameServer * app
 {
 	sUG_TUTORIAL_HINT_UPDATE_REQ * req = (sUG_TUTORIAL_HINT_UPDATE_REQ *)pPacket->GetPacketData();
 	//req->dwTutorialHint;
-	printf("--- TUTORIAL HINT REQUEST %i --- \n", req->dwTutorialHint);
 
 	CNtlPacket packet(sizeof(sGU_TUTORIAL_HINT_UPDATE_RES));
 	sGU_TUTORIAL_HINT_UPDATE_RES * res = (sGU_TUTORIAL_HINT_UPDATE_RES *)packet.GetPacketData();
@@ -552,8 +536,6 @@ void CClientSession::SendTutorialHintReq(CNtlPacket * pPacket, CGameServer * app
 //--------------------------------------------------------------------------------------//
 void CClientSession::SendCharReady(CNtlPacket * pPacket)
 {
-	printf("--- SEND CHAR READY --- \n");
-
 	CNtlPacket packet(sizeof(sUG_CHAR_READY));
 	sUG_CHAR_READY * res = (sUG_CHAR_READY *)packet.GetPacketData();
 
@@ -562,7 +544,6 @@ void CClientSession::SendCharReady(CNtlPacket * pPacket)
 
 	packet.SetPacketLen( sizeof(sUG_CHAR_READY) );
 	int rc = g_pApp->Send( this->GetHandle(), &packet );
-
 }
 
 //--------------------------------------------------------------------------------------//
@@ -570,8 +551,6 @@ void CClientSession::SendCharReady(CNtlPacket * pPacket)
 //--------------------------------------------------------------------------------------//
 void CClientSession::SendCharMove(CNtlPacket * pPacket, CGameServer * app)
 {
-	//printf("--- SEND CHAR MOVE --- \n");
-
 	sUG_CHAR_MOVE * req = (sUG_CHAR_MOVE*)pPacket->GetPacketData();
 
 	CNtlPacket packet(sizeof(sGU_CHAR_MOVE));
@@ -600,8 +579,6 @@ void CClientSession::SendCharMove(CNtlPacket * pPacket, CGameServer * app)
 //--------------------------------------------------------------------------------------//
 void CClientSession::SendCharDestMove(CNtlPacket * pPacket, CGameServer * app)
 {
-	//printf("--- CHARACTER REQUEST DEST MOVE --- \n");
-
 	sUG_CHAR_DEST_MOVE * req = (sUG_CHAR_DEST_MOVE*)pPacket->GetPacketData();
 	
 	CNtlPacket packet(sizeof(sGU_CHAR_DEST_MOVE));
@@ -636,7 +613,6 @@ void CClientSession::SendCharDestMove(CNtlPacket * pPacket, CGameServer * app)
 //--------------------------------------------------------------------------------------//
 void CClientSession::SendCharMoveSync(CNtlPacket * pPacket, CGameServer * app)
 {
-	//printf("--- CHARACTER MOVE SYNC --- \n");
 	sUG_CHAR_MOVE_SYNC * req = (sUG_CHAR_MOVE_SYNC*)pPacket->GetPacketData();
 
 	CNtlPacket packet(sizeof(sGU_CHAR_MOVE_SYNC));
@@ -665,7 +641,6 @@ void CClientSession::SendCharMoveSync(CNtlPacket * pPacket, CGameServer * app)
 //--------------------------------------------------------------------------------------//
 void CClientSession::SendCharChangeHeading(CNtlPacket * pPacket, CGameServer * app)
 {
-	//printf("--- CHARACTER CHANGE HEADING --- \n");
 	sUG_CHAR_CHANGE_HEADING * req = (sUG_CHAR_CHANGE_HEADING*)pPacket->GetPacketData();
 
 	CNtlPacket packet(sizeof(sGU_CHAR_CHANGE_HEADING));
@@ -688,7 +663,6 @@ void CClientSession::SendCharChangeHeading(CNtlPacket * pPacket, CGameServer * a
 //--------------------------------------------------------------------------------------//
 void CClientSession::SendCharJump(CNtlPacket * pPacket, CGameServer * app)
 {
-	//printf("--- CHARACTER JUMP --- \n");
 	sUG_CHAR_CHANGE_HEADING * req = (sUG_CHAR_CHANGE_HEADING*)pPacket->GetPacketData();
 
 	CNtlPacket packet(sizeof(sGU_CHAR_JUMP));
@@ -715,7 +689,6 @@ void CClientSession::SendCharJump(CNtlPacket * pPacket, CGameServer * app)
 //--------------------------------------------------------------------------------------//
 void CClientSession::SendCharChangeDirOnFloating(CNtlPacket * pPacket, CGameServer * app)
 {
-//	printf("--- Change Char Direction on floating --- \n");
 	sUG_CHAR_CHANGE_DIRECTION_ON_FLOATING * req = (sUG_CHAR_CHANGE_DIRECTION_ON_FLOATING*)pPacket->GetPacketData();
 
 	CNtlPacket packet(sizeof(sGU_CHAR_CHANGE_DIRECTION_ON_FLOATING));
@@ -736,7 +709,6 @@ void CClientSession::SendCharChangeDirOnFloating(CNtlPacket * pPacket, CGameServ
 //--------------------------------------------------------------------------------------//
 void CClientSession::SendCharFalling(CNtlPacket * pPacket, CGameServer * app)
 {
-	//printf("--- character falling --- \n");
 	sUG_CHAR_FALLING * req = (sUG_CHAR_FALLING*)pPacket->GetPacketData();
 
 	req->wOpCode = UG_CHAR_FALLING;
@@ -895,7 +867,6 @@ void CClientSession::RecvServerCommand(CNtlPacket * pPacket, CGameServer * app)
 //--------------------------------------------------------------------------------------//
 void CClientSession::SendUpdateCharSpeed(float fSpeed, CGameServer * app)
 {
-	printf("Update char speed \n");
 	CNtlPacket packet(sizeof(sGU_UPDATE_CHAR_SPEED));
 	sGU_UPDATE_CHAR_SPEED * res = (sGU_UPDATE_CHAR_SPEED *)packet.GetPacketData();
 
@@ -914,15 +885,12 @@ void CClientSession::SendCharTargetSelect(CNtlPacket * pPacket)
 {
 	sUG_CHAR_TARGET_SELECT * req = (sUG_CHAR_TARGET_SELECT*)pPacket->GetPacketData();
 	m_uiTargetSerialId = req->hTarget;
-	//printf("UG_CHAR_TARGET_SELECT %i \n", m_uiTargetSerialId);
 }
 //--------------------------------------------------------------------------------------//
 //		Select target
 //--------------------------------------------------------------------------------------//
 void CClientSession::SendCharTargetFacing(CNtlPacket * pPacket)
 {
-	//printf("UG_CHAR_TARGET_FACING \n");
-
 	sUG_CHAR_TARGET_SELECT * req = (sUG_CHAR_TARGET_SELECT*)pPacket->GetPacketData();
 	m_uiTargetSerialId = req->hTarget;
 }
@@ -931,21 +899,18 @@ void CClientSession::SendCharTargetFacing(CNtlPacket * pPacket)
 //--------------------------------------------------------------------------------------//
 void CClientSession::SendCharTargetInfo(CNtlPacket * pPacket)
 {
-	//printf("UG_CHAR_TARGET_INFO \n");
 	sUG_CHAR_TARGET_SELECT * req = (sUG_CHAR_TARGET_SELECT*)pPacket->GetPacketData();
-
 }
 //--------------------------------------------------------------------------------------//
 //		Send game leave request
 //--------------------------------------------------------------------------------------//
 void CClientSession::SendGameLeaveReq(CNtlPacket * pPacket, CGameServer * app)
 {
-	printf("--- CHARACTER REQUEST LEAVE GAME --- \n");
-	
 	app->db->prepare("UPDATE characters SET IsOnline = 0, OnlineID = 0 WHERE CharID = ?");
 	app->db->setInt(1,  this->plr->pcProfile->charId);
 	app->db->execute();
-	
+	std::string log = "Player " + this->plr->GetPlayerName() + "have leaved the game\n";
+	this->gsf->printDebug(log.c_str());
 	this->plr->SaveMe();
 	app->RemoveUser( this->plr->GetPlayerName().c_str() );
 	CNtlPacket packet(sizeof(sGU_OBJECT_DESTROY));
@@ -962,11 +927,11 @@ void CClientSession::SendGameLeaveReq(CNtlPacket * pPacket, CGameServer * app)
 //--------------------------------------------------------------------------------------//
 void CClientSession::SendCharExitReq(CNtlPacket * pPacket, CGameServer * app)
 {
-	//printf("--- Char exit request --- \n");
 	app->db->prepare("UPDATE characters SET IsOnline = 0, OnlineID = 0 WHERE CharID = ?");
 	app->db->setInt(1,  this->plr->pcProfile->charId);
 	app->db->execute();
-
+	std::string log = "Player " + this->plr->GetPlayerName() + "have leaved the game\n";
+	this->gsf->printDebug(log.c_str());
 	this->plr->SaveMe();
 // log out of game
 	CNtlPacket packet1(sizeof(sGU_OBJECT_DESTROY));
@@ -1000,8 +965,6 @@ void CClientSession::SendCharExitReq(CNtlPacket * pPacket, CGameServer * app)
 //--------------------------------------------------------------------------------------//
 void CClientSession::SendCharSitDown(CNtlPacket * pPacket, CGameServer * app)
 {
-	//printf("--- Char sit down request --- \n");
-
 	CNtlPacket packet(sizeof(sGU_CHAR_SITDOWN));
 	sGU_CHAR_SITDOWN * sPacket = (sGU_CHAR_SITDOWN *)packet.GetPacketData();
 
@@ -1015,8 +978,6 @@ void CClientSession::SendCharSitDown(CNtlPacket * pPacket, CGameServer * app)
 //--------------------------------------------------------------------------------------//
 void CClientSession::SendCharStandUp(CNtlPacket * pPacket, CGameServer * app)
 {
-	//printf("--- Char stand up request --- \n");
-
 	CNtlPacket packet(sizeof(sGU_CHAR_STANDUP));
 	sGU_CHAR_STANDUP * sPacket = (sGU_CHAR_STANDUP *)packet.GetPacketData();
 
@@ -1030,8 +991,6 @@ void CClientSession::SendCharStandUp(CNtlPacket * pPacket, CGameServer * app)
 //--------------------------------------------------------------------------------------//
 void CClientSession::SendCharMailStart(CNtlPacket * pPacket, CGameServer * app)
 {
-	//printf("--- char start mail --- \n");
-
 	sUG_MAIL_START_REQ * req = (sUG_MAIL_START_REQ*)pPacket->GetPacketData();
 
 	CNtlPacket packet(sizeof(sGU_MAIL_START_RES));
@@ -1082,7 +1041,6 @@ void CClientSession::SendCharMailStart(CNtlPacket * pPacket, CGameServer * app)
 //--------------------------------------------------------------------------------------//
 void	CClientSession::SendCharMailLoadReq(CNtlPacket * pPacket, CGameServer * app)
 {
-	//printf("--- load mails --- \n");
 	sUG_MAIL_LOAD_REQ * req = (sUG_MAIL_LOAD_REQ*)pPacket->GetPacketData();
 	
 	CNtlPacket packet(sizeof(sGU_MAIL_LOAD_RES));
@@ -1100,7 +1058,6 @@ void	CClientSession::SendCharMailLoadReq(CNtlPacket * pPacket, CGameServer * app
 //--------------------------------------------------------------------------------------//
 void	CClientSession::SendCharMailReloadReq(CNtlPacket * pPacket, CGameServer * app)
 {
-	//printf("--- reload mails --- \n");
 	sUG_MAIL_RELOAD_REQ * req = (sUG_MAIL_RELOAD_REQ*)pPacket->GetPacketData();
 	
 	CNtlPacket packet(sizeof(sGU_MAIL_RELOAD_RES));
@@ -1141,7 +1098,6 @@ void	CClientSession::SendCharMailReloadReq(CNtlPacket * pPacket, CGameServer * a
 //--------------------------------------------------------------------------------------//
 void	CClientSession::SendCharMailReadReq(CNtlPacket * pPacket, CGameServer * app)
 {
-	//printf("--- UG_MAIL_READ_REQ --- \n");
 	sUG_MAIL_READ_REQ * req = (sUG_MAIL_READ_REQ*)pPacket->GetPacketData();
 
 	app->db->prepare("SELECT * FROM mail WHERE id = ?");
@@ -1292,8 +1248,6 @@ void	CClientSession::SendCharMailSendReq(CNtlPacket * pPacket, CGameServer * app
 //--------------------------------------------------------------------------------------//
 void	CClientSession::SendCharMailDelReq(CNtlPacket * pPacket, CGameServer * app)
 {
-	//printf("--- UG_MAIL_DEL_REQ --- \n");
-
 	sUG_MAIL_DEL_REQ * req = (sUG_MAIL_DEL_REQ*)pPacket->GetPacketData();
 
 	CNtlPacket packet(sizeof(sGU_MAIL_DEL_RES));
@@ -1314,8 +1268,6 @@ void	CClientSession::SendCharMailDelReq(CNtlPacket * pPacket, CGameServer * app)
 //--------------------------------------------------------------------------------------//
 void	CClientSession::SendCharMailItemReceiveReq(CNtlPacket * pPacket, CGameServer * app)
 {
-	//printf("--- UG_MAIL_ITEM_RECEIVE_REQ --- \n");
-
 	sUG_MAIL_ITEM_RECEIVE_REQ * req = (sUG_MAIL_ITEM_RECEIVE_REQ*)pPacket->GetPacketData();
 
 	app->db->prepare("SELECT * FROM mail WHERE id = ?");
@@ -1377,8 +1329,6 @@ void	CClientSession::SendCharMailItemReceiveReq(CNtlPacket * pPacket, CGameServe
 //--------------------------------------------------------------------------------------//
 void	CClientSession::SendCharMailMultiDelReq(CNtlPacket * pPacket, CGameServer * app)
 {
-	//printf("--- UG_MAIL_MULTI_DEL_REQ --- \n");
-
 	sUG_MAIL_MULTI_DEL_REQ * req = (sUG_MAIL_MULTI_DEL_REQ*)pPacket->GetPacketData();
 
 	CNtlPacket packet(sizeof(sGU_MAIL_MULTI_DEL_RES));
@@ -1404,7 +1354,6 @@ void	CClientSession::SendCharMailMultiDelReq(CNtlPacket * pPacket, CGameServer *
 //--------------------------------------------------------------------------------------//
 void	CClientSession::SendCharMailLockReq(CNtlPacket * pPacket, CGameServer * app)
 {
-	//printf("--- LOCK MAIL --- \n");
 	sUG_MAIL_LOCK_REQ * req = (sUG_MAIL_LOCK_REQ*)pPacket->GetPacketData();
 
 	app->db->prepare("SELECT * FROM mail WHERE id = ?");
@@ -1431,8 +1380,6 @@ void	CClientSession::SendCharMailLockReq(CNtlPacket * pPacket, CGameServer * app
 //--------------------------------------------------------------------------------------//
 void	CClientSession::SendCharMailReturnReq(CNtlPacket * pPacket, CGameServer * app)
 {
-	//printf("--- RETURN MAIL --- \n");
-
 	sUG_MAIL_RETURN_REQ * req = (sUG_MAIL_RETURN_REQ*)pPacket->GetPacketData();
 
 	app->db->prepare("SELECT item_id FROM mail WHERE id = ?");
@@ -1463,7 +1410,6 @@ void	CClientSession::SendCharMailReturnReq(CNtlPacket * pPacket, CGameServer * a
 //--------------------------------------------------------------------------------------//
 void	CClientSession::SendCharAwayReq(CNtlPacket * pPacket, CGameServer * app)
 {
-	//printf("--- char away req --- \n");
 	sUG_CHAR_AWAY_REQ * req = (sUG_CHAR_AWAY_REQ*)pPacket->GetPacketData();
 	
 	CNtlPacket packet(sizeof(sGU_CHAR_AWAY_RES));
@@ -1483,7 +1429,6 @@ void	CClientSession::SendCharAwayReq(CNtlPacket * pPacket, CGameServer * app)
 //--------------------------------------------------------------------------------------//
 void CClientSession::SendCharFollowMove(CNtlPacket * pPacket, CGameServer * app)
 {
-	//printf("--- SEND CHAR FOLLOW MOVE --- \n");
 	sUG_CHAR_FOLLOW_MOVE * req = (sUG_CHAR_FOLLOW_MOVE*)pPacket->GetPacketData();
 
 	CNtlPacket packet(sizeof(sGU_CHAR_FOLLOW_MOVE));
@@ -1508,15 +1453,12 @@ void CClientSession::SendCharFollowMove(CNtlPacket * pPacket, CGameServer * app)
 //--------------------------------------------------------------------------------------//
 void CClientSession::SendGuildCreateReq(CNtlPacket * pPacket, CGameServer * app)
 {
-	//printf("--- create guild request --- \n");
-
 	sUG_GUILD_CREATE_REQ * req = (sUG_GUILD_CREATE_REQ*)pPacket->GetPacketData();
 
 	CNtlPacket packet(sizeof(sGU_GUILD_CREATE_RES));
 	sGU_GUILD_CREATE_RES * res = (sGU_GUILD_CREATE_RES *)packet.GetPacketData();
 
 	res->wOpCode = GU_GUILD_CREATE_RES;
-	printf("guild manager id: %i ", req->hGuildManagerNpc);
 
 	app->db->prepare("CALL GuildCreate (?,?, @wResultCode, @cguildid, @charactername)");
 	app->db->setString(1, Ntl_WC2MB(req->wszGuildName));
@@ -1526,8 +1468,6 @@ void CClientSession::SendGuildCreateReq(CNtlPacket * pPacket, CGameServer * app)
 	app->db->fetch(); 
 
 	int result = app->db->getInt("@wResultCode");
-
-	printf("create guild result %i \n ", result);
 	res->wResultCode = result;
 
 	packet.SetPacketLen( sizeof(sGU_GUILD_CREATE_RES) );
@@ -1567,11 +1507,8 @@ void CClientSession::SendGuildCreateReq(CNtlPacket * pPacket, CGameServer * app)
 		packet4.SetPacketLen( sizeof(sTU_GUILD_MEMBER_INFO));
 		rc = g_pApp->Send( this->GetHandle(), &packet4);
 		app->UserBroadcastothers(&packet4, this);
-
 		this->plr->SetGuildName(app->db->getString("@charactername"));
-		
 	}
-	
 }
 
 //--------------------------------------------------------------------------------------//
@@ -1579,8 +1516,6 @@ void CClientSession::SendGuildCreateReq(CNtlPacket * pPacket, CGameServer * app)
 //--------------------------------------------------------------------------------------//
 void CClientSession::SendCreatePartyReq(CNtlPacket * pPacket, CGameServer * app)
 {
-	//printf("--- create party request --- \n");
-
 	PlayerPartyClass *t = new PlayerPartyClass;
 
 	t->m_partyList.begin();
@@ -1705,15 +1640,13 @@ void CClientSession::SendPartyInviteReq(CNtlPacket * pPacket, CGameServer * app)
 //--------------------------------------------------------------------------------------//
 void CClientSession::SendPartyResponse(CNtlPacket * pPacket, CGameServer * app)
 {
-	printf("--- Party invitation response --- \n");
-
 	sUG_PARTY_RESPONSE_INVITATION * req2 = (sUG_PARTY_RESPONSE_INVITATION*)pPacket->GetPacketData();
 
 	CNtlPacket packet3(sizeof(sGU_PARTY_RESPONSE_INVITATION_RES));
 	sGU_PARTY_RESPONSE_INVITATION_RES * res3 = (sGU_PARTY_RESPONSE_INVITATION_RES *)packet3.GetPacketData();
 	res3->wOpCode = GU_PARTY_RESPONSE_INVITATION_RES;
 	res3->wResultCode = GAME_FAIL;
-	printf("%d this->plr->LastPartyHandle\n",this->plr->LastPartyHandle);
+
 	if(req2->byResponse == 0 && this->plr->LastPartyHandle != -1) // User accepted party invite
 	{
 		CNtlPacket packet4(sizeof(sGU_PARTY_MEMBER_JOINED_NFY));
@@ -1756,8 +1689,6 @@ void CClientSession::SendPartyResponse(CNtlPacket * pPacket, CGameServer * app)
 //--------------------------------------------------------------------------------------//
 void CClientSession::SendPartyLeaveReq(CNtlPacket * pPacket, CGameServer * app)
 {
-	//printf("--- leave party request --- \n");
-
 	CNtlPacket packet(sizeof(sGU_PARTY_LEAVE_RES));
 	sGU_PARTY_LEAVE_RES * res = (sGU_PARTY_LEAVE_RES *)packet.GetPacketData();
 
@@ -1785,8 +1716,6 @@ void CClientSession::SendPartyLeaveReq(CNtlPacket * pPacket, CGameServer * app)
 //--------------------------------------------------------------------------------------//
 void CClientSession::SendExcuteTriggerObject(CNtlPacket * pPacket, CGameServer * app)
 {
-	//printf("--- SendExcuteTriggerObject --- \n");
-
 	sUG_TS_EXCUTE_TRIGGER_OBJECT * req = (sUG_TS_EXCUTE_TRIGGER_OBJECT*)pPacket->GetPacketData();
 
 	CNtlPacket packet(sizeof(sGU_TS_EXCUTE_TRIGGER_OBJECT_RES));
@@ -1795,9 +1724,6 @@ void CClientSession::SendExcuteTriggerObject(CNtlPacket * pPacket, CGameServer *
 	res->wOpCode = GU_TS_EXCUTE_TRIGGER_OBJECT_RES;
 	res->wResultCode = GAME_SUCCESS;
 	res->hTriggerObject = req->hTarget;
-
-	printf("SOURCE: %i TARGET: %i EVTGENTYPE: %i ", req->hSource, req->hTarget, req->byEvtGenType);
-
 	packet.SetPacketLen( sizeof(sGU_TS_EXCUTE_TRIGGER_OBJECT_RES) );
 	app->UserBroadcastothers(&packet, this);
 	int rc = g_pApp->Send( this->GetHandle(), &packet );
@@ -1807,8 +1733,6 @@ void CClientSession::SendExcuteTriggerObject(CNtlPacket * pPacket, CGameServer *
 //--------------------------------------------------------------------------------------//
 void CClientSession::SendCharBindReq(CNtlPacket * pPacket, CGameServer * app)
 {
-	//printf("--- UG_CHAR_BIND_REQ --- \n");
-
 	sUG_CHAR_BIND_REQ * req = (sUG_CHAR_BIND_REQ*)pPacket->GetPacketData();
 
 	CNtlPacket packet(sizeof(sGU_CHAR_BIND_RES));
@@ -1827,8 +1751,6 @@ void CClientSession::SendCharBindReq(CNtlPacket * pPacket, CGameServer * app)
 	res->bindObjectTblidx = req->bindObjectTblidx;
 
 	res->bindWorldId = app->db->getInt("@currentWorldID");
-
-	printf("bindWorldId: %i  bindObjectTblidx:%i", app->db->getInt("@currentWorldID"), req->bindObjectTblidx);
 
 	packet.SetPacketLen( sizeof(sGU_CHAR_BIND_RES) );
 	int rc = g_pApp->Send( this->GetHandle(), &packet );
@@ -1966,6 +1888,7 @@ void CClientSession::SendPortalTelReq(CNtlPacket * pPacket, CGameServer * app)
 		res->wOpCode = GU_PORTAL_RES;
 		res->wResultCode = GAME_PORTAL_NOT_EXIST;
 		g_pApp->Send( this->GetHandle(), &packet );
+		this->gsf->printError("An error is occured in SendPortalTelReq: GAME_PORTAL_NOT_EXIST");
 	}
 }
 
@@ -1977,8 +1900,6 @@ void CClientSession::SendAttackBegin(CNtlPacket * pPacket, CGameServer * app)
 	
 	sUG_CHAR_ATTACK_BEGIN* req = (sUG_CHAR_ATTACK_BEGIN *)pPacket->GetPacketData();
 
-	//printf("--- ATTACK BEGIN --- \n");
-
 	if(req->byType == 0)
 	{
 		AddAttackBegin(this->GetavatarHandle(), this->GetTargetSerialId());
@@ -1986,20 +1907,14 @@ void CClientSession::SendAttackBegin(CNtlPacket * pPacket, CGameServer * app)
 	}
 	else if(req->byType == 1)
 	{
-		//CNtlSobAvatar *pSobAvatar = GetNtlSLGlobal()->GetSobAvatar();
-		//CNtlPetBuffer *pPetBuffer = pSobAvatar->GetPetBuffer();
-		//AddAttackBegin(pPetBuffer->GetSerialId(0));
-		printf("ATTACK FOR TYPE 1 NOT EXIST \n");
+		this->gsf->printError("An error is occured in SendAttackBegin: req->byType == 1");
 	}
-
-
 }
 //--------------------------------------------------------------------------------------//
 //		ATTACK END
 //---------------------------------------------------------------------------------------//
 void CClientSession::SendAttackEnd(CNtlPacket * pPacket, CGameServer * app)
 {
-	//printf("--- ATTACK END --- \n");
 	sUG_CHAR_ATTACK_END* req = (sUG_CHAR_ATTACK_END *)pPacket->GetPacketData();
 	
 	if(req->byType == 0)
@@ -2008,17 +1923,13 @@ void CClientSession::SendAttackEnd(CNtlPacket * pPacket, CGameServer * app)
 	}
 	else if(req->byType == 1)
 	{
-		//CNtlSobAvatar *pSobAvatar = GetNtlSLGlobal()->GetSobAvatar();
-		//CNtlPetBuffer *pPetBuffer = pSobAvatar->GetPetBuffer();
-		//RemoveAttackBegin(pPetBuffer->GetSerialId(0));
-		printf("END ATTACK FOR TYPE 1 NOT EXIST \n");
+		this->gsf->printError("An error is occured in SendAttackEnd: req->byType == 1");
 	}
 }
 
 void CClientSession::AddAttackBegin(RwUInt32 uiSerialId, RwUInt32 m_uiTargetSerialId)
 {
 	SBattleData *pBattleData = new SBattleData;
-	printf("AddAttackBegin SERIAL %i %i \n", uiSerialId,m_uiTargetSerialId);
 
 	pBattleData->uiSerialId			= uiSerialId;
 	pBattleData->m_uiTargetSerialId	= m_uiTargetSerialId;
@@ -2037,7 +1948,6 @@ void CClientSession::RemoveAttackBegin(RwUInt32 uiSerialId, RwUInt32 m_uiTargetS
 		pBattleData = (*it);
 		if(pBattleData->uiSerialId == uiSerialId)
 		{
-			//printf("RemoveAttackBegin SERIAL %i %i \n", uiSerialId,m_uiTargetSerialId);
 			RWS_DELETE(pBattleData);
 			m_listAttackBegin.erase(it);
 			return;
@@ -2144,7 +2054,7 @@ void	CClientSession::SendMobLoot(CNtlPacket * pPacket, CGameServer * app, RwUInt
 	if ((mobid = IsMonsterIDInsideList(m_uiTargetSerialId)) != 0)
 	{
 		sMOB_TBLDAT* mob = (sMOB_TBLDAT*)app->g_pTableContainer->GetMobTable()->FindData(mobid);
-		printf("Each rate control %d\n", mob->byDropEachRateControl);
+		/*printf("Each rate control %d\n", mob->byDropEachRateControl);
 		printf("Drop Eeach Item %d\n", mob->byDropEItemRateControl);
 		printf("Drop Legendary Item %d\n", mob->byDropLItemRateControl);
 		printf("Drop Normal Item %d\n", mob->byDropNItemRateControl);
@@ -2153,7 +2063,7 @@ void	CClientSession::SendMobLoot(CNtlPacket * pPacket, CGameServer * app, RwUInt
 		printf("Drop each tblidx %d\n", mob->dropEachTblidx);
 		printf("Drop Quest tblidx %d\n", mob->dropQuestTblidx);
 		printf("Drop Type TBLIDX %d\n", mob->dropTypeTblidx);
-		printf("Drop Item TBLIDX %d\n", mob->drop_Item_Tblidx);
+		printf("Drop Item TBLIDX %d\n", mob->drop_Item_Tblidx);*/
 		CEachDropTable * edrop = app->g_pTableContainer->GetEachDropTable();
 		CNormalDropTable * ndrop = app->g_pTableContainer->GetNormalDropTable();
 		CSuperiorDropTable * sdrop = app->g_pTableContainer->GetSuperiorDropTable();
@@ -2174,8 +2084,6 @@ void	CClientSession::SendMobLoot(CNtlPacket * pPacket, CGameServer * app, RwUInt
 			packet.SetPacketLen( sizeof(sGU_OBJECT_CREATE) );
 			g_pApp->Send( this->GetHandle() , &packet );
 		}
-
-		
 			/*res2->handle = AcquireSerialId();
 			res2->sObjectInfo.objType = OBJTYPE_DROPITEM;
 			res2->sObjectInfo.itemBrief.tblidx = mob->drop_Item_Tblidx;
@@ -2194,8 +2102,6 @@ void	CClientSession::SendMobLoot(CNtlPacket * pPacket, CGameServer * app, RwUInt
 }
 void CClientSession::SendCharUpdateFaintingState(CNtlPacket * pPacket, CGameServer * app, RwUInt32 uiSerialId, RwUInt32 m_uiTargetSerialId)
 {
-	//printf("char die: %i \n", m_uiTargetSerialId);
-
 	RemoveAttackBegin(uiSerialId, m_uiTargetSerialId);
 
 	CNtlPacket packet(sizeof(sGU_UPDATE_CHAR_STATE));
@@ -2214,10 +2120,7 @@ void CClientSession::SendCharUpdateFaintingState(CNtlPacket * pPacket, CGameServ
 	packet.SetPacketLen( sizeof(sGU_UPDATE_CHAR_STATE) );
 	app->UserBroadcastothers(&packet, this);
 	g_pApp->Send( this->GetHandle() , &packet );
-
-
 	app->mob->UpdateDeathStatus(m_uiTargetSerialId, true);
-
 }
 
 void CClientSession::SendCharSkillRes(CNtlPacket * pPacket, CGameServer * app)
@@ -2259,12 +2162,7 @@ void CClientSession::SendCharSkillAction(CNtlPacket * pPacket, CGameServer * app
 	
 	CSkillTable *pSkillTbl = app->g_pTableContainer->GetSkillTable();
 	
-	/*app->db->prepare("SELECT * FROM skills WHERE owner_id=? AND skill_id = ? ");
-	app->db->setInt(1, this->plr->pcProfile->charId);
-	app->db->setInt(2, res->skillId);
-	app->db->execute();
-	app->db->fetch();*/
-	int skillID = _skillID;//app->db->getInt("skill_id");
+	int skillID = _skillID;
 
 	sSKILL_TBLDAT *pSkillTblData = reinterpret_cast<sSKILL_TBLDAT*>(pSkillTbl->FindData(skillID));
 	res->wOpCode = GU_CHAR_ACTION_SKILL;
@@ -2312,8 +2210,6 @@ void CClientSession::SendCharSkillCasting(CNtlPacket * pPacket, CGameServer * ap
 	//sPacket.skillId = m_uiSkillTblId;
 	//	
 	//SendEvent(sizeof(sPacket), &sPacket);
-
-
 }
 
 void CGameServer::UpdateClient(CNtlPacket * pPacket, CClientSession * pSession)
@@ -2328,8 +2224,6 @@ void CGameServer::UpdateClient(CNtlPacket * pPacket, CClientSession * pSession)
 		pBattleData = (*it);
 		if(timeGetTime() - pBattleData->dwCurrTime >= MONSTER_ATTACK_UPDATE_TICK)
 		{
-			printf("ATTACK %i %i\n", pBattleData->uiSerialId, pBattleData->m_uiTargetSerialId);
-
 			//app->pSession->SendCharActionAttack(pBattleData->uiSerialId, pBattleData->m_uiTargetSerialId, pPacket);
 			pBattleData->dwCurrTime = timeGetTime();
 		}
@@ -2512,6 +2406,7 @@ void CClientSession::SendItemMoveReq(CNtlPacket * pPacket, CGameServer * app)
 	if((app->qry->CheckIfCanMoveItemThere(this->plr->pcProfile->charId, req->byDestPlace, req->byDestPos) == false))
 	{
 		res->wResultCode = GAME_MOVE_CANT_GO_THERE;
+		this->gsf->printError("An error is occured in SendItemMoveReq: GAME_MOVE_CANT_GO_THERE");
 	} 
 	else 
 	{
@@ -2528,6 +2423,7 @@ void CClientSession::SendItemMoveReq(CNtlPacket * pPacket, CGameServer * app)
 			else
 			{
 				res->wResultCode = GAME_MOVE_CANT_GO_THERE;
+				this->gsf->printError("An error is occured in SendItemMoveReq: Level < LevelRequiert");
 			}
 		}
 		else
@@ -2668,6 +2564,7 @@ void CClientSession::SendItemStackReq(CNtlPacket * pPacket, CGameServer * app)
 		res->wResultCode = GAME_FAIL;
 		packet.SetPacketLen(sizeof(sGU_ITEM_MOVE_STACK_RES));
 		g_pApp->Send( this->GetHandle() , &packet );
+		this->gsf->printError("An error is occured in SendItemStackReq: GAME_FAIL item1ID != item2ID");
 	}
 }
 
@@ -2900,7 +2797,10 @@ void	CClientSession::SendScouterIndicatorReq(CNtlPacket * pPacket, CGameServer *
 				break;
 			}
 			else
+			{
+				this->gsf->printError("An error is occured in SendScouterIndicatorReq: GAME_FAIL pMOBtData->tblidx != mobid");
 				res->wResultCode = GAME_FAIL;
+			}
 		}
 	}
 	packet.SetPacketLen( sizeof(sGU_SCOUTER_INDICATOR_RES) );
@@ -2942,6 +2842,7 @@ void	CClientSession::SendDragonBallCheckReq(CNtlPacket * pPacket, CGameServer * 
 			res->wOpCode = GU_DRAGONBALL_CHECK_RES;
 			packet.SetPacketLen( sizeof(sGU_DRAGONBALL_CHECK_RES) );
 			g_pApp->Send( this->GetHandle() , &packet );
+			this->gsf->printError("An error is occured in SendGambleBuyReq: GAME_DRAGONBALL_NOT_FOUND");
 			i = 0;
 			break;
 		}
@@ -2976,39 +2877,19 @@ void	CClientSession::SendDragonBallCheckReq(CNtlPacket * pPacket, CGameServer * 
 		packet.SetPacketLen( sizeof(sGU_DRAGONBALL_CHECK_RES) );
 		g_pApp->Send( this->GetHandle() , &packet );
 	}
-	/*CMobTable* npc = app->g_pTableContainer->GetMobTable();
-	FILE *ptr_file;
-	int x;
-
-	ptr_file =fopen("output.txt", "w");
-
-	if (!ptr_file);
-	else
-	{
-		for ( CTable::TABLEIT itmob = npc->Begin(); itmob != npc->End(); ++itmob )
-		{
-			sMOB_TBLDAT* npct = (sMOB_TBLDAT*)itmob->second;
-
-			fprintf(ptr_file,"%s\n", npct->szNameText);
-			if (strcmp("°í´ë µå·¡°ï", npct->szNameText) == 0)
-				printf("tdblidx %d\nName %s\n", npct->tblidx, npct->szNameText);
-		}
-		fclose(ptr_file);
-	}*/
 }
 
 void	CClientSession::SendDragonBallRewardReq(CNtlPacket * pPacket, CGameServer * app) // THIS IS THE FIRST VERSION
 {
-	printf("--- UG_DRAGONBALL_REWARD_REQ --- \n");
 	sUG_DRAGONBALL_REWARD_REQ * req = (sUG_DRAGONBALL_REWARD_REQ *)pPacket->GetPacketData();
 	CNtlPacket packet(sizeof(sGU_DRAGONBALL_REWARD_RES));
 	sGU_DRAGONBALL_REWARD_RES * res = (sGU_DRAGONBALL_REWARD_RES *)packet.GetPacketData();
 
 	sDRAGONBALL_REWARD_TBLDAT* pDBtData = (sDRAGONBALL_REWARD_TBLDAT*)app->g_pTableContainer->GetDragonBallRewardTable()->FindData(req->rewardTblidx);
-	printf("Datacontainer = byBallType = %d, byRewardCategoryDepth = %d, rewardType = %d\ndwRewardZenny = %d, catergoryDialogue = %d\nCategoryName = %d, RewardDialog1 = %d, RewardDialog2 = %d\nrewardlinktblidx = %d, rewardname = %d, tdblidx = %d\n",
-		pDBtData->byBallType, pDBtData->byRewardCategoryDepth, pDBtData->byRewardType, pDBtData->dwRewardZenny, pDBtData->rewardCategoryDialog,pDBtData->rewardCategoryName,
-		pDBtData->rewardDialog1, pDBtData->rewardDialog2,pDBtData->rewardLinkTblidx, pDBtData->rewardName, pDBtData->tblidx);
-	printf("Reward have been found.\nReward id = %d.\n", req->rewardTblidx);
+	//printf("Datacontainer = byBallType = %d, byRewardCategoryDepth = %d, rewardType = %d\ndwRewardZenny = %d, catergoryDialogue = %d\nCategoryName = %d, RewardDialog1 = %d, RewardDialog2 = %d\nrewardlinktblidx = %d, rewardname = %d, tdblidx = %d\n",
+		//pDBtData->byBallType, pDBtData->byRewardCategoryDepth, pDBtData->byRewardType, pDBtData->dwRewardZenny, pDBtData->rewardCategoryDialog,pDBtData->rewardCategoryName,
+		//pDBtData->rewardDialog1, pDBtData->rewardDialog2,pDBtData->rewardLinkTblidx, pDBtData->rewardName, pDBtData->tblidx);
+	//printf("Reward have been found.\nReward id = %d.\n", req->rewardTblidx);
 	//------------ Wishlist --------//
 
 	CSkillTable* pSkillTable = app->g_pTableContainer->GetSkillTable();
@@ -3122,7 +3003,6 @@ void	CClientSession::SendDragonBallRewardReq(CNtlPacket * pPacket, CGameServer *
 }
 void CClientSession::SendGambleBuyReq(CNtlPacket * pPacket, CGameServer * app)
 {
-	printf("--- UG_SHOP_GAMBLE_BUY_REQ --- \n");
 	sUG_SHOP_GAMBLE_BUY_REQ *req = (sUG_SHOP_GAMBLE_BUY_REQ*)pPacket->GetPacketData();
 	CNtlPacket packet(sizeof(sGU_SHOP_GAMBLE_BUY_RES));
 	sGU_SHOP_GAMBLE_BUY_RES * res = (sGU_SHOP_GAMBLE_BUY_RES *)packet.GetPacketData();
@@ -3136,12 +3016,13 @@ void CClientSession::SendGambleBuyReq(CNtlPacket * pPacket, CGameServer * app)
 		sITEM_MIX_MACHINE_TBLDAT* pMusoData = (sITEM_MIX_MACHINE_TBLDAT*) itmob->second;
 		if (pMusoData)
 		{
-			printf("%d, %d, %d, %d, %d, %d, %d, %d, %S", pMusoData->aBuiltInRecipeTblidx[0], pMusoData->aBuiltInRecipeTblidx[1], pMusoData->aBuiltInRecipeTblidx[2], pMusoData->bValidityAble, pMusoData->byMachineType, pMusoData->byMixZennyDiscountRate, pMusoData->dynamicObjectTblidx, pMusoData->tblidx, pMusoData->wFunctionBitFlag);
+			//printf("%d, %d, %d, %d, %d, %d, %d, %d, %S", pMusoData->aBuiltInRecipeTblidx[0], pMusoData->aBuiltInRecipeTblidx[1], pMusoData->aBuiltInRecipeTblidx[2], pMusoData->bValidityAble, pMusoData->byMachineType, pMusoData->byMixZennyDiscountRate, pMusoData->dynamicObjectTblidx, pMusoData->tblidx, pMusoData->wFunctionBitFlag);
 			res->hItem = pMusoData->aBuiltInRecipeTblidx[0];
 		}
 	}
 	packet.SetPacketLen(sizeof(sGU_SHOP_GAMBLE_BUY_RES));
 	int rc = g_pApp->Send(this->GetHandle(), &packet);
+	this->gsf->printError("An error is occured in SendGambleBuyReq: GAME_FAIL");
 }
 //------------------------------------------------
 // Character Skill Upgrade By luiz45
@@ -3254,7 +3135,6 @@ void CClientSession::SendCharUpdQuickSlot(CNtlPacket * pPacket, CGameServer * ap
 	CNtlPacket packet(sizeof(sGU_QUICK_SLOT_UPDATE_RES));
 	sGU_QUICK_SLOT_UPDATE_RES * res = (sGU_QUICK_SLOT_UPDATE_RES*)packet.GetPacketData();	
 
-	printf("QUICK SLOT ID: %i", req->bySlotID);
 	app->qry->InsertRemoveQuickSlot(req->tblidx, req->bySlotID, this->plr->pcProfile->charId);
 
 	res->wResultCode = GAME_SUCCESS;
@@ -3270,7 +3150,7 @@ void CClientSession::SendCharDelQuickSlot(CNtlPacket * pPacket, CGameServer * ap
 {
 	sUG_QUICK_SLOT_DEL_REQ * req = (sUG_QUICK_SLOT_DEL_REQ*)pPacket->GetPacketData();
 
-	CNtlPacket packet(sizeof(sGU_QUICK_SLOT_DEL_NFY));	
+	CNtlPacket packet(sizeof(sGU_QUICK_SLOT_DEL_NFY));
 	sGU_QUICK_SLOT_DEL_NFY * response = (sGU_QUICK_SLOT_DEL_NFY*)packet.GetPacketData();
 	app->qry->InsertRemoveQuickSlot(0, req->bySlotID, this->plr->pcProfile->charId);
 
@@ -3321,7 +3201,6 @@ void CClientSession::SendPlayerLevelUpCheck(CGameServer * app, int exp)
 }
 void CClientSession::SendPlayerQuestReq(CNtlPacket * pPacket, CGameServer * app)
 {
-	printf("--- UG_TS_CONFIRM_STEP_REQ --- \n");
 	sUG_TS_CONFIRM_STEP_REQ* req = (sUG_TS_CONFIRM_STEP_REQ *)pPacket->GetPacketData();
 	CNtlPacket packet(sizeof(sGU_TS_CONFIRM_STEP_RES));
 	sGU_TS_CONFIRM_STEP_RES * res = (sGU_TS_CONFIRM_STEP_RES *)packet.GetPacketData();
@@ -3338,7 +3217,7 @@ void CClientSession::SendPlayerQuestReq(CNtlPacket * pPacket, CGameServer * app)
 
 	if (res->tcNextId == 255)
 	{
-		printf("REWARD NOW\n");
+		this->gsf->printError("We need to add the reward");
 		// should be the reward because when we rewarsd a quest res->tcNextId is all the time 255
 		// WE NEED THE CORRECT TBLIDX FOR THE REWARD
 
@@ -3352,7 +3231,6 @@ void CClientSession::SendPlayerQuestReq(CNtlPacket * pPacket, CGameServer * app)
 void	CClientSession::SendZennyPickUpReq(CNtlPacket * pPacket, CGameServer * app)
 {
 	sUG_ZENNY_PICK_REQ* req = (sUG_ZENNY_PICK_REQ *)pPacket->GetPacketData();
-	printf("%d = req->byAvatarType\n",req->byAvatarType);
 	CNtlPacket packet(sizeof(sGU_ZENNY_PICK_RES));
 	sGU_ZENNY_PICK_RES * res = (sGU_ZENNY_PICK_RES *)packet.GetPacketData();
 

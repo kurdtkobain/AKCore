@@ -2,9 +2,14 @@
 
 #include "SharedType.h"
 #include "MobTable.h"
+#include <conio.h>
+#include <stdio.h>
+#include <dos.h>
+#include <ctype.h>
+#include <windows.h>
+
 static RwUInt32 m_uiSerialId = 5;
 static RwUInt32 m_uiTargetSerialId = 0;
-
 
 typedef struct _SBattleData
 {
@@ -47,6 +52,9 @@ public:
 	bool						DeleteItemByUIdPlacePos(CNtlPacket * pPacket, CClientSession * pSession, RwUInt32 UniqueID, RwUInt32 Place, RwUInt32 Pos);
 	bool						UpdateCharMoney(CNtlPacket * pPacket, CClientSession * pSession, RwUInt32 ChangeType, RwUInt32 MoneyAmount, RwUInt32 AvatarHandle);
 	DWORD						CalculePowerLevel(sMOB_TBLDAT* pMOBtData);
+	void						printError(const char* err);
+	void						printOk(const char* err);
+	void						printDebug(const char* dbg);
 };
 
 #endif

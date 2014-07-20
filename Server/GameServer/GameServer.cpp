@@ -35,9 +35,6 @@ int CClientSession::OnDispatch(CNtlPacket * pPacket)
 {
 	CGameServer * app = (CGameServer*) NtlSfxGetApp();
 	sNTLPACKETHEADER * pHeader = (sNTLPACKETHEADER *)pPacket->GetPacketData();
-	//printf("~~~ opcode %i received ~~~ \n", pHeader->wOpCode);
-	if (pHeader->wOpCode >= 37000)
-		printf("This should be ng gn\n");
 	switch( pHeader->wOpCode )
 	{
 		case UG_GAME_ENTER_REQ:
@@ -73,7 +70,7 @@ int CClientSession::OnDispatch(CNtlPacket * pPacket)
 			break;
 		case UG_CHAR_READY_FOR_COMMUNITY_SERVER_NFY:
 		{
-			printf("--- UG_CHAR_READY_FOR_COMMUNITY_SERVER_NFY --- \n");
+			//printf("--- UG_CHAR_READY_FOR_COMMUNITY_SERVER_NFY --- \n");
 		}
 			break;
 		case UG_CHAR_READY_TO_SPAWN:
@@ -84,8 +81,6 @@ int CClientSession::OnDispatch(CNtlPacket * pPacket)
 		case UG_CHAR_READY:
 		{
 			CClientSession::SendCharReady(pPacket);
-		//	CClientSession::SendNpcCreate(pPacket, app);
-		//	CClientSession::SendMonsterCreate(pPacket, app);
 		}
 			break;
 		case UG_CHAR_MOVE:
@@ -135,7 +130,6 @@ int CClientSession::OnDispatch(CNtlPacket * pPacket)
 			break;
 		case UG_CHAR_JUMP_END:
 		{
-			printf("--- CHARACTER JUMP END --- \n");
 			CNtlPacket packet(sizeof(sGU_CHAR_JUMP));
 			sGU_CHAR_JUMP * res = (sGU_CHAR_JUMP *)packet.GetPacketData();
 			res->wOpCode = GU_CHAR_JUMP_END;
@@ -260,7 +254,6 @@ int CClientSession::OnDispatch(CNtlPacket * pPacket)
 			break;
 		case UG_CHAR_SKILL_REQ:
 		{
-			printf("--- UG_CHAR_SKILL_REQ --- \n");
 			CClientSession::SendCharSkillRes(pPacket, app);
 		}
 			break;
@@ -351,7 +344,6 @@ int CClientSession::OnDispatch(CNtlPacket * pPacket)
 			break;
 		case UG_ZENNY_PICK_REQ:
 		{
-			printf("--- UG_ZENNY_PICK_REQ --- \n");
 			CClientSession::SendZennyPickUpReq(pPacket, app);
 		}
 			break;
@@ -498,7 +490,6 @@ int CClientSession::OnDispatch(CNtlPacket * pPacket)
 			break;
 		case UG_BANK_START_REQ:
 		{
-			printf("--- UG_BANK_START_REQ --- \n");
 			CClientSession::SendBankStartReq(pPacket, app);
 		}
 			break;
@@ -514,7 +505,6 @@ int CClientSession::OnDispatch(CNtlPacket * pPacket)
 			break;
 		case UG_BANK_END_REQ:
 		{
-			printf("--- UG_BANK_END_REQ --- \n");
 			CClientSession::SendBankEndReq(pPacket, app);
 		}
 			break;
@@ -525,7 +515,6 @@ int CClientSession::OnDispatch(CNtlPacket * pPacket)
 			break;
 		case UG_BANK_BUY_REQ:
 		{
-			printf("--- UG_BANK_BUY_REQ --- \n");
 			CClientSession::SendBankBuyReq(pPacket, app);
 		}
 			break;
@@ -536,7 +525,6 @@ int CClientSession::OnDispatch(CNtlPacket * pPacket)
 			break;
 		case UG_SCOUTER_INDICATOR_REQ:
 		{
-			printf("--- UG_SCOUTER_INDICATOR_REQ --- \n");
 			CClientSession::SendScouterIndicatorReq(pPacket, app);
 		}
 			break;
@@ -602,25 +590,21 @@ int CClientSession::OnDispatch(CNtlPacket * pPacket)
 			break;
 		case UG_FREEBATTLE_CHALLENGE_REQ:
 		{
-			printf("--- UG_FREEBATTLE_CHALLENGE_REQ --- \n");
 			CClientSession::SendFreeBattleReq(pPacket, app);
 		}
 			break;
 		case UG_FREEBATTLE_ACCEPT_RES:
 		{
-			printf("--- UG_FREEBATTLE_ACCEPT_RES --- \n");
 			CClientSession::SendFreeBattleAccpetReq(pPacket, app);
 		}
 			break;
 		case UG_QUICK_SLOT_UPDATE_REQ:
 		{
-			printf("--- UG_QUICK_SLOT_UPDATE_REQ --- \n");
 			CClientSession::SendCharUpdQuickSlot(pPacket, app);
 		}
 			break;
 		case UG_QUICK_SLOT_DEL_REQ:
 		{
-			printf("--- UG_QUICK_SLOT_DEL_REQ --- \n");
 			CClientSession::SendCharDelQuickSlot(pPacket, app);
 		}
 			break;
@@ -1467,7 +1451,8 @@ int CClientSession::OnDispatch(CNtlPacket * pPacket)
 //-----------------------------------------------------------------------------------
 bool CGameServer::CreateTableContainer(int byLoadMethod)
 {
-	printf("==== LOADING GAME TABLES ... ==== \n");
+	GsFunctionsClass *gs = new GsFunctionsClass();
+	gs->printOk("==== LOADING GAME TABLES ... ==== \n");
 
   CNtlBitFlagManager flagManager;
     if (false == flagManager.Create(CTableContainer::TABLE_COUNT))
@@ -1588,19 +1573,14 @@ bool CGameServer::CreateTableContainer(int byLoadMethod)
 	fileNameList.SetFileName(CTableContainer::TABLE_EXP,					"table_exp_data");
 
 	g_pTableContainer = new CTableContainer;
-	
 	std::string str;
 	CTable::eLOADING_METHOD eLoadMethod = (CTable::eLOADING_METHOD)byLoadMethod;
-
-		str = "data";
-
+	str = "data";
     bool bResult = FALSE;
-	//bool aResult = FALSE;
-     bResult = g_pTableContainer->Create(flagManager, (char*)str.c_str(), &fileNameList, eLoadMethod, GetACP(), NULL);
-	 //g_pTableContainer->SaveToFile(flagManager, &fileNameList, false);
-    	
-	printf("==== LOADING GAMETABLES COMPLETE ==== \n");                                                                                              
+    bResult = g_pTableContainer->Create(flagManager, (char*)str.c_str(), &fileNameList, eLoadMethod, GetACP(), NULL);
+	gs->printOk("==== LOADING GAMETABLES COMPLETE ==== \n");                                                                                              
 	mob->Create();
+	delete gs;
 	return bResult;
 }
 
