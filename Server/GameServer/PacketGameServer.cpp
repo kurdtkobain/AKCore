@@ -2048,12 +2048,9 @@ void CClientSession::RemoveAttackBegin(RwUInt32 uiSerialId, RwUInt32 m_uiTargetS
 void CClientSession::SendCharActionAttack(RwUInt32 uiSerialId, RwUInt32 m_uiTargetSerialId, CNtlPacket * pPacket)
 {
 	CGameServer * app = (CGameServer*)NtlSfxGetApp();
-	//static RwUInt8 byChainAttack = 0;
+	static RwUInt8 byChainAttack = 0;
 	RwBool bDamageApply = true;
 
-	//printf("SendCharActionAttack SERIAL %i %i \n", uiSerialId,m_uiTargetSerialId);
-
-	//printf("AVATAR HANDLE TEST %i \n", this->GetavatarHandle());
 	CNtlPacket packet(sizeof(sGU_CHAR_ACTION_ATTACK));
 	sGU_CHAR_ACTION_ATTACK * res = (sGU_CHAR_ACTION_ATTACK *)packet.GetPacketData();
 
@@ -2097,11 +2094,11 @@ void CClientSession::SendCharActionAttack(RwUInt32 uiSerialId, RwUInt32 m_uiTarg
 	packet.SetPacketLen( sizeof(sGU_CHAR_ACTION_ATTACK) );
 	int rc = g_pApp->Send( this->GetHandle() , &packet );
 	app->UserBroadcast(&packet);
-	//byChainAttack++;
+	byChainAttack++;
 	// update LP
 	if(bDamageApply)
 	{
-		m_iCurrentHp -= 1;
+		m_iCurrentHp -= m_iCurrentHp;
 		if(m_iCurrentHp <= 0)
 		{
 			CClientSession::SendMobLoot(&packet, app, m_uiTargetSerialId);
@@ -2257,7 +2254,6 @@ void CClientSession::SendCharSkillRes(CNtlPacket * pPacket, CGameServer * app)
 //--------------------------------------------------------------------------------------//
 void CClientSession::SendCharSkillAction(CNtlPacket * pPacket, CGameServer * app, int _skillID)
 {
-	printf("SEND SKILL\n");
 	CNtlPacket packet(sizeof(sGU_CHAR_ACTION_SKILL));
 	sGU_CHAR_ACTION_SKILL * res = (sGU_CHAR_ACTION_SKILL *)packet.GetPacketData();	
 	
@@ -3369,4 +3365,53 @@ void	CClientSession::SendZennyPickUpReq(CNtlPacket * pPacket, CGameServer * app)
 	res->dwZenny = 0;
 	res->wOpCode = GU_ZENNY_PICK_RES;
 	res->wResultCode = ZENNY_CHANGE_TYPE_PICK;	
+}
+void	CClientSession::SendFreeBattleReq(CNtlPacket * pPacket, CGameServer * app)
+{
+	sUG_FREEBATTLE_CHALLENGE_REQ* req = (sUG_FREEBATTLE_CHALLENGE_REQ *)pPacket->GetPacketData();
+	CNtlPacket packet(sizeof(sGU_FREEBATTLE_CHALLENGE_RES));
+	sGU_FREEBATTLE_CHALLENGE_RES * res = (sGU_FREEBATTLE_CHALLENGE_RES *)packet.GetPacketData();
+
+	CNtlPacket packet2(sizeof(sGU_FREEBATTLE_ACCEPT_REQ));
+	sGU_FREEBATTLE_ACCEPT_REQ * res2 = (sGU_FREEBATTLE_ACCEPT_REQ *)packet2.GetPacketData();
+
+	res->hTarget = req->hTarget;
+	res->wOpCode = GU_FREEBATTLE_CHALLENGE_RES;
+	res->wResultCode = GAME_SUCCESS;
+
+	res2->hChallenger = this->plr->GetAvatarandle();
+	res2->wOpCode = GU_FREEBATTLE_ACCEPT_REQ;
+
+	packet.SetPacketLen( sizeof(sGU_FREEBATTLE_CHALLENGE_RES) );
+	g_pApp->Send( this->GetHandle() , &packet );
+	packet2.SetPacketLen( sizeof(sGU_FREEBATTLE_ACCEPT_REQ) );
+	//g_pApp->Send( this->GetHandle() , &packet2 );
+	app->UserBroadcastothers(&packet2, this);
+}
+void	CClientSession::SendFreeBattleAccpetReq(CNtlPacket * pPacket, CGameServer * app)
+{
+	sUG_FREEBATTLE_ACCEPT_RES* req = (sUG_FREEBATTLE_ACCEPT_RES *)pPacket->GetPacketData();
+	
+	if (req->byAccept == 1)
+	{
+		CNtlPacket packet2(sizeof(sGU_FREEBATTLE_START_NFY));
+		sGU_FREEBATTLE_START_NFY * res2 = (sGU_FREEBATTLE_START_NFY *)packet2.GetPacketData();
+		res2->hTarget = this->plr->GetAvatarandle();
+		res2->vRefreeLoc = this->plr->GetPosition();
+		res2->vRefreeLoc.x += rand() % 10;
+		res2->wOpCode = GU_FREEBATTLE_START_NFY;
+		packet2.SetPacketLen( sizeof(sGU_FREEBATTLE_START_NFY) );
+		g_pApp->Send( this->GetHandle() , &packet2 );
+		app->UserBroadcastothers(&packet2, this);
+	}
+	else
+	{
+		CNtlPacket packet2(sizeof(sGU_FREEBATTLE_CANCEL_NFY));
+		sGU_FREEBATTLE_CANCEL_NFY * res2 = (sGU_FREEBATTLE_CANCEL_NFY *)packet2.GetPacketData();
+		res2->wOpCode = GU_FREEBATTLE_CANCEL_NFY;
+		res2->wResultCode = GAME_FREEBATTLE_CHALLENGE_ACCEPT_DENIED;
+		packet2.SetPacketLen( sizeof(sGU_FREEBATTLE_CANCEL_NFY) );
+		g_pApp->Send( this->GetHandle() , &packet2 );
+		app->UserBroadcastothers(&packet2, this);
+	}
 }

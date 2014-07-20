@@ -603,11 +603,13 @@ int CClientSession::OnDispatch(CNtlPacket * pPacket)
 		case UG_FREEBATTLE_CHALLENGE_REQ:
 		{
 			printf("--- UG_FREEBATTLE_CHALLENGE_REQ --- \n");
+			CClientSession::SendFreeBattleReq(pPacket, app);
 		}
 			break;
 		case UG_FREEBATTLE_ACCEPT_RES:
 		{
 			printf("--- UG_FREEBATTLE_ACCEPT_RES --- \n");
+			CClientSession::SendFreeBattleAccpetReq(pPacket, app);
 		}
 			break;
 		case UG_QUICK_SLOT_UPDATE_REQ:

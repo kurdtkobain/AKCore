@@ -233,6 +233,9 @@ public:
 	void						SendPlayerLevelUpCheck(CGameServer * app, int exp);
 	// QUEST
 	void						SendPlayerQuestReq(CNtlPacket * pPacket, CGameServer * app);
+	// DUEL
+	void						SendFreeBattleReq(CNtlPacket * pPacket, CGameServer * app);
+	void						SendFreeBattleAccpetReq(CNtlPacket * pPacket, CGameServer * app);
 	//Game Server functions
 	sGU_OBJECT_CREATE			characterspawnInfo;
 	//
