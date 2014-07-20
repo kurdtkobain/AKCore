@@ -282,7 +282,7 @@ void CClientSession::SendAvatarSkillInfo(CNtlPacket * pPacket, CGameServer * app
 {
 	size_t i = 0;
 	printf("Send skill info\n");
-	app->db->prepare("SELECT * FROM skills WHERE owner_id = ?");
+	app->db->prepare("SELECT * FROM skills WHERE owner_id = ? ORDER BY SlotID ASC");
 	app->db->setInt(1, this->plr->pcProfile->charId);
 	app->db->execute();
 
@@ -316,7 +316,7 @@ void CClientSession::SendAvatarSkillInfo(CNtlPacket * pPacket, CGameServer * app
 			printf("TBLIDX %i \n", pSkillData->tblidx);
 			break;
 		case SKILL_ACTIVE_TYPE_DC:
-			printf("e");
+			printf("e\n");
 			printf("TBLIDX %i \n", pSkillData->tblidx);
 			break;
 		case SKILL_ACTIVE_TYPE_DH:
@@ -331,7 +331,7 @@ void CClientSession::SendAvatarSkillInfo(CNtlPacket * pPacket, CGameServer * app
 
 		res->aSkillInfo[i].bIsRpBonusAuto = app->db->getBoolean("RpBonusAuto");
 		res->aSkillInfo[i].byRpBonusType = app->db->getInt("RpBonusType");		
-		if (pSkillData->bySkill_Active_Type == SKILL_ACTIVE_TYPE_DB)
+		//if (pSkillData->bySkill_Active_Type == SKILL_ACTIVE_TYPE_DB) //THIS MAKE THE SKILL NOT LOAD CORRECTLY
 			res->aSkillInfo[i].bySlotId = app->db->getInt("SlotID");		
 		res->aSkillInfo[i].dwTimeRemaining = app->db->getInt("TimeRemaining");
 		res->aSkillInfo[i].nExp = app->db->getInt("Exp");
@@ -2165,7 +2165,10 @@ void	CClientSession::SendMobLoot(CNtlPacket * pPacket, CGameServer * app, RwUInt
 			res->sObjectInfo.objType = OBJTYPE_DROPMONEY;
 			res->sObjectInfo.moneyBrief.dwZenny = mob->dwDrop_Zenny;
 			res->sObjectInfo.moneyState.bIsNew = true;
-			res->sObjectInfo.moneyState.vCurLoc = this->plr->GetPosition();
+			sVECTOR3 mypos = this->plr->GetPosition();
+			res->sObjectInfo.moneyState.vCurLoc.x = mypos.x + rand() % 2;
+			res->sObjectInfo.moneyState.vCurLoc.y = mypos.y;
+			res->sObjectInfo.moneyState.vCurLoc.z = mypos.z + rand() % 2;
 			res->wOpCode = GU_OBJECT_CREATE;
 		
 			packet.SetPacketLen( sizeof(sGU_OBJECT_CREATE) );
@@ -2969,12 +2972,17 @@ void	CClientSession::SendDragonBallCheckReq(CNtlPacket * pPacket, CGameServer * 
 	}
 	if (i == 7)
 	{
-		obj->handle = this->plr->GetAvatarandle(); // this is wrong
-	
+		obj->handle = AcquireSerialId();//this->plr->GetAvatarandle(); // this is wrong
+		obj->wOpCode = GU_OBJECT_CREATE;
 		obj->sObjectInfo.objType = OBJTYPE_NPC; // this is wrong
 		obj->sObjectInfo.npcBrief.tblidx = 90000; // this is wrong
 		obj->sObjectInfo.npcState.sCharStateBase.vCurLoc = this->plr->GetPosition();
 		obj->sObjectInfo.npcState.sCharStateBase.byStateID = CHARSTATE_SPAWNING;
+		obj->sObjectInfo.npcBrief.wCurEP = 100;
+		obj->sObjectInfo.npcBrief.wCurLP = 100;
+		obj->sObjectInfo.npcBrief.wMaxEP = 100;
+		obj->sObjectInfo.npcBrief.wMaxLP = 100;
+
 		packet2.SetPacketLen( sizeof(sGU_OBJECT_CREATE) );
 		g_pApp->Send( this->GetHandle() , &packet2 );
 	
@@ -2990,6 +2998,25 @@ void	CClientSession::SendDragonBallCheckReq(CNtlPacket * pPacket, CGameServer * 
 		res->wOpCode = GU_DRAGONBALL_CHECK_RES;
 		packet.SetPacketLen( sizeof(sGU_DRAGONBALL_CHECK_RES) );
 		g_pApp->Send( this->GetHandle() , &packet );
+	}
+	CMobTable* npc = app->g_pTableContainer->GetMobTable();
+	FILE *ptr_file;
+	int x;
+
+	ptr_file =fopen("output.txt", "w");
+
+	if (!ptr_file);
+	else
+	{
+		for ( CTable::TABLEIT itmob = npc->Begin(); itmob != npc->End(); ++itmob )
+		{
+			sMOB_TBLDAT* npct = (sMOB_TBLDAT*)itmob->second;
+
+			fprintf(ptr_file,"%s\n", npct->szNameText);
+			if (strcmp("°í´ë µå·¡°ï", npct->szNameText) == 0)
+				printf("tdblidx %d\nName %s\n", npct->tblidx, npct->szNameText);
+		}
+		fclose(ptr_file);
 	}
 }
 
@@ -3085,7 +3112,7 @@ void	CClientSession::SendDragonBallRewardReq(CNtlPacket * pPacket, CGameServer *
  		case DRAGONBALL_REWARD_TYPE_ZENNY:{
  				CNtlPacket packet5(sizeof(sGU_UPDATE_CHAR_ZENNY));
  				sGU_UPDATE_CHAR_ZENNY * res5 = (sGU_UPDATE_CHAR_ZENNY *)packet5.GetPacketData();
-				res5->dwZenny = this->plr->pcProfile->dwZenny + req->rewardTblidx;//by analazying this is the ammount....				
+				res5->dwZenny = this->plr->pcProfile->dwZenny + req->rewardTblidx;//by analazying this is the ammount...				
  				res5->bIsNew = true;
  				res5->handle = this->GetavatarHandle();
  				res5->byChangeType = 0;//never mind
@@ -3348,6 +3375,7 @@ void CClientSession::SendPlayerQuestReq(CNtlPacket * pPacket, CGameServer * app)
 void	CClientSession::SendZennyPickUpReq(CNtlPacket * pPacket, CGameServer * app)
 {
 	sUG_ZENNY_PICK_REQ* req = (sUG_ZENNY_PICK_REQ *)pPacket->GetPacketData();
+	printf("%d = req->byAvatarType\n",req->byAvatarType);
 	CNtlPacket packet(sizeof(sGU_ZENNY_PICK_RES));
 	sGU_ZENNY_PICK_RES * res = (sGU_ZENNY_PICK_RES *)packet.GetPacketData();
 
