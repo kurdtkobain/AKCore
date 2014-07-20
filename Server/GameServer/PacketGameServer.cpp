@@ -2338,11 +2338,9 @@ void CGameServer::UpdateClient(CNtlPacket * pPacket, CClientSession * pSession)
 // MAKE MOBS MOVE
 	if(timeGetTime() - app->mob->last_mobMove >= MONSTER_MOVE_UPDATE_TICK)
 	{
-		/*if ((rand() % 100) >= 60) 
-			app->mob->MonsterRandomWalk(pPacket);*/ // we need replace this shit by -> CMobMovePatternTable
+		app->mob->MonsterRandomWalk(NULL);
 		app->mob->last_mobMove = timeGetTime();
 	}
-
 }
 
 //--------------------------------------------------------------------------------------//
@@ -3385,7 +3383,7 @@ void	CClientSession::SendFreeBattleReq(CNtlPacket * pPacket, CGameServer * app)
 	packet.SetPacketLen( sizeof(sGU_FREEBATTLE_CHALLENGE_RES) );
 	g_pApp->Send( this->GetHandle() , &packet );
 	packet2.SetPacketLen( sizeof(sGU_FREEBATTLE_ACCEPT_REQ) );
-	//g_pApp->Send( this->GetHandle() , &packet2 );
+	g_pApp->Send( this->GetHandle() , &packet2 );
 	app->UserBroadcastothers(&packet2, this);
 }
 void	CClientSession::SendFreeBattleAccpetReq(CNtlPacket * pPacket, CGameServer * app)

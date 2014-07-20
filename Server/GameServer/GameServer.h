@@ -42,6 +42,7 @@
 #include "LegendaryDropTable.h"
 #include "NormalDropTable.h"
 #include "SuperiorDropTable.h"
+#include "MobMovePatternTable.h"
 // END TABLES
 #include "PlayerInfos.h"
 #include "MobActivity.h"

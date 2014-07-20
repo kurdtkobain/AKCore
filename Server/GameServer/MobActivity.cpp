@@ -187,7 +187,7 @@ void		MobActivity::MonsterRandomWalk(CNtlPacket * pPacket)
 		creaturelist = (*it);
 		if(creaturelist->IsDead == false)
 		{
-			if (creaturelist->FightMode == false)
+			if (creaturelist->FightMode == false && (rand() % 30) >= 20)
 			{
 				CNtlPacket packet(sizeof(sGU_UPDATE_CHAR_STATE));
 				sGU_UPDATE_CHAR_STATE * res = (sGU_UPDATE_CHAR_STATE *)packet.GetPacketData();
@@ -197,11 +197,11 @@ void		MobActivity::MonsterRandomWalk(CNtlPacket * pPacket)
 				res->sCharState.sCharStateBase.byStateID = CHARSTATE_DESTMOVE;
 				res->sCharState.sCharStateDetail.sCharStateDestMove.byDestLocCount = 2;
 				res->sCharState.sCharStateDetail.sCharStateDestMove.avDestLoc[0].x = creaturelist->Spawn_Loc.x + rand() %15;
-				res->sCharState.sCharStateDetail.sCharStateDestMove.avDestLoc[0].y = creaturelist->Spawn_Loc.y + rand() %25;
-				res->sCharState.sCharStateDetail.sCharStateDestMove.avDestLoc[0].z = creaturelist->Spawn_Loc.z;
-				res->sCharState.sCharStateDetail.sCharStateDestMove.avDestLoc[1].x = creaturelist->Spawn_Loc.x + rand() %50;
-				res->sCharState.sCharStateDetail.sCharStateDestMove.avDestLoc[1].y = creaturelist->Spawn_Loc.y + rand() %30;
-				res->sCharState.sCharStateDetail.sCharStateDestMove.avDestLoc[1].z = creaturelist->Spawn_Loc.z;
+				res->sCharState.sCharStateDetail.sCharStateDestMove.avDestLoc[0].y = creaturelist->Spawn_Loc.y;
+				res->sCharState.sCharStateDetail.sCharStateDestMove.avDestLoc[0].z = creaturelist->Spawn_Loc.z + rand() %25;
+				res->sCharState.sCharStateDetail.sCharStateDestMove.avDestLoc[1].x = creaturelist->Spawn_Loc.x + rand() %15;
+				res->sCharState.sCharStateDetail.sCharStateDestMove.avDestLoc[1].y = creaturelist->Spawn_Loc.y;
+				res->sCharState.sCharStateDetail.sCharStateDestMove.avDestLoc[1].z = creaturelist->Spawn_Loc.z + rand() %25;
 
 				res->sCharState.sCharStateDetail.sCharStateDestMove.bHaveSecondDestLoc = false;
 
