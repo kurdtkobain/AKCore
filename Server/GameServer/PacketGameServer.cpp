@@ -200,6 +200,8 @@ void CClientSession::SendAvatarCharInfo(CNtlPacket * pPacket, CGameServer * app)
 	packet.SetPacketLen( sizeof(sGU_AVATAR_CHAR_INFO) );
 	int rc = g_pApp->Send( this->GetHandle(), &packet );
 	this->plr->SetStartRPBall();
+	std::string log = "Player " + this->plr->GetPlayerName() + " have join the game\n";
+	this->gsf->printDebug(log.c_str());
 }
 
 //--------------------------------------------------------------------------------------//
@@ -909,7 +911,7 @@ void CClientSession::SendGameLeaveReq(CNtlPacket * pPacket, CGameServer * app)
 	app->db->prepare("UPDATE characters SET IsOnline = 0, OnlineID = 0 WHERE CharID = ?");
 	app->db->setInt(1,  this->plr->pcProfile->charId);
 	app->db->execute();
-	std::string log = "Player " + this->plr->GetPlayerName() + "have leaved the game\n";
+	std::string log = "Player " + this->plr->GetPlayerName() + " have leaved the game\n";
 	this->gsf->printDebug(log.c_str());
 	this->plr->SaveMe();
 	app->RemoveUser( this->plr->GetPlayerName().c_str() );
@@ -930,7 +932,7 @@ void CClientSession::SendCharExitReq(CNtlPacket * pPacket, CGameServer * app)
 	app->db->prepare("UPDATE characters SET IsOnline = 0, OnlineID = 0 WHERE CharID = ?");
 	app->db->setInt(1,  this->plr->pcProfile->charId);
 	app->db->execute();
-	std::string log = "Player " + this->plr->GetPlayerName() + "have leaved the game\n";
+	std::string log = "Player " + this->plr->GetPlayerName() + " have leaved the game\n";
 	this->gsf->printDebug(log.c_str());
 	this->plr->SaveMe();
 // log out of game
