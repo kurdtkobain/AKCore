@@ -131,9 +131,9 @@ void CClientSession::SendAvatarCharInfo(CNtlPacket * pPacket, CGameServer * app)
 	res->sPcProfile.avatarAttribute.byBaseDex = app->db->getInt("BaseDex");
 	res->sPcProfile.avatarAttribute.byBaseSol = app->db->getInt("BaseSol");
 	res->sPcProfile.avatarAttribute.byBaseEng = app->db->getInt("BaseEng");
-	res->sPcProfile.avatarAttribute.wBaseMaxLP = app->db->getInt("BaseMaxLP");
-	res->sPcProfile.avatarAttribute.wBaseMaxEP = app->db->getInt("BaseMaxEP");
-	res->sPcProfile.avatarAttribute.wBaseMaxRP = app->db->getInt("BaseMaxRP");
+	res->sPcProfile.avatarAttribute.wBaseMaxLP = 1000;//app->db->getInt("BaseMaxLP");
+	res->sPcProfile.avatarAttribute.wBaseMaxEP = 1000;//app->db->getInt("BaseMaxEP");
+	res->sPcProfile.avatarAttribute.wBaseMaxRP = 1000;//app->db->getInt("BaseMaxRP");
 	res->sPcProfile.avatarAttribute.wBasePhysicalOffence = app->db->getInt("BasePhysicalOffence");
 	res->sPcProfile.avatarAttribute.wBasePhysicalDefence = app->db->getInt("BasePhysicalDefence");
 	res->sPcProfile.avatarAttribute.wBaseEnergyOffence = app->db->getInt("BaseEnergyOffence");
@@ -2101,7 +2101,7 @@ void CClientSession::SendCharActionAttack(RwUInt32 uiSerialId, RwUInt32 m_uiTarg
 	// update LP
 	if(bDamageApply)
 	{
-		m_iCurrentHp -= m_iCurrentHp;
+		m_iCurrentHp -= 1;
 		if(m_iCurrentHp <= 0)
 		{
 			CClientSession::SendMobLoot(&packet, app, m_uiTargetSerialId);
@@ -2117,6 +2117,7 @@ void CClientSession::SendCharActionAttack(RwUInt32 uiSerialId, RwUInt32 m_uiTarg
 	}
 
 }
+
 void CClientSession::SendCharUpdateLp(CNtlPacket * pPacket, CGameServer * app, RwUInt16 wLp, RwUInt32 m_uiTargetSerialId)
 {
 	CNtlPacket packet(sizeof(sGU_UPDATE_CHAR_LP));
@@ -2124,8 +2125,10 @@ void CClientSession::SendCharUpdateLp(CNtlPacket * pPacket, CGameServer * app, R
 
 	res->wOpCode = GU_UPDATE_CHAR_LP;
 	res->handle = m_uiTargetSerialId;
+	int mobid = IsMonsterIDInsideList(m_uiTargetSerialId);
+	sMOB_TBLDAT* pMOBtData = (sMOB_TBLDAT*) app->g_pTableContainer->GetMobTable()->FindData(mobid);
 	res->wCurLP = wLp;
-	res->wMaxLP = 1000;
+	res->wMaxLP = pMOBtData->wBasic_LP;
 
 	packet.SetPacketLen( sizeof(sGU_UPDATE_CHAR_LP) );
 	app->UserBroadcastothers(&packet, this);
@@ -2222,7 +2225,7 @@ void CClientSession::SendCharUpdateFaintingState(CNtlPacket * pPacket, CGameServ
 
 void CClientSession::SendCharSkillRes(CNtlPacket * pPacket, CGameServer * app)
 {
-		SSkillData *pSkillData = new SSkillData();
+	SSkillData *pSkillData = new SSkillData();
 
 	sUG_CHAR_SKILL_REQ *pCharSkillReq = (sUG_CHAR_SKILL_REQ*)pPacket->GetPacketData();
 
@@ -2231,7 +2234,6 @@ void CClientSession::SendCharSkillRes(CNtlPacket * pPacket, CGameServer * app)
 	app->db->setInt(2, pCharSkillReq->bySlotIndex);
 	app->db->execute();
 	app->db->fetch();
-
 	int skillID = app->db->getInt("skill_id");
 
 	pSkillData->pCharSkillTarget = pCharSkillReq->hTarget;
@@ -2239,47 +2241,36 @@ void CClientSession::SendCharSkillRes(CNtlPacket * pPacket, CGameServer * app)
 	pSkillData->m_bySkillActiveType = SKILL_TYPE_CASTING; 
 	pSkillData->m_uiSkillTime = timeGetTime();
 
-
-	// printf("\nSkillID %i   -   SlotSkill %d\n", GetSkillId[m_Char.iClass][pCharSkillReq->bySlotIndex], pCharSkillReq->bySlotIndex);
-
-
 	CNtlPacket packet(sizeof(sGU_CHAR_SKILL_RES));
 	sGU_CHAR_SKILL_RES * sPacket = (sGU_CHAR_SKILL_RES *)packet.GetPacketData();
-
 
 	sPacket->wOpCode = GU_CHAR_SKILL_RES;
 	sPacket->wResultCode = GAME_SUCCESS;
 
-
 	packet.SetPacketLen(sizeof(sGU_CHAR_SKILL_RES));
 	int rc = g_pApp->Send(this->GetHandle(), &packet);
 	app->UserBroadcast(&packet);
-
+	SendCharSkillAction(pPacket, app,skillID);
 }
 //--------------------------------------------------------------------------------------//
 //		Char Skill Send
 //--------------------------------------------------------------------------------------//
-void CClientSession::SendCharSkillAction(CNtlPacket * pPacket, CGameServer * app)
+void CClientSession::SendCharSkillAction(CNtlPacket * pPacket, CGameServer * app, int _skillID)
 {
-	
 	printf("SEND SKILL\n");
 	CNtlPacket packet(sizeof(sGU_CHAR_ACTION_SKILL));
 	sGU_CHAR_ACTION_SKILL * res = (sGU_CHAR_ACTION_SKILL *)packet.GetPacketData();	
 	
 	CSkillTable *pSkillTbl = app->g_pTableContainer->GetSkillTable();
 	
-
-	app->db->prepare("SELECT * FROM skills WHERE owner_id=? AND skill_id = ? ");
+	/*app->db->prepare("SELECT * FROM skills WHERE owner_id=? AND skill_id = ? ");
 	app->db->setInt(1, this->plr->pcProfile->charId);
 	app->db->setInt(2, res->skillId);
 	app->db->execute();
-	app->db->fetch();
-
-	int skillID = app->db->getInt("skill_id");
-	
+	app->db->fetch();*/
+	int skillID = _skillID;//app->db->getInt("skill_id");
 
 	sSKILL_TBLDAT *pSkillTblData = reinterpret_cast<sSKILL_TBLDAT*>(pSkillTbl->FindData(skillID));
-
 	res->wOpCode = GU_CHAR_ACTION_SKILL;
 	res->handle = this->GetavatarHandle();
 	res->wResultCode = GAME_SUCCESS;
@@ -2287,25 +2278,17 @@ void CClientSession::SendCharSkillAction(CNtlPacket * pPacket, CGameServer * app
 	res->skillId = skillID;
 	res->dwLpEpEventId = skillID;
 	res->bySkillResultCount = 1;
-
-
 	res->aSkillResult[0].hTarget = this->GetTargetSerialId();
 	res->aSkillResult[0].byAttackResult = BATTLE_ATTACK_RESULT_HIT;
 	res->aSkillResult[0].effectResult1.fResultValue = pSkillTblData->fSkill_Effect_Value[0];
 	res->aSkillResult[0].effectResult2.fResultValue = pSkillTblData->fSkill_Effect_Value[1];
-
-
 	res->aSkillResult[1].hTarget = this->GetTargetSerialId() +1;
 	res->aSkillResult[1].byAttackResult = BATTLE_ATTACK_RESULT_HIT;
 	res->aSkillResult[1].effectResult1.fResultValue = pSkillTblData->fSkill_Effect_Value[0];
 	res->aSkillResult[1].effectResult2.fResultValue = pSkillTblData->fSkill_Effect_Value[1];
-
-
 	packet.SetPacketLen(sizeof(sGU_CHAR_ACTION_SKILL));
 	int rc = g_pApp->Send(this->GetHandle(), &packet);
 	app->UserBroadcastothers(&packet, this);
-
-
 }
 
 void CClientSession::SendCharSkillCasting(CNtlPacket * pPacket, CGameServer * app)
@@ -2371,8 +2354,8 @@ void CGameServer::UpdateClient(CNtlPacket * pPacket, CClientSession * pSession)
 //--------------------------------------------------------------------------------------//
 void CClientSession::SendCharToggleFighting(CNtlPacket * pPacket, CGameServer * app)
 {
+//CHAR_TOGG_FIGHTING
 //	app->mob->AddToWorld(pPacket, this);
-	
 }
 
 //--------------------------------------------------------------------------------------//
@@ -2972,7 +2955,7 @@ void	CClientSession::SendDragonBallCheckReq(CNtlPacket * pPacket, CGameServer * 
 	}
 	if (i == 7)
 	{
-		obj->handle = AcquireSerialId();//this->plr->GetAvatarandle(); // this is wrong
+		/*obj->handle = AcquireSerialId();//this->plr->GetAvatarandle(); // this is wrong
 		obj->wOpCode = GU_OBJECT_CREATE;
 		obj->sObjectInfo.objType = OBJTYPE_NPC; // this is wrong
 		obj->sObjectInfo.npcBrief.tblidx = 90000; // this is wrong
@@ -2984,7 +2967,7 @@ void	CClientSession::SendDragonBallCheckReq(CNtlPacket * pPacket, CGameServer * 
 		obj->sObjectInfo.npcBrief.wMaxLP = 100;
 
 		packet2.SetPacketLen( sizeof(sGU_OBJECT_CREATE) );
-		g_pApp->Send( this->GetHandle() , &packet2 );
+		g_pApp->Send( this->GetHandle() , &packet2 );*/
 	
 		zone->wOpCode = GU_AVATAR_ZONE_INFO;
 		zone->zoneInfo.bIsDark = true;
@@ -2999,7 +2982,7 @@ void	CClientSession::SendDragonBallCheckReq(CNtlPacket * pPacket, CGameServer * 
 		packet.SetPacketLen( sizeof(sGU_DRAGONBALL_CHECK_RES) );
 		g_pApp->Send( this->GetHandle() , &packet );
 	}
-	CMobTable* npc = app->g_pTableContainer->GetMobTable();
+	/*CMobTable* npc = app->g_pTableContainer->GetMobTable();
 	FILE *ptr_file;
 	int x;
 
@@ -3017,7 +3000,7 @@ void	CClientSession::SendDragonBallCheckReq(CNtlPacket * pPacket, CGameServer * 
 				printf("tdblidx %d\nName %s\n", npct->tblidx, npct->szNameText);
 		}
 		fclose(ptr_file);
-	}
+	}*/
 }
 
 void	CClientSession::SendDragonBallRewardReq(CNtlPacket * pPacket, CGameServer * app) // THIS IS THE FIRST VERSION

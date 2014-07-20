@@ -65,47 +65,41 @@ public:
 	void		UpdateRPBall()
 	{
 		CNtlPacket packet5(sizeof(sGU_UPDATE_CHAR_RP_BALL_MAX));	
-		sGU_UPDATE_CHAR_RP_BALL_MAX * maxBall = (sGU_UPDATE_CHAR_RP_BALL_MAX*)packet5.GetPacketData();
-		CNtlPacket packet6(sizeof(sGU_UPDATE_CHAR_RP_BALL));	
-		sGU_UPDATE_CHAR_RP_BALL * ball = (sGU_UPDATE_CHAR_RP_BALL*)packet6.GetPacketData();
-
-		maxBall->byMaxRPBall = this->getNumberOfRPBall();
-		maxBall->handle = this->GetAvatarandle();
-		maxBall->wOpCode = GU_UPDATE_CHAR_RP_BALL_MAX;
-
-		ball->bDropByTime = true;
-		ball->byCurRPBall = this->getNumberOfRPBall();
-		ball->handle = this->GetAvatarandle();
-		ball->wOpCode = GU_UPDATE_CHAR_RP_BALL;
-
-		packet5.SetPacketLen(sizeof(sGU_UPDATE_CHAR_RP_BALL_MAX));
-		g_pApp->Send(this->MySession, &packet5);
-
-		packet6.SetPacketLen(sizeof(sGU_UPDATE_CHAR_RP_BALL));
-		g_pApp->Send(this->GetAvatarandle(), &packet6);
+ 		sGU_UPDATE_CHAR_RP_BALL_MAX * maxBall = (sGU_UPDATE_CHAR_RP_BALL_MAX*)packet5.GetPacketData();
+ 		CNtlPacket packet6(sizeof(sGU_UPDATE_CHAR_RP_BALL));	
+ 		sGU_UPDATE_CHAR_RP_BALL * ball = (sGU_UPDATE_CHAR_RP_BALL*)packet6.GetPacketData();
+ 
+ 		maxBall->byMaxRPBall = this->getNumberOfRPBall();
+ 		maxBall->handle = this->GetAvatarandle();
+ 		maxBall->wOpCode = GU_UPDATE_CHAR_RP_BALL_MAX;
+ 
+ 		ball->bDropByTime = true;
+ 		ball->byCurRPBall = this->getNumberOfRPBall();
+ 		ball->handle = this->GetAvatarandle();
+ 		ball->wOpCode = GU_UPDATE_CHAR_RP_BALL;
+ 
+ 		packet5.SetPacketLen(sizeof(sGU_UPDATE_CHAR_RP_BALL_MAX));
+ 		g_pApp->Send(this->MySession, &packet5);
+ 
+ 		packet6.SetPacketLen(sizeof(sGU_UPDATE_CHAR_RP_BALL));
+ 		g_pApp->Send(this->avatarHandle, &packet6);
 	};
 	void		SetStartRPBall()
 	{
-		if (this->pcProfile->byLevel >= 5 && this->pcProfile->byLevel <= 10)
+		if (this->pcProfile->byLevel >= 5 && this->pcProfile->byLevel <= 9)
 			this->CurRPBall = 1;
-		if (this->pcProfile->byLevel >= 10 && this->pcProfile->byLevel <= 15)
+		else if (this->pcProfile->byLevel >= 15 && this->pcProfile->byLevel <= 24)
 			this->CurRPBall = 2;
-		if (this->pcProfile->byLevel >= 15 && this->pcProfile->byLevel <= 20)
+		else if (this->pcProfile->byLevel >= 25 && this->pcProfile->byLevel <= 29)
 			this->CurRPBall = 3;
-		if (this->pcProfile->byLevel >= 20 && this->pcProfile->byLevel <= 25)
+		else if (this->pcProfile->byLevel >= 30 && this->pcProfile->byLevel <= 34)
 			this->CurRPBall = 4;
-		if (this->pcProfile->byLevel >= 25 && this->pcProfile->byLevel <= 30)
+		else if (this->pcProfile->byLevel >= 35 && this->pcProfile->byLevel <= 39)
 			this->CurRPBall = 5;
-		if (this->pcProfile->byLevel >= 30 && this->pcProfile->byLevel <= 35)
+		else if (this->pcProfile->byLevel >= 40 && this->pcProfile->byLevel <= 44)
 			this->CurRPBall = 6;
-		if (this->pcProfile->byLevel >= 35 && this->pcProfile->byLevel <= 40)
+		else if (this->pcProfile->byLevel >= 45)
 			this->CurRPBall = 7;
-		if (this->pcProfile->byLevel >= 40 && this->pcProfile->byLevel <= 45)
-			this->CurRPBall = 8;
-		if (this->pcProfile->byLevel >= 45 && this->pcProfile->byLevel <= 49)
-			this->CurRPBall = 9;
-		if (this->pcProfile->byLevel == 50)
-			this->CurRPBall = 10;
 		this->UpdateRPBall();
 	};
 	void		SetLevelup(sPC_TBLDAT *Data)
@@ -143,25 +137,19 @@ public:
 		this->pcProfile->avatarAttribute.wBaseMaxLP += this->byLevel_Up_LP;
 
 		if (this->pcProfile->byLevel == 5)
-			this->CurRPBall++;
-		if (this->pcProfile->byLevel == 10)
-			this->CurRPBall++;
+			this->CurRPBall = 1;
 		if (this->pcProfile->byLevel == 15)
-			this->CurRPBall++;
-		if (this->pcProfile->byLevel == 20)
-			this->CurRPBall++;
+			this->CurRPBall = 2;
 		if (this->pcProfile->byLevel == 25)
-			this->CurRPBall++;
+			this->CurRPBall = 3;
 		if (this->pcProfile->byLevel == 30)
-			this->CurRPBall++;
+			this->CurRPBall = 4;
 		if (this->pcProfile->byLevel == 35)
-			this->CurRPBall++;
+			this->CurRPBall = 5;
 		if (this->pcProfile->byLevel == 40)
-			this->CurRPBall++;
+			this->CurRPBall = 6;
 		if (this->pcProfile->byLevel == 45)
-			this->CurRPBall++;
-		if (this->pcProfile->byLevel == 50)
-			this->CurRPBall++;
+			this->CurRPBall = 7;
 	}
 	void		LastPartyInvited(){};
 private:

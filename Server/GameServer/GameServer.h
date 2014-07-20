@@ -212,7 +212,7 @@ public:
 	void						SendDragonBallCheckReq(CNtlPacket * pPacket, CGameServer * app);
 	void						SendDragonBallRewardReq(CNtlPacket * pPacket, CGameServer * app);
 	// SKILL
-	void						SendCharSkillAction(CNtlPacket * pPacket, CGameServer * app);
+	void						SendCharSkillAction(CNtlPacket * pPacket, CGameServer * app, int _skillid);
 	void						SendCharSkillRes(CNtlPacket * pPacket, CGameServer * app);
 	void						SendCharSkillCasting(CNtlPacket * pPacket, CGameServer * app);
 	// QuickSlots
