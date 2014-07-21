@@ -547,7 +547,7 @@ BEGIN
 					(awchCharName,account_id,byRace,byClass,byGender,byFace,byHair,byHairColor,bySkinColor, 10000);
 
 					SET char_id = LAST_INSERT_ID();
-
+					Insert into quickslot (charId) values(char_id);
 					INSERT INTO items (`owner_id`, `tblidx`, `place`, `pos`, `count`, `rank`, `durability`)
 					VALUES(char_id, 19901, 0, 0, 0, 1, 10),
 						    (char_id, 17001, 1, 3, 1, 1, 100);
