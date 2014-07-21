@@ -2051,6 +2051,7 @@ void CClientSession::SendCharActionAttack(RwUInt32 uiSerialId, RwUInt32 m_uiTarg
 	}
 
 }
+
 void CClientSession::SendCharUpdateLp(CNtlPacket * pPacket, CGameServer * app, RwUInt16 wLp, RwUInt32 m_uiTargetSerialId)
 {
 	CNtlPacket packet(sizeof(sGU_UPDATE_CHAR_LP_EP));
@@ -2375,7 +2376,6 @@ void CClientSession::SendCharLearnSkillReq(CNtlPacket * pPacket, CGameServer * a
 										res2->wOpCode = GU_SKILL_LEARNED_NFY;
 										res2->skillId = pSkillData->tblidx;
 										res2->bySlot = (iSkillCount++);
-
 										app->qry->InsertNewSkill(pSkillData->tblidx, this->plr->pcProfile->charId, iSkillCount, pSkillData->wKeep_Time, pSkillData->wNext_Skill_Train_Exp);
 										this->plr->pcProfile->dwZenny -= pSkillData->dwRequire_Zenny;
 										this->plr->pcProfile->dwSpPoint -= pSkillData->wRequireSP;
@@ -2383,14 +2383,12 @@ void CClientSession::SendCharLearnSkillReq(CNtlPacket * pPacket, CGameServer * a
 										packet2.SetPacketLen( sizeof(sGU_SKILL_LEARNED_NFY) );
 										g_pApp->Send( this->GetHandle() , &packet2 );
 										app->qry->UpdateSPPoint(this->plr->pcProfile->charId, this->plr->pcProfile->dwSpPoint);
-										
 										CNtlPacket packet3(sizeof(sGU_UPDATE_CHAR_SP));
  										sGU_UPDATE_CHAR_SP * res3 = (sGU_UPDATE_CHAR_SP *)packet3.GetPacketData();
  										res3->wOpCode = GU_UPDATE_CHAR_SP;
  										res3->dwSpPoint = this->plr->pcProfile->dwSpPoint;
  										packet3.SetPacketLen(sizeof(sGU_UPDATE_CHAR_SP));
  										g_pApp->Send(this->GetHandle(), &packet3);
-
 										app->qry->SetMinusMoney(this->plr->pcProfile->charId, pSkillData->dwRequire_Zenny);
 										CNtlPacket packet4(sizeof(sGU_UPDATE_CHAR_ZENNY));
 										sGU_UPDATE_CHAR_ZENNY * res4 = (sGU_UPDATE_CHAR_ZENNY *)packet4.GetPacketData();
@@ -2402,6 +2400,7 @@ void CClientSession::SendCharLearnSkillReq(CNtlPacket * pPacket, CGameServer * a
 										packet4.SetPacketLen(sizeof(sGU_UPDATE_CHAR_ZENNY));
  										g_pApp->Send(this->GetHandle(), &packet4);
 										break;
+										this->gsf->printDebug("Debug 4");
 								}else
 								skill_learn_result = 645;
 								break;
@@ -3294,6 +3293,8 @@ void CClientSession::SendPlayerLevelUpCheck(CGameServer * app, int exp)
 	this->plr->pcProfile->dwCurExp += response->dwIncreasedExp;
 	if (this->plr->pcProfile->dwCurExp >= this->plr->pcProfile->dwMaxExpInThisLevel)
 	{
+		CNtlPacket packet2(sizeof(sGU_UPDATE_CHAR_SP));
+ 		sGU_UPDATE_CHAR_SP * res2 = (sGU_UPDATE_CHAR_SP *)packet2.GetPacketData();
 		this->plr->pcProfile->dwCurExp -= this->plr->pcProfile->dwMaxExpInThisLevel;
 		this->plr->pcProfile->dwMaxExpInThisLevel += this->plr->pcProfile->dwMaxExpInThisLevel;
 		CNtlPacket packet1(sizeof(sGU_UPDATE_CHAR_LEVEL));	
@@ -3308,8 +3309,14 @@ void CClientSession::SendPlayerLevelUpCheck(CGameServer * app, int exp)
 		g_pApp->Send(this->GetHandle(), &packet1);
 		this->plr->LevelUpPlayer();
 		this->plr->calculeMyStat(app);
+		this->plr->pcProfile->dwSpPoint += 1;
+		app->qry->UpdateSPPoint(this->plr->pcProfile->charId, this->plr->pcProfile->dwSpPoint);
 		response->dwCurExp = this->plr->pcProfile->dwCurExp;
 		this->plr->UpdateRPBall();
+		res2->wOpCode = GU_UPDATE_CHAR_SP;
+ 		res2->dwSpPoint = this->plr->pcProfile->dwSpPoint;
+ 		packet2.SetPacketLen(sizeof(sGU_UPDATE_CHAR_SP));
+ 		g_pApp->Send(this->GetHandle(), &packet2);
 	}
 	packet.SetPacketLen(sizeof(sGU_UPDATE_CHAR_EXP));
 	g_pApp->Send(this->GetHandle(), &packet);
