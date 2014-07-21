@@ -526,7 +526,6 @@ DELIMITER ;
 -- ----------------------------
 -- Procedure structure for CharCreate
 -- ----------------------------
-DROP PROCEDURE IF EXISTS `CharCreate`;
 DELIMITER ;;
 CREATE DEFINER=`root`@`%` PROCEDURE `CharCreate`(IN awchCharName VARCHAR(16), IN byRace INT, IN byClass INT, IN byGender INT, IN byFace INT, IN byHair INT, IN byHairColor INT, IN bySkinColor INT, IN account_id INT, OUT char_id INT, OUT wResultCode INT)
 BEGIN
@@ -548,33 +547,69 @@ BEGIN
 					(awchCharName,account_id,byRace,byClass,byGender,byFace,byHair,byHairColor,bySkinColor, 10000);
 
 					SET char_id = LAST_INSERT_ID();
-					Insert into quickslot (charId) values(char_id);
+
 					INSERT INTO items (`owner_id`, `tblidx`, `place`, `pos`, `count`, `rank`, `durability`)
 					VALUES(char_id, 19901, 0, 0, 0, 1, 10),
 						    (char_id, 17001, 1, 3, 1, 1, 100);
 
 
 					IF (byRace = 0) THEN
-						INSERT INTO items (`owner_id`, `tblidx`, `place`, `pos`, `count`, `rank`, `durability`)
-						VALUES(char_id,  14001, 7, 2, 1, 1, 100),
+						IF (byClass = 0) THEN
+							INSERT INTO skills (`skill_id`, `owner_id`, RpBonusAuto, `RpBonusType`, `SlotID`, `TimeRemaining`, `Exp`)
+							VALUES (10111,char_id,0,0,1,0,0);
+							INSERT INTO items (`owner_id`, `tblidx`, `place`, `pos`, `count`, `rank`, `durability`)
+							VALUES(char_id,  14001, 7, 2, 1, 1, 100),
 							    (char_id,  14002, 7, 3, 1, 1, 100),
 						    	(char_id,  14003, 7, 4, 1, 1, 100);
-								UPDATE characters SET CurLocX = 4467, CurLocY = -40, CurLocZ = 3951 WHERE CharID = char_id LIMIT 1;
+						END IF;
+						IF (byClass = 1) THEN
+						INSERT INTO items (`owner_id`, `tblidx`, `place`, `pos`, `count`, `rank`, `durability`)
+							VALUES(char_id,  14301, 7, 2, 1, 1, 100),
+							    (char_id,  14302, 7, 3, 1, 1, 100),
+						    	(char_id,  14303, 7, 4, 1, 1, 100);
+						INSERT INTO skills (`skill_id`, `owner_id`, `SlotID`)
+							VALUES(110111,char_id,1);
+						END IF;
+						UPDATE characters SET CurLocX = 4467, CurLocY = -40, CurLocZ = 3951 WHERE CharID = char_id LIMIT 1;
 					END IF;
 
 					IF (byRace = 1) THEN
-						INSERT INTO items (`owner_id`, `tblidx`, `place`, `pos`, `count`, `rank`, `durability`)
-						VALUES(char_id,  23001, 7, 2, 1, 1, 100),
-							    (char_id,  23002, 7, 3, 1, 1, 100),
-						  	  (char_id,  23003, 7, 4, 1, 1, 100);
-							UPDATE characters SET CurLocX = 3131, CurLocY = -32, CurLocZ = -2755 WHERE CharID = char_id LIMIT 1;
+					UPDATE characters SET CurLocX = 3131, CurLocY = -32, CurLocZ = -2755 WHERE CharID = char_id LIMIT 1;
+						IF (byClass = 3) THEN
+							INSERT INTO skills (`skill_id`, `owner_id`, RpBonusAuto, `RpBonusType`, `SlotID`, `TimeRemaining`, `Exp`)
+							VALUES (310111,char_id,0,0,1,0,0);
+							INSERT INTO items (`owner_id`, `tblidx`, `place`, `pos`, `count`, `rank`, `durability`)
+							VALUES(char_id,  23001, 7, 2, 1, 1, 100),
+								(char_id,  23002, 7, 3, 1, 1, 100),
+								(char_id,  23003, 7, 4, 1, 1, 100);
+							END IF;
+						IF (byClass = 4) THEN
+							INSERT INTO items (`owner_id`, `tblidx`, `place`, `pos`, `count`, `rank`, `durability`)
+							VALUES(char_id,  13301, 7, 2, 1, 1, 100),
+								(char_id,  13302, 7, 3, 1, 1, 100),
+						    	(char_id,  13303, 7, 4, 1, 1, 100);
+							INSERT INTO skills (`skill_id`, `owner_id`, `SlotID`)
+							VALUES(410111,char_id,1);
+						END IF;
 					END IF;
-						IF (byRace = 2) THEN
-						INSERT INTO items (`owner_id`, `tblidx`, `place`, `pos`, `count`, `rank`, `durability`)
-						VALUES(char_id,  15001, 7, 2, 1, 1, 100),
+					IF (byRace = 2) THEN
+						IF (byClass = 5) THEN
+							INSERT INTO skills (`skill_id`, `owner_id`, RpBonusAuto, `RpBonusType`, `SlotID`, `TimeRemaining`, `Exp`)
+							VALUES (510111,char_id,0,0,1,0,0);
+							INSERT INTO items (`owner_id`, `tblidx`, `place`, `pos`, `count`, `rank`, `durability`)
+							VALUES(char_id,  15001, 7, 2, 1, 1, 100),
 							    (char_id,  15002, 7, 3, 1, 1, 100),
 						    	(char_id,  15003, 7, 4, 1, 1, 100);
-							UPDATE characters SET CurLocX = 5775, CurLocY = -74, CurLocZ = -4032 WHERE CharID = char_id LIMIT 1;
+						END IF;
+						IF (byClass = 6) THEN
+							INSERT INTO skills (`skill_id`, `owner_id`, RpBonusAuto, `RpBonusType`, `SlotID`, `TimeRemaining`, `Exp`)
+							VALUES (610111,char_id,0,0,1,0,0);
+							INSERT INTO items (`owner_id`, `tblidx`, `place`, `pos`, `count`, `rank`, `durability`)
+							VALUES(char_id,  15301, 7, 2, 1, 1, 100),
+							    (char_id,  15302, 7, 3, 1, 1, 100),
+						    	(char_id,  15303, 7, 4, 1, 1, 100);
+						END IF;
+					UPDATE characters SET CurLocX = 5775, CurLocY = -74, CurLocZ = -4032 WHERE CharID = char_id LIMIT 1;
 					END IF;
 
 				SET wResultCode = 200;
@@ -583,8 +618,7 @@ BEGIN
 
 		END IF;
 
-END
-;;
+END;;
 DELIMITER ;
 
 -- ----------------------------
