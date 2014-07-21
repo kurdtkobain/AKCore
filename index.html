@@ -1,67 +1,116 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
   <head>
-    <meta charset='utf-8'>
+    <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
-
-    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen" />
-    <link rel="stylesheet" type="text/css" href="stylesheets/pygment_trac.css" media="screen" />
-    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print" />
-
     <title>Akcore by AKCore</title>
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+    <script src="javascripts/respond.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <!--[if lt IE 8]>
+    <link rel="stylesheet" href="stylesheets/ie.css">
+    <![endif]-->
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+
   </head>
-
   <body>
+      <div id="header">
+        <nav>
+          <li class="fork"><a href="https://github.com/AKCore/AKCore">View On GitHub</a></li>
+          <li class="downloads"><a href="https://github.com/AKCore/AKCore/zipball/master">ZIP</a></li>
+          <li class="downloads"><a href="https://github.com/AKCore/AKCore/tarball/master">TAR</a></li>
+          <li class="title">DOWNLOADS</li>
+        </nav>
+      </div><!-- end header -->
 
-    <header>
-      <div class="container">
-        <h1>Akcore</h1>
-        <h2>The official DBO server that was made by Atidot3, Daneos, and Kalisto</h2>
+    <div class="wrapper">
 
-        <section id="downloads">
-          <a href="https://github.com/AKCore/AKCore/zipball/master" class="btn">Download as .zip</a>
-          <a href="https://github.com/AKCore/AKCore/tarball/master" class="btn">Download as .tar.gz</a>
-          <a href="https://github.com/AKCore/AKCore" class="btn btn-github"><span class="icon"></span>View on GitHub</a>
-        </section>
-      </div>
-    </header>
+      <section>
+        <div id="title">
+          <h1>Akcore</h1>
+          <p>The official DBO server that was made by Atidot3, Daneos, and Kalisto</p>
+          <hr>
+          <span class="credits left">Project maintained by <a href="https://github.com/AKCore">AKCore</a></span>
+          <span class="credits right">Hosted on GitHub Pages &mdash; Theme by <a href="https://twitter.com/michigangraham">mattgraham</a></span>
+        </div>
 
-    <div class="container">
-      <section id="main_content">
-        <h3>
-<a name="welcome-to-github-pages" class="anchor" href="#welcome-to-github-pages"><span class="octicon octicon-link"></span></a>Welcome to GitHub Pages.</h3>
+        <h1>
+<a name="akcore" class="anchor" href="#akcore"><span class="octicon octicon-link"></span></a>AKCore</h1>
 
-<p>This automatic page generator is the easiest way to create beautiful pages for all of your projects. Author your page content here using GitHub Flavored Markdown, select a template crafted by a designer, and publish. After your page is generated, you can check out the new branch:</p>
+<p>The official DBO server that was made by Atidot3, <del>Daneos</del>, and Kalisto</p>
 
-<pre><code>$ cd your_repo_root/repo_name
-$ git fetch origin
-$ git checkout gh-pages
-</code></pre>
+<h2>
+<a name="prerequisites" class="anchor" href="#prerequisites"><span class="octicon octicon-link"></span></a>Prerequisites</h2>
 
-<p>If you're using the GitHub for Mac, simply sync your repository and you'll see the new branch.</p>
+<p>Very few things are needed for compiing the emulator.</p>
 
-<h3>
-<a name="designer-templates" class="anchor" href="#designer-templates"><span class="octicon octicon-link"></span></a>Designer Templates</h3>
-
-<p>We've crafted some handsome templates for you to use. Go ahead and continue to layouts to browse through them. You can easily go back to edit your page before publishing. After publishing your page, you can revisit the page generator and switch to another theme. Your Page content will be preserved if it remained markdown format.</p>
-
-<h3>
-<a name="rather-drive-stick" class="anchor" href="#rather-drive-stick"><span class="octicon octicon-link"></span></a>Rather Drive Stick?</h3>
-
-<p>If you prefer to not use the automatic generator, push a branch named <code>gh-pages</code> to your repository to create a page manually. In addition to supporting regular HTML content, GitHub Pages support Jekyll, a simple, blog aware static site generator written by our own Tom Preston-Werner. Jekyll makes it easy to create site-wide headers and footers without having to copy them across every page. It also offers intelligent blog support and other advanced templating features.</p>
-
-<h3>
-<a name="authors-and-contributors" class="anchor" href="#authors-and-contributors"><span class="octicon octicon-link"></span></a>Authors and Contributors</h3>
-
-<p>You can <a href="https://github.com/blog/821" class="user-mention">@mention</a> a GitHub username to generate a link to their profile. The resulting <code>&lt;a&gt;</code> element will link to the contributor's GitHub Profile. For example: In 2007, Chris Wanstrath (<a href="https://github.com/defunkt" class="user-mention">@defunkt</a>), PJ Hyett (<a href="https://github.com/pjhyett" class="user-mention">@pjhyett</a>), and Tom Preston-Werner (<a href="https://github.com/mojombo" class="user-mention">@mojombo</a>) founded GitHub.</p>
+<ol>
+<li><a href="http://sourceforge.net/projects/boost/files/boost/1.55.0/boost_1_55_0.zip/download">Boost 1.55.0</a></li>
+<li><a href="http://dev.mysql.com/get/Downloads/Connector-C/mysql-connector-c-6.1.5-win32.msi">x86 MySQL C Connector</a></li>
+<li><a href="http://dev.mysql.com/get/Downloads/Connector-C++/mysql-connector-c++-1.1.3-win32.msi">x86 MySQL C++ Connector</a></li>
+<li>A MySQL Database </li>
+<li>Microsoft Visual Studio 2010</li>
+</ol><h2>
+<a name="installation" class="anchor" href="#installation"><span class="octicon octicon-link"></span></a>Installation</h2>
 
 <h3>
-<a name="support-or-contact" class="anchor" href="#support-or-contact"><span class="octicon octicon-link"></span></a>Support or Contact</h3>
+<a name="compiling" class="anchor" href="#compiling"><span class="octicon octicon-link"></span></a>Compiling</h3>
 
-<p>Having trouble with Pages? Check out the documentation at <a href="http://help.github.com/pages">http://help.github.com/pages</a> or contact <a href="mailto:support@github.com">support@github.com</a> and we’ll help you sort it out.</p>
+<p>Copy your everything from INSIDE your boost download boost download to Server/NtlDatabase/mysql/boost
+When it looks like <a href="http://puu.sh/a0q9o/946f96747f.png">this</a> it is correct.</p>
+
+<p>Next in the NtlDatabase folder open mysql_wrapper.h and change the database credentials to your database credentials
+(currently the stored procedures require the user to be root@% you can change them if you like)</p>
+
+<p>Now open AKCore.sln with visual studio 2010.
+Select the Debug/win32 configurations and compile.</p>
+
+<p>Congrats you are done with this section</p>
+
+<h3>
+<a name="sql" class="anchor" href="#sql"><span class="octicon octicon-link"></span></a>SQL</h3>
+
+<p>Create a new database called dbo in your MySQL instance.</p>
+
+<p>import the sql files from the SQL folder.</p>
+
+<p>Create your first account by manually entering it in your database.</p>
+
+<h2>
+<a name="configuration" class="anchor" href="#configuration"><span class="octicon octicon-link"></span></a>Configuration</h2>
+
+<p>Now that you have everything compiled you can setup your server.</p>
+
+<p>Go into the debug folder in the root directory (AKCore) 
+there are 4 files you can edit.</p>
+
+<ol>
+<li>AuthServer.ini</li>
+<li>CharServer.ini</li>
+<li>ChatServer.ini</li>
+<li>GameServer.ini</li>
+</ol><p>All you have to do in here is set your ports. If you don't want to that is fine as well.
+This is an optional step.</p>
+
+<h2>
+<a name="addendum" class="anchor" href="#addendum"><span class="octicon octicon-link"></span></a>Addendum</h2>
+
+<p>This software is licensed under the GPL for a reason.
+Please share your work.
+You see a bug you want to fix submit a pull request.
+Think you can write an awesome feature that should be there.... Submit a pull request
+We will go over the code and if it complies with the coding standard we have set forth
+we will put it in our next commit. This Git repo was made with you all in mind. Please
+contribute to it, bug fixes, patches all of it,  without all of us, we won't be able to 
+play this awesome game again.</p>
       </section>
-    </div>
 
+    </div>
+    <!--[if !IE]><script>fixScale(document);</script><![endif]-->
     
   </body>
 </html>
