@@ -2262,8 +2262,8 @@ void CGameServer::UpdateClient(CNtlPacket * pPacket, CClientSession * pSession)
 // MAKE MOBS MOVE
 	if(timeGetTime() - app->mob->last_mobMove >= MONSTER_MOVE_UPDATE_TICK)
 	{
-		app->mob->MonsterRandomWalk(NULL);
-		app->mob->last_mobMove = timeGetTime();
+		//app->mob->MonsterRandomWalk(NULL);
+		//app->mob->last_mobMove = timeGetTime();
 	}
 }
 
@@ -2512,7 +2512,7 @@ void CClientSession::SendItemMoveReq(CNtlPacket * pPacket, CGameServer * app)
 	g_pApp->Send( this->GetHandle() , &packet );
 	eqPak.SetPacketLen(sizeof(sGU_UPDATE_ITEM_EQUIP));
 	g_pApp->Send( this->GetHandle(), &eqPak);
-	app->UserBroadcast(&eqPak);
+	app->UserBroadcastothers(&eqPak, this);
 }
 
 //--------------------------------------------------------------------------------------//
