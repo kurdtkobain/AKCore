@@ -34,6 +34,7 @@ public:
 	bool						SetMailAccept(RwUInt32 CharID, RwUInt32 MailID);
 	bool						UpdateSPPoint(RwUInt32 CharID, RwUInt32 point);
 	bool						InsertRemoveQuickSlot(TBLIDX SkillID, BYTE SlotID, int CharID);
+	bool						UpdatePlayerLevel(int _level, int CharID, int _exp, int _maxexp);
 
 };
 

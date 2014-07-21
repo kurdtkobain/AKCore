@@ -3311,6 +3311,7 @@ void CClientSession::SendPlayerLevelUpCheck(CGameServer * app, int exp)
 		this->plr->calculeMyStat(app);
 		this->plr->pcProfile->dwSpPoint += 1;
 		app->qry->UpdateSPPoint(this->plr->pcProfile->charId, this->plr->pcProfile->dwSpPoint);
+		app->qry->UpdatePlayerLevel(this->plr->pcProfile->byLevel, this->plr->pcProfile->charId, this->plr->pcProfile->dwCurExp, this->plr->pcProfile->dwMaxExpInThisLevel);
 		response->dwCurExp = this->plr->pcProfile->dwCurExp;
 		this->plr->UpdateRPBall();
 		res2->wOpCode = GU_UPDATE_CHAR_SP;

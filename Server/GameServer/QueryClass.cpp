@@ -16,6 +16,19 @@ bool	QueryClass::InsertNewSkill(TBLIDX SkillID, int CharID, BYTE SlotID, WORD Ti
 
 	return true;
 }
+bool	QueryClass::UpdatePlayerLevel(int _level, int CharID, int _exp, int _maxexp)
+{
+	CGameServer * app = (CGameServer*) NtlSfxGetApp();
+
+	app->db->prepare("UPDATE characters SET level=? , exp=? , MaxExpInThisLevel=? WHERE CharID=?");
+	app->db->setInt(1, _level);
+	app->db->setInt(2, _exp);
+	app->db->setInt(3, _maxexp);
+	app->db->setInt(4, CharID);
+	app->db->execute();
+
+	return true;
+}
 bool	QueryClass::CheckIfSkillAlreadyLearned(TBLIDX SkillID, int CharID)
 {
 	CGameServer * app = (CGameServer*) NtlSfxGetApp();
