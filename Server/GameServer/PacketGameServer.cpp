@@ -2051,7 +2051,6 @@ void CClientSession::SendCharActionAttack(RwUInt32 uiSerialId, RwUInt32 m_uiTarg
 	}
 
 }
-
 void CClientSession::SendCharUpdateLp(CNtlPacket * pPacket, CGameServer * app, RwUInt16 wLp, RwUInt32 m_uiTargetSerialId)
 {
 	CNtlPacket packet(sizeof(sGU_UPDATE_CHAR_LP_EP));
@@ -2061,14 +2060,16 @@ void CClientSession::SendCharUpdateLp(CNtlPacket * pPacket, CGameServer * app, R
 	res->handle = m_uiTargetSerialId;
 	int mobid = IsMonsterIDInsideList(m_uiTargetSerialId);
 	sMOB_TBLDAT* pMOBtData = (sMOB_TBLDAT*) app->g_pTableContainer->GetMobTable()->FindData(mobid);
-	res->wCurLP = wLp;
-	res->wMaxLP = pMOBtData->wBasic_LP;
-	res->wCurEP = pMOBtData->wBasic_EP;
-	res->wMaxLP = pMOBtData->wBasic_EP;
+	if (pMOBtData)
+	{
+		res->wCurLP = wLp;
+		res->wMaxLP = pMOBtData->wBasic_LP;
+		res->wCurEP = pMOBtData->wBasic_EP;
 
-	packet.SetPacketLen( sizeof(sGU_UPDATE_CHAR_LP_EP) );
-	app->UserBroadcastothers(&packet, this);
-	g_pApp->Send( this->GetHandle() , &packet );
+		packet.SetPacketLen( sizeof(sGU_UPDATE_CHAR_LP_EP) );
+		app->UserBroadcastothers(&packet, this);
+		g_pApp->Send( this->GetHandle() , &packet );
+	}
 }
 void	CClientSession::SendMobLoot(CNtlPacket * pPacket, CGameServer * app, RwUInt32 m_uiTargetSerialId)
 {
