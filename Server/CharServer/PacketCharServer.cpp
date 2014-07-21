@@ -53,7 +53,7 @@ void CClientSession::SendServerListOneReq(CNtlPacket * pPacket)
 
 	res->wOpCode = CU_SERVER_FARM_INFO;
 	res->serverFarmInfo.serverFarmId = 0;
-	wcscpy_s((wchar_t*)res->serverFarmInfo.wszGameServerFarmName, NTL_MAX_SIZE_SERVER_FARM_NAME_UNICODE, L"Test");
+	wcscpy_s((wchar_t*)res->serverFarmInfo.wszGameServerFarmName, NTL_MAX_SIZE_SERVER_FARM_NAME_UNICODE, L"AKCore One");
 	res->serverFarmInfo.byServerStatus = DBO_SERVER_STATUS_UP;
 	res->serverFarmInfo.dwLoad = 10;
 	res->serverFarmInfo.dwMaxLoad = 100;

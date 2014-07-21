@@ -1522,6 +1522,7 @@ bool CGameServer::CreateTableContainer(int byLoadMethod)
 	flagManager.Set(CTableContainer::TABLE_TYPE_DROP);
 	flagManager.Set(CTableContainer::TABLE_EXCELLENT_DROP);
 	flagManager.Set(CTableContainer::TABLE_EXP);
+
 	
 	fileNameList.SetFileName(CTableContainer::TABLE_WORLD,					"Table_World_Data");
 	fileNameList.SetFileName(CTableContainer::TABLE_PC,						"Table_PC_Data");
@@ -1571,6 +1572,20 @@ bool CGameServer::CreateTableContainer(int byLoadMethod)
 	fileNameList.SetFileName(CTableContainer::TABLE_FORMULA,				"TD_Formula");
 	fileNameList.SetFileName(CTableContainer::TABLE_GAME_MANIA_TIME,		"Table_GameManiaTime_Data");
 	fileNameList.SetFileName(CTableContainer::TABLE_EXP,					"table_exp_data");
+	fileNameList.SetFileName(CTableContainer::TABLE_BASIC_DROP,				"table_basic_drop_data");
+	fileNameList.SetFileName(CTableContainer::TABLE_LEGENDARY_DROP,			"table_legendary_drop_data");
+	fileNameList.SetFileName(CTableContainer::TABLE_SYSTEM_EFFECT,			"table_system_effect_data");
+
+
+
+	/*flagManager.Set(CTableContainer::TABLE_GAME_MANIA_TIME);
+	flagManager.Set(CTableContainer::TABLE_BASIC_DROP);
+	flagManager.Set(CTableContainer::TABLE_LEGENDARY_DROP);
+	flagManager.Set(CTableContainer::TABLE_NORMAL_DROP);
+	flagManager.Set(CTableContainer::TABLE_SUPERIOR_DROP);
+	flagManager.Set(CTableContainer::TABLE_EACH_DROP);
+	flagManager.Set(CTableContainer::TABLE_TYPE_DROP);
+	flagManager.Set(CTableContainer::TABLE_EXCELLENT_DROP);*/
 
 	g_pTableContainer = new CTableContainer;
 	std::string str;
@@ -1578,6 +1593,7 @@ bool CGameServer::CreateTableContainer(int byLoadMethod)
 	str = "data";
     bool bResult = FALSE;
     bResult = g_pTableContainer->Create(flagManager, (char*)str.c_str(), &fileNameList, eLoadMethod, GetACP(), NULL);
+	g_pTableContainer->SaveToFile(flagManager, &fileNameList, false); 
 	gs->printOk("==== LOADING GAMETABLES COMPLETE ==== \n");                                                                                              
 	mob->Create();
 	delete gs;

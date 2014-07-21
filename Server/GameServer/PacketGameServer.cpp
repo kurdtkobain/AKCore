@@ -1846,10 +1846,10 @@ void CClientSession::SendPortalTelReq(CNtlPacket * pPacket, CGameServer * app)
 		res->hNpcHandle = this->GetTargetSerialId();
 
 		res2->bIsToMoveAnotherServer = false;
-		res2->sWorldInfo.sRuleInfo.byRuleType = GAMERULE_NORMAL;
-		res2->sWorldInfo.hTriggerObjectOffset = 100000;
-		res2->sWorldInfo.tblidx = this->plr->GetWorldTableID();
-		res2->sWorldInfo.worldID = res->worldID;
+		//res2->sWorldInfo.sRuleInfo.byRuleType = GAMERULE_NORMAL;
+		//res2->sWorldInfo.hTriggerObjectOffset = 100000;
+		//res2->sWorldInfo.tblidx = this->plr->GetWorldTableID();
+		//res2->sWorldInfo.worldID = res->worldID;
 		res2->vNewDir.x = res->vDir.x;
 		res2->vNewDir.y = res->vDir.y;
 		res2->vNewDir.z = res->vDir.z;
@@ -1884,6 +1884,9 @@ void CClientSession::SendPortalTelReq(CNtlPacket * pPacket, CGameServer * app)
 		g_pApp->Send( this->GetHandle(), &packet );
 		g_pApp->Send( this->GetHandle(), &packet2 );
 		g_pApp->Send( this->GetHandle(), &packet3 );
+		app->UserBroadcast(&packet);
+		app->UserBroadcast(&packet2);
+		//app->UserBroadcast(&packet);
 	}
 	else
 	{
@@ -1966,25 +1969,32 @@ void CClientSession::SendCharActionAttack(RwUInt32 uiSerialId, RwUInt32 m_uiTarg
 	CNtlPacket packet(sizeof(sGU_CHAR_ACTION_ATTACK));
 	sGU_CHAR_ACTION_ATTACK * res = (sGU_CHAR_ACTION_ATTACK *)packet.GetPacketData();
 
+
 	res->wOpCode = GU_CHAR_ACTION_ATTACK;
 	res->hSubject = uiSerialId;
 	res->hTarget = m_uiTargetSerialId;
+	res->dwLpEpEventId = 10;
 	res->bChainAttack = false;
+	res->byBlockedAction = 0; 
 
-	res->wAttackResultValue = m_iCurrentHp;
-	
+	res->wAttackResultValue = 100;
+	res->fReflectedDamage = 0;
 	res->vShift.x = this->plr->GetPosition().x;
 	res->vShift.y = this->plr->GetPosition().y;
 	res->vShift.z = this->plr->GetPosition().z;
 
-	res->byAttackSequence = rand()%2;
+	res->byAttackSequence = byChainAttack;//rand()%6;
 
 	if(res->byAttackSequence == 6)
 	{
 		if(rand()%2)
+		{
 			res->byAttackResult = BATTLE_ATTACK_RESULT_KNOCKDOWN;
+		}
 		else
+		{
 			res->byAttackResult = BATTLE_ATTACK_RESULT_SLIDING;
+		}
 	}
 	else
 	{
@@ -2015,6 +2025,21 @@ void CClientSession::SendCharActionAttack(RwUInt32 uiSerialId, RwUInt32 m_uiTarg
 		{
 			CClientSession::SendMobLoot(&packet, app, m_uiTargetSerialId);
 			m_iCurrentHp = 0;
+			/*CNtlPacket packet2(sizeof(sGU_UPDATE_CHAR_STATE));
+			sGU_UPDATE_CHAR_STATE * res = (sGU_UPDATE_CHAR_STATE *)packet2.GetPacketData();
+
+			req->byAvatarType = DBO_AVATAR_TYPE_AVATAR;
+			req->bFightMode = true;
+			req->wOpCode = UG_CHAR_TOGG_FIGHTING;
+			packet.SetPacketLen(sizeof(sUG_CHAR_TOGG_FIGHTING));
+			g_pApp->Send(this->GetHandle(), &packet);
+
+			res->handle = this->plr->GetAvatarandle();
+			res->sCharState.sCharStateBase.bFightMode = false;
+			res->wOpCode = GU_UPDATE_CHAR_STATE;
+			packet.SetPacketLen(sizeof(sGU_UPDATE_CHAR_STATE));
+			g_pApp->Send(this->GetHandle(), &packet2);
+			app->UserBroadcast(&packet2);*/
 		}
 		SendCharUpdateLp(pPacket, app, m_iCurrentHp, m_uiTargetSerialId);
 	}
@@ -2029,17 +2054,19 @@ void CClientSession::SendCharActionAttack(RwUInt32 uiSerialId, RwUInt32 m_uiTarg
 
 void CClientSession::SendCharUpdateLp(CNtlPacket * pPacket, CGameServer * app, RwUInt16 wLp, RwUInt32 m_uiTargetSerialId)
 {
-	CNtlPacket packet(sizeof(sGU_UPDATE_CHAR_LP));
-	sGU_UPDATE_CHAR_LP * res = (sGU_UPDATE_CHAR_LP *)packet.GetPacketData();
+	CNtlPacket packet(sizeof(sGU_UPDATE_CHAR_LP_EP));
+	sGU_UPDATE_CHAR_LP_EP * res = (sGU_UPDATE_CHAR_LP_EP *)packet.GetPacketData();
 
-	res->wOpCode = GU_UPDATE_CHAR_LP;
+	res->wOpCode = GU_UPDATE_CHAR_LP_EP;
 	res->handle = m_uiTargetSerialId;
 	int mobid = IsMonsterIDInsideList(m_uiTargetSerialId);
 	sMOB_TBLDAT* pMOBtData = (sMOB_TBLDAT*) app->g_pTableContainer->GetMobTable()->FindData(mobid);
 	res->wCurLP = wLp;
 	res->wMaxLP = pMOBtData->wBasic_LP;
+	res->wCurEP = pMOBtData->wBasic_EP;
+	res->wMaxLP = pMOBtData->wBasic_EP;
 
-	packet.SetPacketLen( sizeof(sGU_UPDATE_CHAR_LP) );
+	packet.SetPacketLen( sizeof(sGU_UPDATE_CHAR_LP_EP) );
 	app->UserBroadcastothers(&packet, this);
 	g_pApp->Send( this->GetHandle() , &packet );
 }
@@ -2182,6 +2209,7 @@ void CClientSession::SendCharSkillAction(CNtlPacket * pPacket, CGameServer * app
 	res->aSkillResult[1].byAttackResult = BATTLE_ATTACK_RESULT_HIT;
 	res->aSkillResult[1].effectResult1.fResultValue = pSkillTblData->fSkill_Effect_Value[0];
 	res->aSkillResult[1].effectResult2.fResultValue = pSkillTblData->fSkill_Effect_Value[1];
+	SendCharUpdateLp(pPacket, app, res->aSkillResult[0].effectResult1.fResultValue, res->hAppointedTarget);
 	packet.SetPacketLen(sizeof(sGU_CHAR_ACTION_SKILL));
 	int rc = g_pApp->Send(this->GetHandle(), &packet);
 	app->UserBroadcastothers(&packet, this);
@@ -2246,6 +2274,25 @@ void CClientSession::SendCharToggleFighting(CNtlPacket * pPacket, CGameServer * 
 {
 //CHAR_TOGG_FIGHTING
 //	app->mob->AddToWorld(pPacket, this);
+	/*CNtlPacket packet(sizeof(sUG_CHAR_TOGG_FIGHTING));
+	sUG_CHAR_TOGG_FIGHTING * req = (sUG_CHAR_TOGG_FIGHTING *)packet.GetPacketData();
+
+	CNtlPacket packet2(sizeof(sGU_UPDATE_CHAR_STATE));
+	sGU_UPDATE_CHAR_STATE * res = (sGU_UPDATE_CHAR_STATE *)packet2.GetPacketData();
+
+	/*req->byAvatarType = DBO_AVATAR_TYPE_AVATAR;
+	req->bFightMode = true;
+	req->wOpCode = UG_CHAR_TOGG_FIGHTING;
+	packet.SetPacketLen(sizeof(sUG_CHAR_TOGG_FIGHTING));
+	g_pApp->Send(this->GetHandle(), &packet);
+
+	res->handle = this->plr->GetAvatarandle();
+	res->sCharState.sCharStateBase.bFightMode = true;
+	res->wOpCode = GU_UPDATE_CHAR_STATE;
+	packet.SetPacketLen(sizeof(sGU_UPDATE_CHAR_STATE));
+	g_pApp->Send(this->GetHandle(), &packet2);
+
+	*/
 }
 
 //--------------------------------------------------------------------------------------//
@@ -2396,6 +2443,10 @@ void CClientSession::SendItemMoveReq(CNtlPacket * pPacket, CGameServer * app)
     CNtlPacket packet(sizeof(sGU_ITEM_MOVE_RES));
     sGU_ITEM_MOVE_RES * res = (sGU_ITEM_MOVE_RES *)packet.GetPacketData();
 	
+	//For equipment
+	CNtlPacket eqPak(sizeof(sGU_UPDATE_ITEM_EQUIP));
+    sGU_UPDATE_ITEM_EQUIP * eq = (sGU_UPDATE_ITEM_EQUIP *)eqPak.GetPacketData();
+	
 	app->db->prepare("SELECT * FROM items WHERE owner_id=? AND place=? AND pos=?");
 	app->db->setInt(1, this->plr->pcProfile->charId);
 	app->db->setInt(2, req->bySrcPlace);
@@ -2422,6 +2473,21 @@ void CClientSession::SendItemMoveReq(CNtlPacket * pPacket, CGameServer * app)
 				res->wResultCode = GAME_SUCCESS;
 				app->qry->UpdateItemPlaceAndPos(uniqueID, req->byDestPlace, req->byDestPos);
 				this->plr->calculeMyStat(app);
+				if(req->byDestPlace == 7)
+				{
+				eq->byPos = req->byDestPos;
+				eq->handle = this->plr->GetAvatarandle();
+				eq->sItemBrief.tblidx = ID;
+				eq->wOpCode = GU_UPDATE_ITEM_EQUIP;
+				}
+				if(req->bySrcPlace == 7)
+				{
+					eq->handle = this->plr->GetAvatarandle();
+					eq->sItemBrief.tblidx = INVALID_TBLIDX;
+					eq->byPos = req->bySrcPos;
+					eq->wOpCode = GU_UPDATE_ITEM_EQUIP;
+				}
+
 			}
 			else
 			{
@@ -2444,6 +2510,9 @@ void CClientSession::SendItemMoveReq(CNtlPacket * pPacket, CGameServer * app)
 	res->byDestPos = req->byDestPos;
 	packet.SetPacketLen(sizeof(sGU_ITEM_MOVE_RES));
 	g_pApp->Send( this->GetHandle() , &packet );
+	eqPak.SetPacketLen(sizeof(sGU_UPDATE_ITEM_EQUIP));
+	g_pApp->Send( this->GetHandle(), &eqPak);
+	app->UserBroadcast(&eqPak);
 }
 
 //--------------------------------------------------------------------------------------//
@@ -2845,7 +2914,7 @@ void	CClientSession::SendDragonBallCheckReq(CNtlPacket * pPacket, CGameServer * 
 			res->wOpCode = GU_DRAGONBALL_CHECK_RES;
 			packet.SetPacketLen( sizeof(sGU_DRAGONBALL_CHECK_RES) );
 			g_pApp->Send( this->GetHandle() , &packet );
-			this->gsf->printError("An error is occured in SendGambleBuyReq: GAME_DRAGONBALL_NOT_FOUND");
+			this->gsf->printError("An error is occured in SendDragonBallReq: GAME_DRAGONBALL_NOT_FOUND");
 			i = 0;
 			break;
 		}
@@ -2853,19 +2922,7 @@ void	CClientSession::SendDragonBallCheckReq(CNtlPacket * pPacket, CGameServer * 
 	}
 	if (i == 7)
 	{
-		/*obj->handle = AcquireSerialId();//this->plr->GetAvatarandle(); // this is wrong
-		obj->wOpCode = GU_OBJECT_CREATE;
-		obj->sObjectInfo.objType = OBJTYPE_NPC; // this is wrong
-		obj->sObjectInfo.npcBrief.tblidx = 90000; // this is wrong
-		obj->sObjectInfo.npcState.sCharStateBase.vCurLoc = this->plr->GetPosition();
-		obj->sObjectInfo.npcState.sCharStateBase.byStateID = CHARSTATE_SPAWNING;
-		obj->sObjectInfo.npcBrief.wCurEP = 100;
-		obj->sObjectInfo.npcBrief.wCurLP = 100;
-		obj->sObjectInfo.npcBrief.wMaxEP = 100;
-		obj->sObjectInfo.npcBrief.wMaxLP = 100;
-
-		packet2.SetPacketLen( sizeof(sGU_OBJECT_CREATE) );
-		g_pApp->Send( this->GetHandle() , &packet2 );*/
+		
 	
 		zone->wOpCode = GU_AVATAR_ZONE_INFO;
 		zone->zoneInfo.bIsDark = true;
@@ -2873,6 +2930,26 @@ void	CClientSession::SendDragonBallCheckReq(CNtlPacket * pPacket, CGameServer * 
 		
 		packet3.SetPacketLen( sizeof(sGU_AVATAR_ZONE_INFO) );
 		g_pApp->Send( this->GetHandle() , &packet3 );
+		app->UserBroadcastothers(&packet3, this);
+
+		//sSPAWN_TBLDAT* pMOBTblData = (sSPAWN_TBLDAT*)app->g_pTableContainer->GetMobSpawnTable(1)->FindData(6361105);
+
+		obj->handle = 90000;//this->plr->GetAvatarandle(); // this is wrong
+		obj->wOpCode = GU_OBJECT_CREATE;
+		obj->sObjectInfo.objType = OBJTYPE_NPC; // this is wrong
+		obj->sObjectInfo.npcBrief.tblidx = 6361105; // this is wrong
+		obj->sObjectInfo.npcState.sCharStateBase.vCurLoc.x = 4708;
+		obj->sObjectInfo.npcState.sCharStateBase.vCurLoc.y = -52;
+		obj->sObjectInfo.npcState.sCharStateBase.vCurLoc.z = 4001;
+		obj->sObjectInfo.npcState.sCharStateBase.byStateID = CHARSTATE_SPAWNING;
+		obj->sObjectInfo.npcBrief.wCurEP = 100;
+		obj->sObjectInfo.npcBrief.wCurLP = 100;
+		obj->sObjectInfo.npcBrief.wMaxEP = 100;
+		obj->sObjectInfo.npcBrief.wMaxLP = 100;
+
+		packet2.SetPacketLen( sizeof(sGU_OBJECT_CREATE) );
+		g_pApp->Send( this->GetHandle() , &packet2 );
+		app->UserBroadcastothers(&packet2, this);
 
 		res->hObject = req->hObject;
 		res->wResultCode = GAME_SUCCESS;
@@ -2889,6 +2966,7 @@ void	CClientSession::SendDragonBallRewardReq(CNtlPacket * pPacket, CGameServer *
 	sGU_DRAGONBALL_REWARD_RES * res = (sGU_DRAGONBALL_REWARD_RES *)packet.GetPacketData();
 
 	sDRAGONBALL_REWARD_TBLDAT* pDBtData = (sDRAGONBALL_REWARD_TBLDAT*)app->g_pTableContainer->GetDragonBallRewardTable()->FindData(req->rewardTblidx);
+	
 	//printf("Datacontainer = byBallType = %d, byRewardCategoryDepth = %d, rewardType = %d\ndwRewardZenny = %d, catergoryDialogue = %d\nCategoryName = %d, RewardDialog1 = %d, RewardDialog2 = %d\nrewardlinktblidx = %d, rewardname = %d, tdblidx = %d\n",
 		//pDBtData->byBallType, pDBtData->byRewardCategoryDepth, pDBtData->byRewardType, pDBtData->dwRewardZenny, pDBtData->rewardCategoryDialog,pDBtData->rewardCategoryName,
 		//pDBtData->rewardDialog1, pDBtData->rewardDialog2,pDBtData->rewardLinkTblidx, pDBtData->rewardName, pDBtData->tblidx);
@@ -2980,8 +3058,9 @@ void	CClientSession::SendDragonBallRewardReq(CNtlPacket * pPacket, CGameServer *
  				res5->wOpCode = GU_UPDATE_CHAR_ZENNY;
  				packet5.SetPacketLen(sizeof(sGU_UPDATE_CHAR_ZENNY));
  				g_pApp->Send(this->GetHandle(), &packet5);
+				app->qry->SetPlusMoney( this->plr->pcProfile->charId, (res5->dwZenny -= this->plr->pcProfile->dwZenny));
 				this->plr->pcProfile->dwZenny += res5->dwZenny;
-				app->qry->SetPlusMoney(res5->dwZenny, this->plr->pcProfile->charId);
+				
  		}
  		break;
   	}
@@ -2999,10 +3078,42 @@ void	CClientSession::SendDragonBallRewardReq(CNtlPacket * pPacket, CGameServer *
 		
 	packet3.SetPacketLen( sizeof(sGU_AVATAR_ZONE_INFO) );
 	g_pApp->Send( this->GetHandle() , &packet3 );
+	app->UserBroadcastothers(&packet3, this);
 
 	CNtlPacket packet2(sizeof(sGU_DRAGONBALL_SCHEDULE_INFO));
 	sGU_DRAGONBALL_SCHEDULE_INFO * res2 = (sGU_DRAGONBALL_SCHEDULE_INFO *)packet2.GetPacketData();
 	res2->bIsAlive = true;
+	res2->byEventType = SCHEDULE_EVENT_TYPE_NORMAL_DRAGONBALL;
+	res2->byTermType = 0;
+	res2->nStartTime = timeGetTime();
+	res2->nEndTime = timeGetTime() * 2;
+	res2->wOpCode = GU_DRAGONBALL_SCHEDULE_INFO;
+
+	packet2.SetPacketLen( sizeof(sGU_DRAGONBALL_SCHEDULE_INFO) );
+	g_pApp->Send( this->GetHandle() , &packet2 );
+	app->UserBroadcastothers(&packet2, this);
+
+	CNtlPacket packet5(sizeof(sGU_UPDATE_CHAR_STATE));
+	sGU_UPDATE_CHAR_STATE * res3 = (sGU_UPDATE_CHAR_STATE *)packet5.GetPacketData();
+
+	res3->handle = 90000;
+	res3->sCharState.sCharStateBase.byStateID = CHARSTATE_DESPAWNING;
+	res3->wOpCode = GU_UPDATE_CHAR_STATE;
+	packet5.SetPacketLen( sizeof(sGU_UPDATE_CHAR_STATE) );
+		g_pApp->Send( this->GetHandle() , &packet5 );
+		app->UserBroadcastothers(&packet5, this);
+
+
+
+	Sleep(10000);
+	CNtlPacket packet4(sizeof(sGU_OBJECT_DESTROY));
+	sGU_OBJECT_DESTROY * res4 = (sGU_OBJECT_DESTROY *)packet4.GetPacketData();
+		res4->handle = 90000;
+		res4->wOpCode = GU_OBJECT_DESTROY;
+		packet4.SetPacketLen( sizeof(sGU_OBJECT_DESTROY) );
+		g_pApp->Send( this->GetHandle() , &packet4 );
+		app->UserBroadcastothers(&packet4, this);
+
 }
 void CClientSession::SendGambleBuyReq(CNtlPacket * pPacket, CGameServer * app)
 {
@@ -3056,7 +3167,7 @@ void CClientSession::SendCharSkillUpgrade(CNtlPacket * pPacket, CGameServer * ap
  		res->wOpCode = GU_SKILL_UPGRADE_RES;
  		res->wResultCode = GAME_SUCCESS;
  		res->skillId = pSkillData->dwNextSkillTblidx;
- 		res->bySlot = app->db->getInt("SlotID");
+ 		res->bySlot = req->bySlotIndex;
  		packet.SetPacketLen(sizeof(sGU_SKILL_UPGRADE_RES));
  		g_pApp->Send(this->GetHandle(), &packet);
  		//Skill Level(ID)

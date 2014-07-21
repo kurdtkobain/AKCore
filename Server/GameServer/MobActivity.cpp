@@ -227,7 +227,7 @@ void		MobActivity::MonsterRandomWalk(CNtlPacket * pPacket)
 			res->sObjectInfo.mobState.sCharStateBase.vCurDir.y = creaturelist->Spawn_Dir.y;
 			res->sObjectInfo.mobState.sCharStateBase.vCurDir.z = creaturelist->Spawn_Dir.z;
 			res->sObjectInfo.mobState.sCharStateBase.byStateID = CHARSTATE_SPAWNING;
-			res->sObjectInfo.mobState.sCharStateBase.bFightMode = creaturelist->FightMode;
+			res->sObjectInfo.mobState.sCharStateBase.bFightMode = false;
 			res->sObjectInfo.mobBrief.tblidx = creaturelist->MonsterID;
 			res->sObjectInfo.mobBrief.wCurEP = creaturelist->CurEP;
 			res->sObjectInfo.mobBrief.wMaxEP = creaturelist->MaxEP;
@@ -260,7 +260,7 @@ bool		MobActivity::UpdateDeathStatus(RwUInt32 MobID, bool death_status)
 					creaturelist->KilledTime = timeGetTime();
 					creaturelist->IsDead = death_status;
 					//Delete from all Monster lists
-					app->RemoveMonsterFromAllMyMonsterLists(creaturelist->MonsterSpawnID);
+					//app->RemoveMonsterFromAllMyMonsterLists(creaturelist->MonsterSpawnID);
 				}else{
 					creaturelist->IsDead = death_status;
 				}
