@@ -542,7 +542,18 @@ public:
 			it->second->PushPacket( pPacket );
 		}
 	}
-
+	void						GetUserSession(int handle, PlayerInfos *requested)
+	{
+		for( USERIT it = m_userList.begin(); it != m_userList.end(); it++ )
+		{
+			if(it->second->plr->GetAvatarandle() == handle)
+			{
+				printf("%d %d\n", handle, it->second->plr->GetAvatarandle());
+				memcpy(requested, it->second->plr, sizeof (PlayerInfos));
+				break;
+			}
+		}
+	}
 	void						UserBroadcastothers(CNtlPacket * pPacket, CClientSession * pSession)
 	{
 		for( USERIT it = m_userList.begin(); it != m_userList.end(); it++ )

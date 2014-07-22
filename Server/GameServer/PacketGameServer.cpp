@@ -2372,10 +2372,10 @@ void CClientSession::SendCharLearnSkillReq(CNtlPacket * pPacket, CGameServer * a
 										// Skill learned notification
 										CNtlPacket packet2(sizeof(sGU_SKILL_LEARNED_NFY));
 										sGU_SKILL_LEARNED_NFY * res2 = (sGU_SKILL_LEARNED_NFY *)packet2.GetPacketData();
-
+										iSkillCount++;//don't send this directly if you learned SSJ first...because we always are sending 1...nevermind :P
 										res2->wOpCode = GU_SKILL_LEARNED_NFY;
 										res2->skillId = pSkillData->tblidx;
-										res2->bySlot = (iSkillCount++);
+										res2->bySlot = iSkillCount;
 										app->qry->InsertNewSkill(pSkillData->tblidx, this->plr->pcProfile->charId, iSkillCount, pSkillData->wKeep_Time, pSkillData->wNext_Skill_Train_Exp);
 										this->plr->pcProfile->dwZenny -= pSkillData->dwRequire_Zenny;
 										this->plr->pcProfile->dwSpPoint -= pSkillData->wRequireSP;
@@ -2400,7 +2400,6 @@ void CClientSession::SendCharLearnSkillReq(CNtlPacket * pPacket, CGameServer * a
 										packet4.SetPacketLen(sizeof(sGU_UPDATE_CHAR_ZENNY));
  										g_pApp->Send(this->GetHandle(), &packet4);
 										break;
-										this->gsf->printDebug("Debug 4");
 								}else
 								skill_learn_result = 645;
 								break;
@@ -2850,14 +2849,13 @@ void	CClientSession::SendScouterIndicatorReq(CNtlPacket * pPacket, CGameServer *
 	CNtlPacket packet(sizeof(sGU_SCOUTER_INDICATOR_RES));
 	sGU_SCOUTER_INDICATOR_RES * res = (sGU_SCOUTER_INDICATOR_RES *)packet.GetPacketData();
 
-	int mobid = 0;
+	res->hTarget = req->hTarget;
+	res->dwRetValue = 0;
+	res->wOpCode = GU_SCOUTER_INDICATOR_RES;
 
+	int mobid = 0;
 	if ((mobid = IsMonsterIDInsideList(req->hTarget)) != 0)
 	{
-		res->hTarget = req->hTarget;
-		res->dwRetValue = 0;
-		res->wOpCode = GU_SCOUTER_INDICATOR_RES;
-
 		CMobTable *Mob = app->g_pTableContainer->GetMobTable();
 		for ( CTable::TABLEIT itmob = Mob->Begin(); itmob != Mob->End(); ++itmob )
 		{
@@ -2869,11 +2867,21 @@ void	CClientSession::SendScouterIndicatorReq(CNtlPacket * pPacket, CGameServer *
 				break;
 			}
 			else
-			{
-				this->gsf->printError("An error is occured in SendScouterIndicatorReq: GAME_FAIL pMOBtData->tblidx != mobid");
-				res->wResultCode = GAME_FAIL;
-			}
+				res->wResultCode = GAME_SCOUTER_TARGET_FAIL;
 		}
+	}
+	else
+	{
+		PlayerInfos *targetPlr = new PlayerInfos();
+		app->GetUserSession(req->hTarget, targetPlr);
+		if (targetPlr != NULL)
+		{
+			res->dwRetValue = this->gsf->CalculePowerLevelPlayer(targetPlr);
+			res->wResultCode = GAME_SUCCESS;
+			delete targetPlr;
+		}
+		else
+			res->wResultCode = GAME_SCOUTER_TARGET_FAIL;
 	}
 	packet.SetPacketLen( sizeof(sGU_SCOUTER_INDICATOR_RES) );
 	g_pApp->Send( this->GetHandle() , &packet );

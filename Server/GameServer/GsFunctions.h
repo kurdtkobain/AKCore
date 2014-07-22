@@ -10,7 +10,7 @@
 
 static RwUInt32 m_uiSerialId = 5;
 static RwUInt32 m_uiTargetSerialId = 0;
-
+class PlayerInfos;
 typedef struct _SBattleData
 {
 	RwUInt32			uiSerialId;
@@ -52,6 +52,7 @@ public:
 	bool						DeleteItemByUIdPlacePos(CNtlPacket * pPacket, CClientSession * pSession, RwUInt32 UniqueID, RwUInt32 Place, RwUInt32 Pos);
 	bool						UpdateCharMoney(CNtlPacket * pPacket, CClientSession * pSession, RwUInt32 ChangeType, RwUInt32 MoneyAmount, RwUInt32 AvatarHandle);
 	DWORD						CalculePowerLevel(sMOB_TBLDAT* pMOBtData);
+	DWORD						CalculePowerLevelPlayer(PlayerInfos *plr);
 	//System Functions
 	void						printError(const char* err);
 	void						printOk(const char* err);

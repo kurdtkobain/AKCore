@@ -1,7 +1,6 @@
 #include "stdafx.h"
 #include "GameServer.h"
 
-
 bool	GsFunctionsClass::DeleteItemByUIdPlacePos(CNtlPacket * pPacket, CClientSession * pSession, RwUInt32 UniqueID, RwUInt32 Place, RwUInt32 Pos)
 {
 	CGameServer * app = (CGameServer*) NtlSfxGetApp();
@@ -36,13 +35,24 @@ bool	GsFunctionsClass::UpdateCharMoney(CNtlPacket * pPacket, CClientSession * pS
 
 	return true;
 }
-
+DWORD	GsFunctionsClass::CalculePowerLevelPlayer(PlayerInfos *plr)
+{
+	if (plr)
+		return Dbo_CalculatePowerLevel(plr->pcProfile->avatarAttribute.byLastStr, plr->pcProfile->avatarAttribute.byLastCon, plr->pcProfile->avatarAttribute.byLastFoc, plr->pcProfile->avatarAttribute.byLastDex,
+			plr->pcProfile->avatarAttribute.byLastSol, plr->pcProfile->avatarAttribute.byLastEng, plr->pcProfile->avatarAttribute.wLastPhysicalOffence, plr->pcProfile->avatarAttribute.wLastPhysicalDefence,
+			plr->pcProfile->avatarAttribute.wLastEnergyOffence, plr->pcProfile->avatarAttribute.wLastEnergyDefence, plr->pcProfile->avatarAttribute.wLastAttackRate, plr->pcProfile->avatarAttribute.wLastDodgeRate, plr->pcProfile->avatarAttribute.wLastCurseSuccessRate,
+			plr->pcProfile->avatarAttribute.wLastCurseToleranceRate, plr->pcProfile->avatarAttribute.wLastPhysicalCriticalRate, plr->pcProfile->avatarAttribute.wLastEnergyCriticalRate, plr->pcProfile->avatarAttribute.wLastAttackSpeedRate, plr->pcProfile->avatarAttribute.wBaseMaxLP,
+			plr->pcProfile->avatarAttribute.wBaseMaxEP, plr->pcProfile->wCurLP, plr->pcProfile->wCurEP, plr->getNumberOfRPBall(), plr->pcProfile->byLevel, 0);
+	return 1;
+}
 DWORD	GsFunctionsClass::CalculePowerLevel(sMOB_TBLDAT* pMOBtData)
 {
-	return Dbo_CalculatePowerLevel(pMOBtData->byStr, pMOBtData->byCon, pMOBtData->byFoc,pMOBtData->byDex, pMOBtData->bySol,
-		pMOBtData->byEng, pMOBtData->wBasic_Offence, pMOBtData->wBasic_Physical_Defence, pMOBtData->wBasic_Energy_Defence, pMOBtData->wBasic_Energy_Defence,
-		pMOBtData->wAttack_Rate, pMOBtData->wDodge_Rate, pMOBtData->wCurse_Success_Rate, pMOBtData->wCurse_Tolerance_Rate, 5, 
-		5, pMOBtData->wAttack_Speed_Rate,pMOBtData->wBasic_LP,pMOBtData->wBasic_EP, pMOBtData->wBasic_LP, pMOBtData->wBasic_EP,1,pMOBtData->byLevel, pMOBtData->byGrade);
+	if (pMOBtData)
+		return Dbo_CalculatePowerLevel(pMOBtData->byStr, pMOBtData->byCon, pMOBtData->byFoc,pMOBtData->byDex, pMOBtData->bySol,
+			pMOBtData->byEng, pMOBtData->wBasic_Offence, pMOBtData->wBasic_Physical_Defence, pMOBtData->wBasic_Energy_Defence, pMOBtData->wBasic_Energy_Defence,
+			pMOBtData->wAttack_Rate, pMOBtData->wDodge_Rate, pMOBtData->wCurse_Success_Rate, pMOBtData->wCurse_Tolerance_Rate, 5, 
+			5, pMOBtData->wAttack_Speed_Rate,pMOBtData->wBasic_LP,pMOBtData->wBasic_EP, pMOBtData->wBasic_LP, pMOBtData->wBasic_EP,1,pMOBtData->byLevel, pMOBtData->byGrade);
+	return 1;
 }
 int     GsFunctionsClass::GetTotalSlotSkill(int charID)
  {
