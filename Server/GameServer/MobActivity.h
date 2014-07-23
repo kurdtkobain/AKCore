@@ -20,7 +20,6 @@ class CClientSession;
 class CGameServer;
 class CNtlPacket;
 
-
 class MobActivity
 {
 public:
@@ -33,16 +32,11 @@ public:
 	bool						CreatureRangeCheck(sVECTOR3 mycurPos, CNtlVector othercurPos);
 	bool						IsMonsterVisible(CNtlVector Position);
 	float						Distance(const sVECTOR3 mycurPos, const CNtlVector othercurPos);
-
 	bool						RunSpawnCheck(CNtlPacket * pPacket, sVECTOR3 curPos, CClientSession * pSession);
-
 	void						MonsterRandomWalk(CNtlPacket * pPacket);
-
 	bool						UpdateDeathStatus(RwUInt32 MobID, bool death_status);
-
 	void						SpawnNpcAtLogin(CNtlPacket * pPacket, CClientSession * pSession);
 	void						SpawnMonsterAtLogin(CNtlPacket * pPacket, CClientSession * pSession);
-
 
 typedef struct _CreatureData
 {
@@ -155,18 +149,8 @@ typedef std::list<CreatureData*> MONSTERLIST;
 typedef MONSTERLIST::iterator MONSTERLISTIT;
 MONSTERLIST					m_monsterList;
 
-	DWORD						last_mobMove;
-
-protected:
-
-
-private:
-
-	
-
-
-	
-
+DWORD						last_mobMove;
+CreatureData*				GetMobByHandle(RwUInt32 m_uiTargetSerialId);
 };
 
 #endif

@@ -7,12 +7,10 @@
 #include "NtlPacketUT.h"
 #include "GameServer.h"
 
-
 typedef std::list<SBattleData*> ListAttackBegin;
 typedef ListAttackBegin::iterator BATTLEIT;
 ListAttackBegin				m_listAttackBegin;
 SSkillData *pSkillData;
-
 
 //--------------------------------------------------------------------------------------//
 //		Log into Game Server
@@ -1964,32 +1962,35 @@ void CClientSession::SendCharActionAttack(RwUInt32 uiSerialId, RwUInt32 m_uiTarg
 {
 	CGameServer * app = (CGameServer*)NtlSfxGetApp();
 	static RwUInt8 byChainAttack = 0;
+	int CurHP = 0;
 	RwBool bDamageApply = true;
 
 	CNtlPacket packet(sizeof(sGU_CHAR_ACTION_ATTACK));
 	sGU_CHAR_ACTION_ATTACK * res = (sGU_CHAR_ACTION_ATTACK *)packet.GetPacketData();
-
 
 	res->wOpCode = GU_CHAR_ACTION_ATTACK;
 	res->hSubject = uiSerialId;
 	res->hTarget = m_uiTargetSerialId;
 	res->dwLpEpEventId = 255;
 	res->bChainAttack = false;
-	res->byBlockedAction = 255; 
-	int mobid = IsMonsterIDInsideList(m_uiTargetSerialId);
-	sMOB_TBLDAT* pMOBtData = (sMOB_TBLDAT*) app->g_pTableContainer->GetMobTable()->FindData(mobid);
-	if (pMOBtData)
+	res->byBlockedAction = 255;
+
+	if (IsMonsterInsideList(m_uiTargetSerialId) == true)
 	{
-	m_iCurrentHp = pMOBtData->wBasic_LP; 
+		MobActivity::CreatureData *lol = app->mob->GetMobByHandle(m_uiTargetSerialId);
+		if (lol != NULL)
+		{
+			CurHP = (RwUInt32)lol->CurLP;
+		}
 	}
-	else
+	/*else if (IsMonsterInsideList(m_uiTargetSerialId) == false)
 	{
-	app->db->prepare("SELECT CurLP FROM characters WHERE onlineID = ?");
-	app->db->setInt(1, m_uiTargetSerialId);
-	app->db->execute();
-	app->db->fetch();
-	m_iCurrentHp = app->db->getInt("CurLP");
-	}
+		app->db->prepare("SELECT CurLP FROM characters WHERE onlineID = ?");
+		app->db->setInt(1, m_uiTargetSerialId);
+		app->db->execute();
+		app->db->fetch();
+		m_iCurrentHp = app->db->getInt("CurLP");
+	}*/
 	res->wAttackResultValue = 100;
 	res->fReflectedDamage = 0;
 	res->vShift.x = this->plr->GetPosition().x;
@@ -2000,6 +2001,7 @@ void CClientSession::SendCharActionAttack(RwUInt32 uiSerialId, RwUInt32 m_uiTarg
 
 	if(res->byAttackSequence == 6)
 	{
+		byChainAttack = 0;
 		if(rand()%2)
 		{
 			res->byAttackResult = BATTLE_ATTACK_RESULT_KNOCKDOWN;
@@ -2028,50 +2030,29 @@ void CClientSession::SendCharActionAttack(RwUInt32 uiSerialId, RwUInt32 m_uiTarg
 			res->byAttackResult = BATTLE_ATTACK_RESULT_BLOCK;
 		}
 	}
-
 	packet.SetPacketLen( sizeof(sGU_CHAR_ACTION_ATTACK) );
 	int rc = g_pApp->Send( this->GetHandle() , &packet );
 	app->UserBroadcast(&packet);
 	byChainAttack++;
 	// update LP
-	if(bDamageApply)
+	if(bDamageApply == true)
 	{
-		if((m_iCurrentHp -= res->wAttackResultValue) <= 0)
-			m_iCurrentHp = 0;
-		else
-		m_iCurrentHp -= res->wAttackResultValue;
-
-		SendCharUpdateLp(pPacket, app, m_iCurrentHp, m_uiTargetSerialId);
-		if(m_iCurrentHp <= 0)
-		{
-			CClientSession::SendMobLoot(&packet, app, m_uiTargetSerialId);
-			m_iCurrentHp = 0;
-			/*CNtlPacket packet2(sizeof(sGU_UPDATE_CHAR_STATE));
-			sGU_UPDATE_CHAR_STATE * res = (sGU_UPDATE_CHAR_STATE *)packet2.GetPacketData();
-
-			req->byAvatarType = DBO_AVATAR_TYPE_AVATAR;
-			req->bFightMode = true;
-			req->wOpCode = UG_CHAR_TOGG_FIGHTING;
-			packet.SetPacketLen(sizeof(sUG_CHAR_TOGG_FIGHTING));
-			g_pApp->Send(this->GetHandle(), &packet);
-
-			res->handle = this->plr->GetAvatarandle();
-			res->sCharState.sCharStateBase.bFightMode = false;
-			res->wOpCode = GU_UPDATE_CHAR_STATE;
-			packet.SetPacketLen(sizeof(sGU_UPDATE_CHAR_STATE));
-			g_pApp->Send(this->GetHandle(), &packet2);
-			app->UserBroadcast(&packet2);*/
-		}
-		
+		this->gsf->printOk("OK");
+		CurHP -= res->wAttackResultValue;
 	}
-
-	if(m_iCurrentHp == 0)
-		{
-			SendCharUpdateFaintingState(pPacket, app, uiSerialId, m_uiTargetSerialId);
-		}
-
-
-
+	else if (bDamageApply == false)
+		this->gsf->printError("DAMAGES NOT SENDED");
+	else
+		this->gsf->printError("WHAT THE FUCK");
+	if (CurHP <= 0)
+	{
+		CClientSession::SendMobLoot(&packet, app, m_uiTargetSerialId);
+		this->gsf->printOk("DIE MOTHER FUCKER");
+		CurHP = 0;
+		SendCharUpdateFaintingState(pPacket, app, uiSerialId, m_uiTargetSerialId);
+	}
+	else
+		SendCharUpdateLp(pPacket, app, CurHP, m_uiTargetSerialId);
 }
 
 void CClientSession::SendCharUpdateLp(CNtlPacket * pPacket, CGameServer * app, RwUInt16 wLp, RwUInt32 m_uiTargetSerialId)
@@ -2081,30 +2062,39 @@ void CClientSession::SendCharUpdateLp(CNtlPacket * pPacket, CGameServer * app, R
 
 	res->wOpCode = GU_UPDATE_CHAR_LP;
 	res->handle = m_uiTargetSerialId;
-	int mobid = IsMonsterIDInsideList(m_uiTargetSerialId);
-	sMOB_TBLDAT* pMOBtData = (sMOB_TBLDAT*) app->g_pTableContainer->GetMobTable()->FindData(mobid);
-	if (pMOBtData)
+	if (IsMonsterInsideList(m_uiTargetSerialId) == true)
 	{
-		res->wCurLP = wLp;
-		//res->wMaxLP = pMOBtData->wBasic_LP;
+		MobActivity::CreatureData *lol = app->mob->GetMobByHandle(m_uiTargetSerialId);
+		if (lol != NULL)
+		{
+			printf("wLP: %d, lol->CurLP: %d\n", wLp, lol->CurLP);
+			lol->FightMode = true;
+			lol->CurLP = (WORD)wLp;
+			res->wCurLP = lol->CurLP;
+			res->wMaxLP = lol->MaxLP;
+			res->dwLpEpEventId = 255;
+			packet.SetPacketLen( sizeof(sGU_UPDATE_CHAR_LP) );
+			app->UserBroadcastothers(&packet, this);
+			g_pApp->Send( this->GetHandle() , &packet );
+			printf("wLP: %d, lol->CurLP: %d\n", wLp, lol->CurLP);
+		}
+	}
+	/*else if (IsMonsterInsideList(m_uiTargetSerialId) == false)
+	{
+		this->gsf->printOk("PAS OK");
+		PlayerInfos *targetPlr = NULL;
+		app->GetUserSession(m_uiTargetSerialId, targetPlr);
+		if (targetPlr)
+		{
+			res->wCurLP = targetPlr->pcProfile->wCurLP = wLp;
+			res->wMaxLP = targetPlr->pcProfile->avatarAttribute.wLastMaxLP;
+			packet.SetPacketLen( sizeof(sGU_UPDATE_CHAR_LP) );
 
-		packet.SetPacketLen( sizeof(sGU_UPDATE_CHAR_LP) );
-		app->UserBroadcastothers(&packet, this);
-		g_pApp->Send( this->GetHandle() , &packet );
-	}
-	else
-	{
-		res->wCurLP = wLp;
-		app->db->prepare("UPDATE characters SET CurLP = ? WHERE onlineID = ?");
-		app->db->setInt(1,res->wCurLP);
-		app->db->setInt(2, m_uiTargetSerialId);
-		app->db->execute();
-		
-		packet.SetPacketLen( sizeof(sGU_UPDATE_CHAR_LP) );
-	
-		app->UserBroadcastothers(&packet, this);
-		g_pApp->Send( this->GetHandle() , &packet );
-	}
+			app->UserBroadcastothers(&packet, this);
+			g_pApp->Send( this->GetHandle() , &packet );
+			delete targetPlr;
+		}
+	}*/
 }
 void	CClientSession::SendMobLoot(CNtlPacket * pPacket, CGameServer * app, RwUInt32 m_uiTargetSerialId)
 {
@@ -2250,10 +2240,34 @@ void CClientSession::SendCharSkillAction(CNtlPacket * pPacket, CGameServer * app
 	res->aSkillResult[1].byAttackResult = BATTLE_ATTACK_RESULT_HIT;
 	res->aSkillResult[1].effectResult1.fResultValue = pSkillTblData->fSkill_Effect_Value[0];
 	res->aSkillResult[1].effectResult2.fResultValue = pSkillTblData->fSkill_Effect_Value[1];
-	SendCharUpdateLp(pPacket, app, res->aSkillResult[0].effectResult1.fResultValue, res->hAppointedTarget);
+
 	packet.SetPacketLen(sizeof(sGU_CHAR_ACTION_SKILL));
 	int rc = g_pApp->Send(this->GetHandle(), &packet);
 	app->UserBroadcastothers(&packet, this);
+	
+	float newLP = 0;
+	if (IsMonsterInsideList(res->hAppointedTarget) == true)
+	{
+		MobActivity::CreatureData *lol = app->mob->GetMobByHandle(res->hAppointedTarget);
+		if (lol != NULL)
+		{
+			lol->FightMode = true;
+			newLP = (float)lol->CurLP;
+			newLP -= res->aSkillResult[0].effectResult1.fResultValue;
+			printf("LP: %f, damage: %f\n", newLP, res->aSkillResult[0].effectResult1.fResultValue);
+			if (newLP <= 0 || (newLP > lol->MaxLP))
+			{
+				lol->IsDead = true;
+				CClientSession::SendMobLoot(&packet, app, res->hAppointedTarget);
+				this->gsf->printOk("DIE MOTHER FUCKER");
+				SendCharUpdateFaintingState(pPacket, app, this->GetavatarHandle(), res->hAppointedTarget);
+			}
+			else if (newLP > 0 && lol->IsDead == false)
+			{
+				SendCharUpdateLp(pPacket, app, newLP, res->hAppointedTarget);
+			}
+		}
+	}
 }
 
 
@@ -2278,8 +2292,6 @@ void CClientSession::SendCharSkillCasting(CNtlPacket * pPacket, CGameServer * ap
 	packet.SetPacketLen(sizeof(sGU_CHAR_ACTION_SKILL));
   	int rc = g_pApp->Send(this->GetHandle(), &packet);
   	app->UserBroadcastothers(&packet, this);
-
-
 }
 
 void CGameServer::UpdateClient(CNtlPacket * pPacket, CClientSession * pSession)
@@ -3146,19 +3158,19 @@ void	CClientSession::SendDragonBallRewardReq(CNtlPacket * pPacket, CGameServer *
 	res3->sCharState.sCharStateBase.byStateID = CHARSTATE_DESPAWNING;
 	res3->wOpCode = GU_UPDATE_CHAR_STATE;
 	packet5.SetPacketLen( sizeof(sGU_UPDATE_CHAR_STATE) );
-		g_pApp->Send( this->GetHandle() , &packet5 );
-		app->UserBroadcastothers(&packet5, this);
+	g_pApp->Send( this->GetHandle() , &packet5 );
+	app->UserBroadcastothers(&packet5, this);
 
 
 
 	Sleep(10000);
 	CNtlPacket packet4(sizeof(sGU_OBJECT_DESTROY));
 	sGU_OBJECT_DESTROY * res4 = (sGU_OBJECT_DESTROY *)packet4.GetPacketData();
-		res4->handle = 90000;
-		res4->wOpCode = GU_OBJECT_DESTROY;
-		packet4.SetPacketLen( sizeof(sGU_OBJECT_DESTROY) );
-		g_pApp->Send( this->GetHandle() , &packet4 );
-		app->UserBroadcastothers(&packet4, this);
+	res4->handle = 90000;
+	res4->wOpCode = GU_OBJECT_DESTROY;
+	packet4.SetPacketLen( sizeof(sGU_OBJECT_DESTROY) );
+	g_pApp->Send( this->GetHandle() , &packet4 );
+	app->UserBroadcastothers(&packet4, this);
 
 }
 void CClientSession::SendGambleBuyReq(CNtlPacket * pPacket, CGameServer * app)
@@ -3402,7 +3414,7 @@ void	CClientSession::SendZennyPickUpReq(CNtlPacket * pPacket, CGameServer * app)
 	sUG_ZENNY_PICK_REQ* req = (sUG_ZENNY_PICK_REQ *)pPacket->GetPacketData();
 	CNtlPacket packet(sizeof(sGU_ZENNY_PICK_RES));
 	sGU_ZENNY_PICK_RES * res = (sGU_ZENNY_PICK_RES *)packet.GetPacketData();
-
+	printf("%d = req->handle, %d = req->byAvatarType\n", req->handle,req->byAvatarType );
 	res->bSharedInParty = false; //this->plr->isInParty();
 	res->dwAcquisitionZenny = 0;
 	res->dwBonusZenny = 0;

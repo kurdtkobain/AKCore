@@ -1,7 +1,6 @@
 #include "stdafx.h"
 #include "GameServer.h"
 
-
 RwUInt32		MobActivity::AcquireMOBSerialId(void)
 {
 	if(m_uiSerialId++)
@@ -71,6 +70,25 @@ bool		MobActivity::CreatureRangeCheck(sVECTOR3 mycurPos, CNtlVector othercurPos)
 		return true;
 	}
 	return false;
+}
+MobActivity::CreatureData*	MobActivity::GetMobByHandle(RwUInt32 Target)
+{
+	CreatureData * creaturelist;
+
+	for (MONSTERLISTIT it = m_monsterList.begin(); it != m_monsterList.end(); ++it )
+	{
+		creaturelist = (*it);
+		if (creaturelist)
+		{
+			if (creaturelist->MonsterSpawnID == Target)
+			{
+				printf("%d, %d\n", creaturelist->MonsterSpawnID, Target);
+				return creaturelist;
+				break;
+			}
+		}
+	}
+	return NULL;
 }
 bool		MobActivity::RunSpawnCheck(CNtlPacket * pPacket, sVECTOR3 curPos, CClientSession * pSession)
 {
@@ -256,9 +274,12 @@ bool		MobActivity::UpdateDeathStatus(RwUInt32 MobID, bool death_status)
 		{
 			if ( creaturelist->MonsterSpawnID == MobID )
 			{
-				if(death_status == true) {
+				if(death_status == true)
+				{
 					creaturelist->KilledTime = timeGetTime();
 					creaturelist->IsDead = death_status;
+					creaturelist->CurLP = creaturelist->MaxLP;
+					creaturelist->CurEP = creaturelist->MaxEP;
 					//Delete from all Monster lists
 					//app->RemoveMonsterFromAllMyMonsterLists(creaturelist->MonsterSpawnID);
 				}else{
