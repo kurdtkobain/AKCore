@@ -200,11 +200,13 @@ public:
 
 	void						SendShopSkillReq(CNtlPacket * pPacket, CGameServer * app);
 	void						SendCharLearnSkillReq(CNtlPacket * pPacket, CGameServer * app);
-
+	//ITEMS
 	void						SendItemMoveReq(CNtlPacket * pPacket, CGameServer * app);
 	void						SendItemDeleteReq(CNtlPacket * pPacket, CGameServer * app);
 	void						SendItemStackReq(CNtlPacket * pPacket, CGameServer * app);
+	void						SendItemUseReq(CNtlPacket * pPacket, CGameServer * app);
 
+	//MISC
 	void						SendRollDice(CNtlPacket * pPacket, CGameServer * app);
 
 	// SCOUTER
@@ -215,7 +217,10 @@ public:
 	// SKILL
 	void						SendCharSkillAction(CNtlPacket * pPacket, CGameServer * app, int _skillid);
 	void						SendCharSkillRes(CNtlPacket * pPacket, CGameServer * app);
-	void						SendCharSkillCasting(CNtlPacket * pPacket, CGameServer * app);
+	void						SendCharSkillCasting(CNtlPacket * pPacket, CGameServer * app, int _skillid);
+ 	void						SendCharSkillTransformCancel(CNtlPacket * pPacket, CGameServer * app);
+	void						SendSocialSkillRes(CNtlPacket *pPacket, CGameServer * app);
+
 	// QuickSlots
 	void						SendCharUpdQuickSlot(CNtlPacket * pPacket, CGameServer * app);
  	void						SendCharDelQuickSlot(CNtlPacket * pPacket, CGameServer * app);
