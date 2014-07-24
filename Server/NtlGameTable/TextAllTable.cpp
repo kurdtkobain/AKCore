@@ -292,7 +292,7 @@ bool CTextTable::InitializeFromXmlDoc(CNtlXMLDoc* pXmlDoc, WCHAR* pwszFileName, 
 		}
 
 		// 제목은 버린다.
-		for( INT j = 1 ; j < nIndexLength ; ++j )
+		for( INT j = 0 ; j < nIndexLength ; ++j )
 		{
 			VOID* pvTable = AllocNewTable( ppwszSheetList[dwSheetIndex], m_dwCodePage );
 			if ( !pvTable )
@@ -319,8 +319,12 @@ bool CTextTable::InitializeFromXmlDoc(CNtlXMLDoc* pXmlDoc, WCHAR* pwszFileName, 
 			
 			if( !pCellNode )
 			{
-				DeallocNewTable( pvTable, ppwszSheetList[dwSheetIndex] );
-				break;
+				//DeallocNewTable( pvTable, ppwszSheetList[dwSheetIndex] );
+				//break;
+				bstr = L"";
+				SetTableData(pvTable, ppwszSheetList[dwSheetIndex], INDEX, bstr);
+				
+				continue;
 			}
 
 			if( FAILED( pCellNode->get_firstChild( &pDataNode ) ) )
@@ -336,9 +340,13 @@ bool CTextTable::InitializeFromXmlDoc(CNtlXMLDoc* pXmlDoc, WCHAR* pwszFileName, 
 
 			if ( !pDataNode )
 			{
-				pCellNode->Release();
-				DeallocNewTable( pvTable, ppwszSheetList[dwSheetIndex] );
-				break;
+				//pCellNode->Release();
+				//DeallocNewTable( pvTable, ppwszSheetList[dwSheetIndex] );
+				//break;
+				bstr = L"";
+				SetTableData(pvTable, ppwszSheetList[dwSheetIndex], INDEX, bstr);
+				
+				continue;
 			}
 
 			if ( FAILED( pDataNode->get_text( &bstr ) ) )
@@ -375,8 +383,13 @@ bool CTextTable::InitializeFromXmlDoc(CNtlXMLDoc* pXmlDoc, WCHAR* pwszFileName, 
 
 			if( !pCellNode )
 			{
-				DeallocNewTable( pvTable, ppwszSheetList[dwSheetIndex] );
-				break;
+				//DeallocNewTable( pvTable, ppwszSheetList[dwSheetIndex] );
+				//break;
+
+				bstr = L"";
+				SetTableData(pvTable, ppwszSheetList[dwSheetIndex], INDEX, bstr);
+				
+				continue;
 			}
 
 			if( FAILED( pCellNode->get_firstChild( &pDataNode ) ) )
@@ -395,6 +408,7 @@ bool CTextTable::InitializeFromXmlDoc(CNtlXMLDoc* pXmlDoc, WCHAR* pwszFileName, 
 
 			if ( !pDataNode )
 			{
+				#if 0
 				//- yoshiki : TODO!(Get the field name)
 				CTable::CallErrorCallbackFunction("[File] : %S\n[Error] : Table data is null.(Row Index : %d, Field Name = %S)", pwszFileName, j - 1, L"FIELD_NAME!");
 
@@ -402,6 +416,12 @@ bool CTextTable::InitializeFromXmlDoc(CNtlXMLDoc* pXmlDoc, WCHAR* pwszFileName, 
 				DeallocNewTable( pvTable, ppwszSheetList[dwSheetIndex] );
 				_ASSERT( 0 );		// Index는 있고 Data는 공란인경우.
 				break;
+				#endif
+
+				bstr = L"";
+				SetTableData(pvTable, ppwszSheetList[dwSheetIndex], INDEX, bstr);
+				
+				continue;
 			}
 
 			if ( FAILED( pDataNode->get_text( &bstr ) ) )

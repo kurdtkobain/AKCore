@@ -2310,7 +2310,7 @@ void CClientSession::SendCharSkillCasting(CNtlPacket * pPacket, CGameServer * ap
  	g_pApp->Send(this->GetHandle(), &packet2);
  	g_pApp->Send(this->GetHandle(), &packet);
  	app->UserBroadcastothers(&packet2, this);
-  	app->UserBroadcastothers(&packet, this)
+  	app->UserBroadcastothers(&packet, this);
 }
 
 void CGameServer::UpdateClient(CNtlPacket * pPacket, CClientSession * pSession)
@@ -3421,7 +3421,7 @@ void CClientSession::SendPlayerQuestReq(CNtlPacket * pPacket, CGameServer * app)
 		// should be the reward because when we rewarsd a quest res->tcNextId is all the time 255
 		// WE NEED THE CORRECT TBLIDX FOR THE REWARD
 
-		sQUEST_REWARD_TBLDAT *rew = (sQUEST_REWARD_TBLDAT*)app->g_pTableContainer->GetQuestRewardTable()->FindData(res->tId);
+		/*sQUEST_REWARD_TBLDAT *rew = (sQUEST_REWARD_TBLDAT*)app->g_pTableContainer->GetQuestRewardTable()->FindData(res->tId);
 		printf("%d %d %d %d\n%d %d %d %d\n%d\n",rew->arsDefRwd[0], rew->arsDefRwd[1], rew->arsDefRwd[2], rew->arsDefRwd[3], rew->arsSelRwd[0], rew->arsSelRwd[1], rew->arsSelRwd[2], rew->arsSelRwd[3], rew->tblidx);
 		for(int i = 0; i <= QUEST_REWARD_DEF_MAX_CNT; i++ )
 		{
@@ -3492,7 +3492,7 @@ void CClientSession::SendPlayerQuestReq(CNtlPacket * pPacket, CGameServer * app)
 					gsf->printError("Unknown Reward Type");
 				}
 			}
-		}
+		}*/
 	}
 	//printf("res->byTsType = %d, res->dwParam = %d, res->tcCurId = %d, res->tcNextId = %d, res->tId = %d\n",res->byTsType, res->dwParam, res->tcCurId, res->tcNextId, res->tId); 
 	packet.SetPacketLen( sizeof(sGU_TS_CONFIRM_STEP_RES) );
@@ -3646,7 +3646,7 @@ void CClientSession::SendCharSkillTransformCancel(CNtlPacket * pPacket, CGameSer
  	 CNtlPacket packet(sizeof(sGU_UPDATE_CHAR_STATE));
 	sGU_UPDATE_CHAR_STATE * res = (sGU_UPDATE_CHAR_STATE *)packet.GetPacketData();
 	
-	res->handle = this->plr->GetAvatarandle();
+	res->handle = this->GetHandle();
 	res->sCharState.sCharStateBase.byStateID = CHARSTATE_CHARGING;
 	res->wOpCode = GU_UPDATE_CHAR_STATE;
 
