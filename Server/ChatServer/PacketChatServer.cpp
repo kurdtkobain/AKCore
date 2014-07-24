@@ -45,6 +45,7 @@ void CClientSession::SendChatReq(CNtlPacket * pPacket, CChatServer * app)
 	res->wOpCode = TU_CHAT_MESSAGE_SAY;
 	wcscpy_s(res->awchMessage, NTL_MAX_LENGTH_OF_CHAT_MESSAGE_UNICODE, req->awchMessage );
 	res->wMessageLengthInUnicode = req->wMessageLengthInUnicode;
+	res->hSubject = GetavatarHandle();
 
 	wcscpy_s(res->awchSenderCharName, NTL_MAX_SIZE_CHAR_NAME_UNICODE, s2ws(this->charName).c_str() );
 

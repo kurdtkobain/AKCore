@@ -294,6 +294,18 @@ bool CTable::InitializeFromXmlDoc(CNtlXMLDoc* pXmlDoc, WCHAR* pwszFileName, bool
 				IXMLDOMNode* pCellNode = NULL;
 				IXMLDOMNode* pDataNode = NULL;
 
+				std::map<long, std::wstring>::iterator mapIt;
+				mapIt = mapAttributeMapping.find(i);
+				if (mapAttributeMapping.end() == mapIt)
+				{
+					DeallocNewTable(pvTable, ppwszSheetList[dwSheetIndex]);
+					pCellNode->Release();
+					pRow->Release();
+					::SysFreeString(rowXPathFormat);
+
+					return false;
+				}
+
 				if (FAILED(pRow->get_item(i, &pCellNode)))
 				{
 					DeallocNewTable(pvTable, ppwszSheetList[dwSheetIndex]);
@@ -312,21 +324,13 @@ bool CTable::InitializeFromXmlDoc(CNtlXMLDoc* pXmlDoc, WCHAR* pwszFileName, bool
 					}
 					else
 					{
+						bstr = L"";
+						SetTableData(pvTable, ppwszSheetList[dwSheetIndex], &(mapIt->second), bstr);
+						
 						continue;
 					}
 				}
-
-				std::map<long, std::wstring>::iterator mapIt;
-				mapIt = mapAttributeMapping.find(i);
-				if (mapAttributeMapping.end() == mapIt)
-				{
-					DeallocNewTable(pvTable, ppwszSheetList[dwSheetIndex]);
-					pCellNode->Release();
-					pRow->Release();
-					::SysFreeString(rowXPathFormat);
-
-					return false;
-				}
+				
 
 				if (FAILED(pCellNode->get_firstChild(&pDataNode)))
 				{
@@ -354,6 +358,9 @@ bool CTable::InitializeFromXmlDoc(CNtlXMLDoc* pXmlDoc, WCHAR* pwszFileName, bool
 					}
 					else
 					{
+						bstr = L"";
+						SetTableData(pvTable, ppwszSheetList[dwSheetIndex], &(mapIt->second), bstr);
+						
 						continue;
 					}
 				}
@@ -368,13 +375,14 @@ bool CTable::InitializeFromXmlDoc(CNtlXMLDoc* pXmlDoc, WCHAR* pwszFileName, bool
 
 					return false;
 				}
-
+	
 				SetTableData(pvTable, ppwszSheetList[dwSheetIndex], &(mapIt->second), bstr);
 
 				::SysFreeString(bstr);
 				pDataNode->Release();
 				pCellNode->Release();
 			}
+
 			pRow->Release();
 
 			if (false == bIsEndOfSheet)

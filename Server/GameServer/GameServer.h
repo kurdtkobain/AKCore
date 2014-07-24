@@ -73,6 +73,23 @@ struct sSERVERCONFIG
 	int				PlayerSaveStatsSaveOnlyOnLogout;
 };
 
+enum eREWARD_TYPE
+{
+	eREWARD_TYPE_NORMAL_ITEM,
+	eREWARD_TYPE_QUEST_ITEM,
+	eREWARD_TYPE_EXP,
+	eREWARD_TYPE_SKILL,
+	eREWARD_TYPE_ZENY,
+	eREWARD_TYPE_CHANGE_CLASS,
+	eREWARD_TYPE_BUFF,
+	eREWARD_TYPE_PROBABILITY,
+	eREWARD_TYPE_REPUTATION,
+	eREWARD_TYPE_CHANGE_ADULT,
+	eREWARD_TYPE_GET_CONVERT_CLASS_RIGHT,
+
+	eREWARD_TYPE_INVALID				= 0xffffffff
+};
+
 const DWORD					MAX_NUMOF_GAME_CLIENT = 5;
 const DWORD					MAX_NUMOF_SERVER = 1;
 const DWORD					MAX_NUMOF_SESSION = MAX_NUMOF_GAME_CLIENT + MAX_NUMOF_SERVER;
@@ -220,6 +237,8 @@ public:
 	void						SendCharSkillCasting(CNtlPacket * pPacket, CGameServer * app, int _skillid);
  	void						SendCharSkillTransformCancel(CNtlPacket * pPacket, CGameServer * app);
 	void						SendSocialSkillRes(CNtlPacket *pPacket, CGameServer * app);
+	void						SendRpCharge(CNtlPacket *pPacket, CGameServer * app);
+	void						SendCharSkillBuffDrop(CNtlPacket *pPacket, CGameServer * app);
 
 	// QuickSlots
 	void						SendCharUpdQuickSlot(CNtlPacket * pPacket, CGameServer * app);
