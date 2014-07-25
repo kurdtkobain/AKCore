@@ -556,7 +556,6 @@ public:
 		USERIT it = m_userList.find( CNtlString(lpszUserID) );
 		if( it == m_userList.end() )
 			return false;
-
 		return true;
 	}
 	void						UserBroadcast(CNtlPacket * pPacket)
@@ -572,7 +571,6 @@ public:
 		{
 			if(it->second->plr->GetAvatarandle() == handle)
 			{
-				printf("%d %d\n", handle, it->second->plr->GetAvatarandle());
 				memcpy(requested, it->second->plr, sizeof (PlayerInfos));
 				break;
 			}
@@ -601,42 +599,54 @@ public:
 
 					packet.SetPacketLen( sizeof(sGU_OBJECT_CREATE) );
 					pSession->PushPacket(&packet);
-					//g_pApp->Send( this->GetHandle(), &packet );
-
-				//it->second->PushPacket( pPacket );
 				}
 			}
 		}
 	}
 
-
-
-void		InsertMonsterIntoAllMyMonsterLists(CNtlPacket * pPacket, TBLIDX MonsterSpawnID, CNtlVector Position, TBLIDX MonsterID)
-{
-
-	for( USERIT it = m_userList.begin(); it != m_userList.end(); it++ )
+	void		InsertMonsterIntoAllMyMonsterLists(CNtlPacket * pPacket, TBLIDX MonsterSpawnID, CNtlVector Position, TBLIDX MonsterID)
 	{
-		it->second->InsertIntoMyMonsterList(MonsterSpawnID, Position, MonsterID);
+		for( USERIT it = m_userList.begin(); it != m_userList.end(); it++ )
+		{
+			it->second->InsertIntoMyMonsterList(MonsterSpawnID, Position, MonsterID);
+		}
 	}
-}
-void		RemoveMonsterFromAllMyMonsterLists(TBLIDX MonsterSpawnID)
-{
-
-	for( USERIT it = m_userList.begin(); it != m_userList.end(); it++ )
+	void		RemoveMonsterFromAllMyMonsterLists(TBLIDX MonsterSpawnID)
 	{
-		it->second->RemoveFromMyMonsterList(MonsterSpawnID);
+		for( USERIT it = m_userList.begin(); it != m_userList.end(); it++ )
+		{
+			it->second->RemoveFromMyMonsterList(MonsterSpawnID);
+		}
 	}
-}
-
-
-
-
-
-
+	bool			AddNewZennyAmount(int handle, int amount)
+	{
+		if( false == amount_zenny.insert( ZENNYAMOUNTVAL(handle, amount)).second )
+		{
+			return false;
+		}
+		return true;		
+	}
+	void			RemoveZenny(const int handle)
+	{
+		amount_zenny.erase(handle);
+	}
+	int				FindZenny(const int handle)
+	{
+		int amount_ = 0;
+		ZENNYAMOUNTIT it = amount_zenny.find(handle);
+		if( it == amount_zenny.end() )
+			return -1;
+		else
+			return amount_zenny[handle];
+	}
 	typedef std::map<CNtlString, CClientSession*> USERLIST;
 	typedef USERLIST::value_type USERVAL;
 	typedef USERLIST::iterator USERIT;
-
 	USERLIST					m_userList;
+
+	typedef std::map<int, int> ZENNYAMOUNT;
+	typedef ZENNYAMOUNT::value_type ZENNYAMOUNTVAL;
+	typedef ZENNYAMOUNT::iterator ZENNYAMOUNTIT;
+	ZENNYAMOUNT					amount_zenny;
 };
 

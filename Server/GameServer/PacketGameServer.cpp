@@ -2138,6 +2138,7 @@ void	CClientSession::SendMobLoot(CNtlPacket * pPacket, CGameServer * app, RwUInt
 		
 			packet.SetPacketLen( sizeof(sGU_OBJECT_CREATE) );
 			g_pApp->Send( this->GetHandle() , &packet );
+			app->AddNewZennyAmount(res->handle, mob->dwDrop_Zenny);
 		}
 			/*res2->handle = AcquireSerialId();
 			res2->sObjectInfo.objType = OBJTYPE_DROPITEM;
@@ -3503,14 +3504,46 @@ void	CClientSession::SendZennyPickUpReq(CNtlPacket * pPacket, CGameServer * app)
 	sUG_ZENNY_PICK_REQ* req = (sUG_ZENNY_PICK_REQ *)pPacket->GetPacketData();
 	CNtlPacket packet(sizeof(sGU_ZENNY_PICK_RES));
 	sGU_ZENNY_PICK_RES * res = (sGU_ZENNY_PICK_RES *)packet.GetPacketData();
-	printf("%d = req->handle, %d = req->byAvatarType\n", req->handle,req->byAvatarType );
-	res->bSharedInParty = false; //this->plr->isInParty();
-	res->dwAcquisitionZenny = 0;
-	res->dwBonusZenny = 0;
-	res->dwOriginalZenny = 0;
-	res->dwZenny = 0;
+	
+	int amnt = app->FindZenny(req->handle);
+
+	if (amnt > 0)
+	{
+		app->RemoveZenny(req->handle);
+		res->bSharedInParty = false; //this->plr->isInParty();
+		res->dwBonusZenny = rand() % 100;
+		//res->dwOriginalZenny = amnt;
+		this->plr->pcProfile->dwZenny += (amnt + res->dwBonusZenny);
+		res->dwZenny = this->plr->pcProfile->dwZenny;
+		res->dwAcquisitionZenny = res->dwZenny;
+		res->wResultCode = ZENNY_CHANGE_TYPE_PICK;
+
+		app->qry->SetPlusMoney(this->plr->pcProfile->charId, res->dwAcquisitionZenny);
+
+		CNtlPacket packet3(sizeof(sGU_OBJECT_DESTROY));
+		sGU_OBJECT_DESTROY * res3 = (sGU_OBJECT_DESTROY *)packet3.GetPacketData();
+		res3->handle = req->handle;
+		res3->wOpCode = GU_OBJECT_DESTROY;
+		packet3.SetPacketLen( sizeof(sGU_OBJECT_DESTROY) );
+		g_pApp->Send( this->GetHandle() , &packet3 );
+
+		CNtlPacket packet5(sizeof(sGU_UPDATE_CHAR_ZENNY));
+ 		sGU_UPDATE_CHAR_ZENNY * res5 = (sGU_UPDATE_CHAR_ZENNY *)packet5.GetPacketData();
+		res5->dwZenny = this->plr->pcProfile->dwZenny;//by analazying this is the ammount...				
+ 		res5->bIsNew = true;
+ 		res5->handle = this->GetavatarHandle();
+ 		res5->byChangeType = 0;//never mind
+ 		res5->wOpCode = GU_UPDATE_CHAR_ZENNY;
+ 		packet5.SetPacketLen(sizeof(sGU_UPDATE_CHAR_ZENNY));
+ 		g_pApp->Send(this->GetHandle(), &packet5);
+	}
+	else
+	{
+		res->wResultCode = GAME_FAIL;
+	}
 	res->wOpCode = GU_ZENNY_PICK_RES;
-	res->wResultCode = ZENNY_CHANGE_TYPE_PICK;	
+	packet.SetPacketLen( sizeof(sGU_ZENNY_PICK_RES) );
+	g_pApp->Send( this->GetHandle(), &packet );
 }
 void	CClientSession::SendFreeBattleReq(CNtlPacket * pPacket, CGameServer * app)
 {
@@ -3621,23 +3654,18 @@ void CClientSession::SendCharSkillTransformCancel(CNtlPacket * pPacket, CGameSer
 
  void CClientSession::SendSocialSkillRes(CNtlPacket * pPacket, CGameServer * app)
  {
-	/* sUG_SOCIAL_ACTION * req = (sUG_SOCIAL_ACTION*)pPacket->GetPacketData();
+	/*sUG_SOCIAL_ACTION * req = (sUG_SOCIAL_ACTION*)pPacket->GetPacketData();
  	CNtlPacket packet(sizeof(sGU_SOCIAL_ACTION));
  	sGU_SOCIAL_ACTION* res =(sGU_SOCIAL_ACTION*)packet.GetPacketData();
-	printf("Req Social Action ID %d \n", req->socialActionId);
-	req->wOpCode = UG_SOCIAL_ACTION;
-	printf("Req Social Action OpCode %d \n", req->wOpCode);
-	res->hSubject = this->plr->GetAvatarandle();
+
+	res->hSubject = this->GetavatarHandle();
 	res->socialActionId = req->socialActionId;
 	res->wOpCode = GU_SOCIAL_ACTION;
-	printf("Res Social Action ID %d \n", res->socialActionId);
-	printf("Res Social Action Subject %d \n", res->hSubject);
-	printf("Res Social Action OpCode %d \n", res->wOpCode);
+
 	packet.SetPacketLen(sizeof(GU_SOCIAL_ACTION));
 	g_pApp->Send(this->GetHandle(), &packet);
-	printf("Packet Sent");
-	app->UserBroadcastothers(&packet, this);
-	printf("Broadcast Sent");*/
+	//app->UserBroadcastothers(&packet, this);
+	this->gsf->printOk("Sended");*/
  }
 
  void CClientSession::SendRpCharge(CNtlPacket *pPacket, CGameServer * app)
@@ -3652,7 +3680,6 @@ void CClientSession::SendCharSkillTransformCancel(CNtlPacket * pPacket, CGameSer
 
 	g_pApp->Send(this->GetHandle(), &packet);
 	app->UserBroadcastothers(&packet, this);
-	 
  }
 
 //-----------------------------------------------------------------//
