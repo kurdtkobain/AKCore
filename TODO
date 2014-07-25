@@ -16,6 +16,14 @@ FIX / EDIT
 	-FIX LEVELUP CRASH MULTIPLAYER (client crash)
 	-FIX CORRECT LP AFTER SKILL / ATTACK
 
+	PLAYER STATS:
+	-----
+	-WRITE DIFFERENT FUNCTION:
+	v1:
+		-Set all the stats at the bases stats at the beggining + adding to it STR SOL ENG ETC
+		-Adding to this new stats the items stats (physical offence = 30 + STR so physical offence become 54)
+		-Adding to the calculated stats the buff stats (+ 10% STR so physical offence = 30 + BUFF physical offence become 40)
+	-----
 
 DONE:
 -CHECK LEVEL (BUY / EQUIPE / LEARN SPELL)
