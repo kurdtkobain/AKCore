@@ -59,6 +59,8 @@ public:
 	// PLAYER STAT CALCULE
 	void		calculeMyStat(CGameServer * app);
 	void		setZero();
+	void		UpdateAttribute(RwUInt32 Handle, RwUInt32 Attribute, RwUInt32 Amount);
+
 	void		StoreHandle(const RwUInt32 _avatarHandle){this->avatarHandle = _avatarHandle;};
 	RwUInt32	GetAvatarandle(){return this->avatarHandle;};
 	int			getNumberOfRPBall(){return this->CurRPBall;};

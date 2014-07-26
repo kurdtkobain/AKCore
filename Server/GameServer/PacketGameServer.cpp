@@ -2541,13 +2541,13 @@ void CClientSession::SendItemMoveReq(CNtlPacket * pPacket, CGameServer * app)
 			{
 				res->wResultCode = GAME_SUCCESS;
 				app->qry->UpdateItemPlaceAndPos(uniqueID, req->byDestPlace, req->byDestPos);
-				this->plr->calculeMyStat(app);
 				if(req->byDestPlace == 7)
 				{
 				eq->byPos = req->byDestPos;
 				eq->handle = this->plr->GetAvatarandle();
 				eq->sItemBrief.tblidx = ID;
 				eq->wOpCode = GU_UPDATE_ITEM_EQUIP;
+				this->plr->calculeMyStat(app);
 				}
 				if(req->bySrcPlace == 7)
 				{
@@ -2555,6 +2555,7 @@ void CClientSession::SendItemMoveReq(CNtlPacket * pPacket, CGameServer * app)
 					eq->sItemBrief.tblidx = INVALID_TBLIDX;
 					eq->byPos = req->bySrcPos;
 					eq->wOpCode = GU_UPDATE_ITEM_EQUIP;
+					this->plr->calculeMyStat(app);
 				}
 
 			}

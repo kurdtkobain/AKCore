@@ -215,6 +215,8 @@ void		PlayerInfos::setZero()
 
 void		PlayerInfos::calculeMyStat(CGameServer * app)
 {
+
+
 	app->db->prepare("SELECT * FROM items WHERE owner_ID = ? AND place=7");
 	app->db->setInt(1, this->pcProfile->charId);
 	app->db->execute();
@@ -224,17 +226,35 @@ void		PlayerInfos::calculeMyStat(CGameServer * app)
 	{
 		sITEM_TBLDAT* pItemData = (sITEM_TBLDAT*) itemTbl->FindData(app->db->getInt("tblidx"));
 		if (pItemData->wPhysical_Offence < 65535 && pItemData->wPhysical_Offence > 0)
+		{
 			this->pcProfile->avatarAttribute.wLastPhysicalOffence += pItemData->wPhysical_Offence;
+			UpdateAttribute(this->GetAvatarandle(), ATTRIBUTE_TO_UPDATE_PHYSICAL_OFFENCE_LAST, (this->pcProfile->avatarAttribute.wLastPhysicalOffence + pItemData->wPhysical_Offence));
+		}
 		if (pItemData->wPhysical_Defence < 65535 && pItemData->wPhysical_Defence > 0)
+		{
 			this->pcProfile->avatarAttribute.wLastPhysicalDefence += pItemData->wPhysical_Defence;
+			UpdateAttribute(this->GetAvatarandle(), ATTRIBUTE_TO_UPDATE_PHYSICAL_DEFENCE_LAST, (this->pcProfile->avatarAttribute.wLastPhysicalDefence + pItemData->wPhysical_Defence));
+		}
 		if (pItemData->wEnergy_Offence < 65535 && pItemData->wEnergy_Offence > 0)
+		{
 			this->pcProfile->avatarAttribute.wLastEnergyOffence += pItemData->wEnergy_Offence;
+			UpdateAttribute(this->GetAvatarandle(), ATTRIBUTE_TO_UPDATE_ENERGY_OFFENCE_LAST, (this->pcProfile->avatarAttribute.wLastEnergyOffence + pItemData->wEnergy_Offence));
+		}
 		if (pItemData->wEnergy_Defence < 65535 && pItemData->wEnergy_Defence > 0)
+		{
 			this->pcProfile->avatarAttribute.wLastEnergyDefence += pItemData->wEnergy_Defence;
+			UpdateAttribute(this->GetAvatarandle(), ATTRIBUTE_TO_UPDATE_ENERGY_DEFENCE_LAST, (this->pcProfile->avatarAttribute.wLastEnergyDefence + pItemData->wEnergy_Defence));
+		}
 		if (pItemData->wAttack_Speed_Rate < 65535 && pItemData->wAttack_Speed_Rate > 0)
+		{	
 			this->pcProfile->avatarAttribute.wLastAttackSpeedRate += pItemData->wAttack_Speed_Rate;
+			UpdateAttribute(this->GetAvatarandle(), ATTRIBUTE_TO_UPDATE_ATTACK_RATE_LAST, (this->pcProfile->avatarAttribute.wLastAttackSpeedRate + pItemData->wAttack_Speed_Rate));
+		}
 		if (pItemData->fAttack_Range_Bonus < 65535 && pItemData->fAttack_Range_Bonus > 0)
+		{
 			this->pcProfile->avatarAttribute.fLastAttackRange += pItemData->fAttack_Range_Bonus;
+			UpdateAttribute(this->GetAvatarandle(), ATTRIBUTE_TO_UPDATE_ATTACK_RANGE_LAST, (this->pcProfile->avatarAttribute.fLastAttackRange + pItemData->fAttack_Range_Bonus));
+		}
 		pItemData->dwPhysical_OffenceUpgrade;
 		pItemData->dwPhysical_DefenceUpgrade;
 		pItemData->dwEnergy_OffenceUpgrade;
@@ -275,18 +295,25 @@ void		PlayerInfos::calculeMyStat(CGameServer * app)
 	app->db->setInt(6,  this->pcProfile->charId);
 	app->db->execute();
 
-	CNtlPacket packet(sizeof(sGU_AVATAR_ATTRIBUTE_UPDATE));
-    sGU_AVATAR_ATTRIBUTE_UPDATE * res = (sGU_AVATAR_ATTRIBUTE_UPDATE *)packet.GetPacketData();
-
-	test(101, &res->abyFlexibleField, &this->pcProfile->avatarAttribute);
-	res->byAttributeTotalCount = 101;
-	res->hHandle = this->avatarHandle;
-	res->wOpCode = GU_AVATAR_ATTRIBUTE_UPDATE;
-	packet.SetPacketLen(sizeof(sGU_AVATAR_ATTRIBUTE_UPDATE));
-	g_pApp->Send( this->MySession , &packet );
+	
 
 	app->db->prepare("SELECT * FROM characters WHERE CharID = ?");
 	app->db->setInt(1, this->pcProfile->charId);
 	app->db->execute();
 	app->db->fetch();
+}
+
+
+void PlayerInfos::UpdateAttribute(RwUInt32 Handle, RwUInt32 Attribute, RwUInt32 Amount)
+{
+        CNtlPacket packet(sizeof(sGU_AVATAR_ATTRIBUTE_UPDATE));
+        sGU_AVATAR_ATTRIBUTE_UPDATE * res = (sGU_AVATAR_ATTRIBUTE_UPDATE *)packet.GetPacketData();
+
+        res->wOpCode = GU_AVATAR_ATTRIBUTE_UPDATE;
+        res->hHandle = Handle;
+        res->byAttributeTotalCount = 1;
+        res->abyFlexibleField[Attribute] = Amount;
+
+        packet.SetPacketLen(sizeof(sGU_AVATAR_ATTRIBUTE_UPDATE));
+        int rc = g_pApp->Send(this->GetAvatarandle(), &packet);
 }
