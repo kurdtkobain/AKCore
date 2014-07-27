@@ -163,6 +163,8 @@ public:
 	void						SendCharMoveSync(CNtlPacket * pPacket, CGameServer * app);
 	void						SendCharChangeHeading(CNtlPacket * pPacket, CGameServer * app);
 	void						SendCharJump(CNtlPacket * pPacket, CGameServer * app);
+	void						SendCharDashKeyBoard(CNtlPacket * pPacket, CGameServer * app);
+	void						SendCharDashMouse(CNtlPacket * pPacket, CGameServer * app);
 	void						SendCharChangeDirOnFloating(CNtlPacket * pPacket, CGameServer * app);
 	void						SendCharFalling(CNtlPacket * pPacket, CGameServer * app);
 	void						SendCharExitReq(CNtlPacket * pPacket, CGameServer * app);

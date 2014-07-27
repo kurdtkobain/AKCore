@@ -43,7 +43,7 @@ int CClientSession::OnDispatch(CNtlPacket * pPacket)
 			CClientSession::SendAvatarCharInfo(pPacket, app);
 			CClientSession::SendAvatarItemInfo(pPacket, app);
 			CClientSession::SendAvatarSkillInfo(pPacket, app);			
-			//CClientSession::SendAvatarHTBInfo(pPacket, app);
+			CClientSession::SendAvatarHTBInfo(pPacket, app);
 			CClientSession::SendSlotInfo(pPacket, app);
 			CClientSession::SendAvatarInfoEnd(pPacket);
 		}
@@ -117,11 +117,13 @@ int CClientSession::OnDispatch(CNtlPacket * pPacket)
 		case UG_CHAR_DASH_KEYBOARD:
 		{
 			printf("--- UG_CHAR_DASH_KEYBOARD --- \n");
+			CClientSession::SendCharDashKeyBoard(pPacket, app);
 		}
 			break;
 		case UG_CHAR_DASH_MOUSE:
 		{
 			printf("--- UG_CHAR_DASH_MOUSE --- \n");
+			CClientSession::SendCharDashMouse(pPacket, app);
 		}
 			break;
 		case UG_CHAR_JUMP:

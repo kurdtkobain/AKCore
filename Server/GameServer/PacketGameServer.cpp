@@ -345,7 +345,7 @@ void CClientSession::SendAvatarHTBInfo(CNtlPacket * pPacket, CGameServer* app)
 	CNtlPacket packet(sizeof(sGU_AVATAR_HTB_INFO));
 	sGU_AVATAR_HTB_INFO * res = (sGU_AVATAR_HTB_INFO *)packet.GetPacketData();
 	res->wOpCode = GU_AVATAR_HTB_INFO;
-	res->byHTBSkillCount = 2;//Always TWO per Race/Class
+	
 	CSkillTable * pSkillTable = app->g_pTableContainer->GetSkillTable();
 	while (app->db->fetch())
 	{
@@ -359,12 +359,12 @@ void CClientSession::SendAvatarHTBInfo(CNtlPacket * pPacket, CGameServer* app)
 			res->aHTBSkillnfo[i].bySlotId = app->db->getInt("SlotID");
 			res->aHTBSkillnfo[i].dwTimeRemaining = app->db->getInt("TimeRemaining");
 			res->aHTBSkillnfo[i].skillId = pSkillData->tblidx;
-			packet.AdjustPacketLen(sizeof(sNTLPACKETHEADER)+(2 * sizeof(BYTE)) + (res->byHTBSkillCount * sizeof(sITEM_PROFILE)));
-			g_pApp->Send(this->GetHandle(), &packet);
-
 			i++;
 		}		
 	}
+	res->byHTBSkillCount = i;
+	packet.SetPacketLen(sizeof(sGU_AVATAR_HTB_INFO));
+	g_pApp->Send(this->GetHandle(), &packet);
 }
 //--------------------------------------------------------------------------------------//
 //		SendCharRevivalRequest
@@ -3938,6 +3938,54 @@ void CClientSession::SendRideOffBusRes(CNtlPacket * pPacket, CGameServer * app)
 	g_pApp->Send(this->GetHandle(), &packet);
 }
 
+void CClientSession::SendCharDashKeyBoard(CNtlPacket * pPacket, CGameServer * app)
+{
+	sUG_CHAR_DASH_KEYBOARD * req = (sUG_CHAR_DASH_KEYBOARD*)pPacket->GetPacketData();
+
+	CNtlPacket packet(sizeof(sGU_UPDATE_CHAR_EP));
+	sGU_UPDATE_CHAR_EP * res = (sGU_UPDATE_CHAR_EP*)packet.GetPacketData();
+	
+	//Response
+	this->plr->pcProfile->wCurEP = (this->plr->pcProfile->wCurEP - 50);
+	this->plr->sCharState->sCharStateBase.vCurDir.x = req->vCurDir.x;
+	this->plr->sCharState->sCharStateBase.vCurDir.z = req->vCurDir.z;
+	this->plr->sCharState->sCharStateBase.vCurLoc.x = req->vCurLoc.x;
+	this->plr->sCharState->sCharStateBase.vCurLoc.z = req->vCurLoc.z;
+	this->plr->sCharState->sCharStateBase.vCurLoc.y = req->vCurLoc.y;
+	res->handle = this->GetavatarHandle();
+	res->wOpCode = GU_UPDATE_CHAR_EP;
+	res->wCurEP = this->plr->pcProfile->wCurEP;//Or some number to get right xD
+	res->wMaxEP = this->plr->pcProfile->avatarAttribute.wBaseMaxEP;
+
+	//this->plr->SavePlayerData();//Always save after update ? or no?
+
+	packet.SetPacketLen(sizeof(sGU_UPDATE_CHAR_EP));
+	g_pApp->Send(this->GetHandle(), &packet);
+
+}
+void CClientSession::SendCharDashMouse(CNtlPacket * pPacket, CGameServer * app)
+{ 
+	sUG_CHAR_DASH_MOUSE * req = (sUG_CHAR_DASH_MOUSE*)pPacket->GetPacketData();
+	CNtlPacket packet(sizeof(sGU_UPDATE_CHAR_EP));
+	sGU_UPDATE_CHAR_EP * res = (sGU_UPDATE_CHAR_EP*)packet.GetPacketData();
+
+	//Response
+	this->plr->pcProfile->wCurEP = (this->plr->pcProfile->wCurEP - 50);
+	this->plr->sCharState->sCharStateBase.vCurDir.x = req->vCurDir.x;
+	this->plr->sCharState->sCharStateBase.vCurDir.z = req->vCurDir.z;
+	this->plr->sCharState->sCharStateBase.vCurLoc.x = req->vCurLoc.x;
+	this->plr->sCharState->sCharStateBase.vCurLoc.z = req->vCurLoc.z;
+	this->plr->sCharState->sCharStateBase.vCurLoc.y = req->vCurLoc.y;
+	res->handle = this->GetavatarHandle();
+	res->wOpCode = GU_UPDATE_CHAR_EP;
+	res->wCurEP = this->plr->pcProfile->wCurEP;//Or some number to get right xD
+	res->wMaxEP = this->plr->pcProfile->avatarAttribute.wBaseMaxEP;
+
+	//this->plr->SavePlayerData();//Always save after update ? or no?
+
+	packet.SetPacketLen(sizeof(sGU_UPDATE_CHAR_EP));
+	g_pApp->Send(this->GetHandle(), &packet);	
+}
 void CClientSession::SendBusLocation(CNtlPacket * pPacket, CGameServer * app)
 {
 	CNtlPacket packet(sizeof(sGU_BUS_LOCATION_NFY));
