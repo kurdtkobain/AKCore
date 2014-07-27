@@ -76,6 +76,8 @@ void CClientSession::CheckPlayerStat(CGameServer * app, sPC_TBLDAT *pTblData, in
 	WORD leveleng = pTblData->byEng + (pTblData->fLevel_Up_Eng * level);
 	WORD EP = basicenergy + ((leveleng * level) * 4.2);
 
+	printf("BaseMaxLP: %d, BaseMaxEP: %d, BaseMaxRP: %d, LP: %d\n", pTblData->wBasic_LP,pTblData->wBasic_EP,pTblData->wBasic_RP, LP);
+	
 	app->db->prepare("UPDATE characters SET BaseMaxLP = ?, BaseMaxEP = ?, BaseMaxRP = ?, BaseDodgeRate = ?, BaseAttackRate = ?, BaseBlockRate = ?, BasePhysicalCriticalRate = ?, BaseEnergyCriticalRate = ? WHERE CharID = ?");
 	app->db->setInt(1,LP);
 	app->db->setInt(2, EP);
@@ -262,9 +264,20 @@ void CClientSession::SendSlotInfo(CNtlPacket * pPacket, CGameServer * app)
 	int i = 0;
 	int SkillOrItem = 0;
 	int slotID = 0;
+	std::string query;
+	
 	while (i < 48)
 	{
-		std::string query = "slotId_" + std::to_string((double long)i);
+
+		if (_MSC_VER == 1600)
+		{
+			query = "slotId_" + std::to_string((double long)i);
+		}
+		else
+		{
+			query = "slotId_" + std::to_string(i);
+			printf("LOading slot %s\n", query.c_str());
+		}
 		SkillOrItem = app->db->getInt(query.c_str());
 		res->asQuickSlotData[slotID].bySlot = 255;
 		res->asQuickSlotData[slotID].tblidx = 0;		
@@ -842,7 +855,7 @@ void CClientSession::RecvServerCommand(CNtlPacket * pPacket, CGameServer * app)
 				lexer.PopToPeek();
 				strToken = lexer.PeekNextToken(NULL, &iLine);
 				unsigned int uiTblId = (unsigned int)atof(strToken.c_str());
-			//	SendCharLearnSkillRes(uiTblId);
+				//CClientSession::SendCharLearnSkillReq;
 				return;
 			}
 			else if(strToken == "@learnhtb")
@@ -2000,7 +2013,7 @@ void CClientSession::RemoveAttackBegin(RwUInt32 uiSerialId, RwUInt32 m_uiTargetS
 void CClientSession::SendCharActionAttack(RwUInt32 uiSerialId, RwUInt32 m_uiTargetSerialId, CNtlPacket * pPacket)
 {
 	CGameServer * app = (CGameServer*)NtlSfxGetApp();
-	static RwUInt8 byChainAttack = 0;
+	static RwUInt8 byChainAttack = 1;
 	int CurHP = 0;
 	RwBool bDamageApply = true;
 
@@ -2013,7 +2026,7 @@ void CClientSession::SendCharActionAttack(RwUInt32 uiSerialId, RwUInt32 m_uiTarg
 	res->dwLpEpEventId = 255;
 	res->bChainAttack = false;
 	res->byBlockedAction = 255;
-
+	float formula;
 	if (IsMonsterInsideList(m_uiTargetSerialId) == true)
 	{
 		MobActivity::CreatureData *lol = app->mob->GetMobByHandle(m_uiTargetSerialId);
@@ -2022,7 +2035,7 @@ void CClientSession::SendCharActionAttack(RwUInt32 uiSerialId, RwUInt32 m_uiTarg
 			CurHP = (RwUInt32)lol->CurLP;
 		}
 	}
-	/*else if (IsMonsterInsideList(m_uiTargetSerialId) == false)
+	/*else
 	{
 		app->db->prepare("SELECT CurLP FROM characters WHERE onlineID = ?");
 		app->db->setInt(1, m_uiTargetSerialId);
@@ -2030,34 +2043,50 @@ void CClientSession::SendCharActionAttack(RwUInt32 uiSerialId, RwUInt32 m_uiTarg
 		app->db->fetch();
 		m_iCurrentHp = app->db->getInt("CurLP");
 	}*/
-	res->wAttackResultValue = 100;
+	 
+	if (this->plr->pcProfile->byLevel <= 5)
+		formula = rand() % 25 + 5;
+	else
+	formula = (this->plr->pcProfile->avatarAttribute.byLastStr * this->plr->pcProfile->byLevel) * .15 ;
+	res->wAttackResultValue = formula;
 	res->fReflectedDamage = 0;
 	res->vShift.x = this->plr->GetPosition().x;
 	res->vShift.y = this->plr->GetPosition().y;
 	res->vShift.z = this->plr->GetPosition().z;
 
 	res->byAttackSequence = byChainAttack;//rand()%6;
-
+	if (res->byAttackSequence > 1)
+		res->bChainAttack = true;
+	else
+		res->bChainAttack = false;
 	if(res->byAttackSequence == 6)
 	{
-		byChainAttack = 0;
+		byChainAttack = 1;
 		if(rand()%2)
 		{
+			bDamageApply = true;
 			res->byAttackResult = BATTLE_ATTACK_RESULT_KNOCKDOWN;
 		}
 		else
 		{
+			bDamageApply = true;
 			res->byAttackResult = BATTLE_ATTACK_RESULT_SLIDING;
 		}
 	}
 	else
 	{
 		RwInt32 iRandValue = rand()%5;
-		if(iRandValue <= 2)
+		if (iRandValue  <= 2)
 		{
 			res->byAttackResult = BATTLE_ATTACK_RESULT_HIT;
 			bDamageApply = true;
 		}
+		else if (iRandValue == 5)
+		{
+			bDamageApply = true;
+			res->byAttackResult = BATTLE_ATTACK_RESULT_CRITICAL_HIT;
+		}
+
 		else if(iRandValue == 3)
 		{
 			bDamageApply = false;
@@ -2065,8 +2094,9 @@ void CClientSession::SendCharActionAttack(RwUInt32 uiSerialId, RwUInt32 m_uiTarg
 		}
 		else
 		{
-			bDamageApply = false;
+			bDamageApply = true;
 			res->byAttackResult = BATTLE_ATTACK_RESULT_BLOCK;
+			res->byBlockedAction = 1;
 		}
 	}
 	packet.SetPacketLen( sizeof(sGU_CHAR_ACTION_ATTACK) );
@@ -2077,7 +2107,9 @@ void CClientSession::SendCharActionAttack(RwUInt32 uiSerialId, RwUInt32 m_uiTarg
 	if(bDamageApply == true)
 	{
 		this->gsf->printOk("OK");
-		CurHP -= res->wAttackResultValue;
+		printf("LP: %d, damage: %d\n", CurHP, res->wAttackResultValue * 2);
+		CurHP -= (res->wAttackResultValue * 2);
+		printf("LP: %d, damage: %d\n", CurHP, res->wAttackResultValue * 2);
 	}
 	else if (bDamageApply == false)
 		this->gsf->printError("DAMAGES NOT SENDED");
@@ -2089,6 +2121,7 @@ void CClientSession::SendCharActionAttack(RwUInt32 uiSerialId, RwUInt32 m_uiTarg
 		this->gsf->printOk("DIE MOTHER FUCKER");
 		CurHP = 0;
 		SendCharUpdateFaintingState(pPacket, app, uiSerialId, m_uiTargetSerialId);
+		byChainAttack = 1;
 	}
 	else
 		SendCharUpdateLp(pPacket, app, CurHP, m_uiTargetSerialId);
@@ -2294,8 +2327,8 @@ void CClientSession::SendCharSkillAction(CNtlPacket * pPacket, CGameServer * app
 		{
 			lol->FightMode = true;
 			newLP = (float)lol->CurLP;
-			newLP -= res->aSkillResult[0].effectResult1.fResultValue;
-			printf("LP: %f, damage: %f\n", newLP, res->aSkillResult[0].effectResult1.fResultValue);
+			newLP -= res->aSkillResult[0].effectResult1.DD_DOT_fDamage +100 ;
+			printf("LP: %f, damage: %f\n", newLP, res->aSkillResult[0].effectResult1.DD_DOT_fDamage +100);
 			if (newLP <= 0 || (newLP > lol->MaxLP))
 			{
 				lol->IsDead = true;
@@ -3435,7 +3468,7 @@ void CClientSession::SendPlayerLevelUpCheck(CGameServer * app, int exp)
 		CNtlPacket packet2(sizeof(sGU_UPDATE_CHAR_SP));
  		sGU_UPDATE_CHAR_SP * res2 = (sGU_UPDATE_CHAR_SP *)packet2.GetPacketData();
 		this->plr->pcProfile->dwCurExp -= this->plr->pcProfile->dwMaxExpInThisLevel;
-		this->plr->pcProfile->dwMaxExpInThisLevel += this->plr->pcProfile->dwMaxExpInThisLevel;
+		this->plr->pcProfile->dwMaxExpInThisLevel += (this->plr->pcProfile->dwMaxExpInThisLevel / 2);
 		CNtlPacket packet1(sizeof(sGU_UPDATE_CHAR_LEVEL));	
 		sGU_UPDATE_CHAR_LEVEL * response1 = (sGU_UPDATE_CHAR_LEVEL*)packet1.GetPacketData();
 		this->plr->pcProfile->byLevel++;

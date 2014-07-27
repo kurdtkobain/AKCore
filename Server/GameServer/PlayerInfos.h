@@ -133,14 +133,14 @@ public:
 		this->pcProfile->avatarAttribute.byBaseFoc += this->fLevel_Up_Foc;
 		this->pcProfile->avatarAttribute.byBaseSol += this->fLevel_Up_Sol;
 		this->pcProfile->avatarAttribute.byBaseStr += this->fLevel_Up_Str;
+
+		
 		this->pcProfile->avatarAttribute.wBaseMaxRP += this->byLevel_Up_RP;
-
-		this->pcProfile->avatarAttribute.wBaseMaxEP = (this->pcProfile->avatarAttribute.wBaseMaxEP + this->byLevel_Up_EP);
+				this->pcProfile->avatarAttribute.wBaseMaxEP = (this->pcProfile->avatarAttribute.wBaseMaxEP + this->byLevel_Up_EP);
 		this->pcProfile->avatarAttribute.wBaseMaxEP = this->pcProfile->avatarAttribute.wBaseMaxEP + (this->pcProfile->avatarAttribute.byLastEng * 4.2);
-
+		
 		this->pcProfile->avatarAttribute.wBaseMaxLP = (this->pcProfile->avatarAttribute.wBaseMaxLP + this->byLevel_Up_LP);
 		this->pcProfile->avatarAttribute.wBaseMaxLP = this->pcProfile->avatarAttribute.wBaseMaxLP + (this->pcProfile->avatarAttribute.byLastCon* 4.7);
-
 		if (this->pcProfile->byLevel == 5)
 			this->CurRPBall = 1;
 		if (this->pcProfile->byLevel == 15)
