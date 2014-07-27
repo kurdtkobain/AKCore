@@ -42,7 +42,8 @@ int CClientSession::OnDispatch(CNtlPacket * pPacket)
 			CClientSession::SendGameEnterReq(pPacket, app);
 			CClientSession::SendAvatarCharInfo(pPacket, app);
 			CClientSession::SendAvatarItemInfo(pPacket, app);
-			CClientSession::SendAvatarSkillInfo(pPacket, app);
+			CClientSession::SendAvatarSkillInfo(pPacket, app);			
+			CClientSession::SendAvatarHTBInfo(pPacket, app);
 			CClientSession::SendSlotInfo(pPacket, app);
 			CClientSession::SendAvatarInfoEnd(pPacket);
 		}
@@ -1427,6 +1428,7 @@ int CClientSession::OnDispatch(CNtlPacket * pPacket)
 		case UG_GMT_UPDATE_REQ:
 		{
 			printf("--- UG_GMT_UPDATE_REQ --- \n");
+			CClientSession::SendGmtUpdateReq(pPacket, app);
 		}
 			break;
 		case UG_CHAR_LOC_AFTER_KNOCKDOWN_NFY:

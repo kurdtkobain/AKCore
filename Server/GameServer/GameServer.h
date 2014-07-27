@@ -143,6 +143,7 @@ public:
 	void						CheckPlayerStat(CGameServer * app, sPC_TBLDAT *pTblData, int level);
 	void						SendAvatarItemInfo(CNtlPacket * pPacket, CGameServer * app);
 	void						SendAvatarSkillInfo(CNtlPacket * pPacket, CGameServer * app);
+	void						SendAvatarHTBInfo(CNtlPacket * pPacket, CGameServer * app);
 	void						SendSlotInfo(CNtlPacket * pPacket, CGameServer * app);
 	void						SendAvatarInfoEnd(CNtlPacket * pPacket);
 	void						SendAuthCommunityServer(CNtlPacket * pPacket, CGameServer * app);
@@ -152,7 +153,7 @@ public:
 	void						SendNpcCreate(CNtlPacket * pPacket, CGameServer * app);
 	void						SendMonsterCreate(CNtlPacket * pPacket, CGameServer * app);
 	void						SendEnterWorldComplete(CNtlPacket * pPacket);
-
+	//Character Funcs
 	void						SendCharReadyReq(CNtlPacket * pPacket, CGameServer * app);
 	void						SendTutorialHintReq(CNtlPacket * pPacket, CGameServer * app);
 	void						SendCharReady(CNtlPacket * pPacket);
@@ -187,15 +188,16 @@ public:
 	void						SendCharActionAttack(RwUInt32 uiSerialId, RwUInt32 m_uiTargetSerialId, CNtlPacket * pPacket);
 	void						SendCharUpdateFaintingState(CNtlPacket * pPacket, CGameServer * app, RwUInt32 uiSerialId, RwUInt32 m_uiTargetSerialId);
 	void						SendCharUpdateLp(CNtlPacket * pPacket, CGameServer * app, RwUInt16 wLp, RwUInt32 m_uiTargetSerialId);
-
+	void						SendGmtUpdateReq(CNtlPacket * pPacket, CGameServer * app);
+	//Guild
 	void						SendGuildCreateReq(CNtlPacket * pPacket, CGameServer * app);
-
+	//Party
 	void						SendPartyInviteReq(CNtlPacket * pPacket, CGameServer * app);
 	void						SendCreatePartyReq(CNtlPacket * pPacket, CGameServer * app);
 	void						SendDisbandPartyReq(CNtlPacket * pPacket, CGameServer * app);
 	void						SendPartyLeaveReq(CNtlPacket * pPacket, CGameServer * app);
 	void						SendPartyResponse(CNtlPacket * pPacket, CGameServer * app);
-
+	//Mail System
 	void						SendCharMailStart(CNtlPacket * pPacket, CGameServer * app);
 	void						SendCharMailLoadReq(CNtlPacket * pPacket, CGameServer * app);
 	void						SendCharMailReloadReq(CNtlPacket * pPacket, CGameServer * app);
@@ -206,9 +208,9 @@ public:
 	void						SendCharMailMultiDelReq(CNtlPacket * pPacket, CGameServer * app);
 	void						SendCharMailLockReq(CNtlPacket * pPacket, CGameServer * app);
 	void						SendCharMailReturnReq(CNtlPacket * pPacket, CGameServer * app);
-
+	//Afk Status
 	void						SendCharAwayReq(CNtlPacket * pPacket, CGameServer * app);
-
+	//Shop
 	void						SendShopStartReq(CNtlPacket * pPacket, CGameServer * app);
 	void						SendShopBuyReq(CNtlPacket * pPacket, CGameServer * app);
 	void						SendShopEndReq(CNtlPacket * pPacket, CGameServer * app);

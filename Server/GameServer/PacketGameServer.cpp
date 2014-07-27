@@ -241,32 +241,47 @@ void CClientSession::SendSlotInfo(CNtlPacket * pPacket, CGameServer * app)
 	app->db->setInt(1, this->plr->pcProfile->charId);
 	app->db->execute();
  
-	CNtlPacket packetProfile(sizeof(sQUICK_SLOT_PROFILE));
-	sQUICK_SLOT_PROFILE * pProfileQuick = (sQUICK_SLOT_PROFILE*)packetProfile.GetPacketData();
- 
 	CNtlPacket packet(sizeof(sGU_QUICK_SLOT_INFO));
 	sGU_QUICK_SLOT_INFO * res = (sGU_QUICK_SLOT_INFO *)packet.GetPacketData();
+
 	res->wOpCode = GU_QUICK_SLOT_INFO;
-	res->byQuickSlotCount = NTL_CHAR_QUICK_SLOT_MAX_COUNT;
+	
 	app->db->fetch();
 	CSkillTable * pSkillTable = app->g_pTableContainer->GetSkillTable();
- 
-	for (int i = 0, skill = 0, slotID = 0; i <= 32; i++)
+	CItemTable * pItemTable = app->g_pTableContainer->GetItemTable();
+
+	int i = 0;
+	int SkillOrItem = 0;
+	int slotID = 0;
+	while (i < 48)
 	{
-		 std::string query = "slotId_" + std::to_string((double long)i);
-		 skill = app->db->getInt(query.c_str());
-		 res->asQuickSlotData[i].bySlot = 255;
-		 res->asQuickSlotData[i].tblidx = 0;
-		 sSKILL_TBLDAT* pSkillData = reinterpret_cast<sSKILL_TBLDAT*>(pSkillTable->FindData(skill));
-		 if (pSkillData)
-		 {
-			printf("slotId_%d\n", i);
-			res->asQuickSlotData[i].bySlot = app->db->getInt(query.c_str());;
-			res->asQuickSlotData[i].tblidx = pSkillData->tblidx;
-			res->asQuickSlotData[i].byType = QUICK_SLOT_TYPE_SKILL;   
-		 }    
-	}
-	packet.AdjustPacketLen(sizeof(sNTLPACKETHEADER)+(2 * sizeof(BYTE)) + (res->byQuickSlotCount * sizeof(sQUICK_SLOT_PROFILE)));
+		std::string query = "slotId_" + std::to_string(i);
+		printf("LOading slot %s\n", query.c_str());
+		SkillOrItem = app->db->getInt(query.c_str());
+		res->asQuickSlotData[slotID].bySlot = 255;
+		res->asQuickSlotData[slotID].tblidx = 0;		
+		sSKILL_TBLDAT* pSkillData = reinterpret_cast<sSKILL_TBLDAT*>(pSkillTable->FindData(SkillOrItem));
+		sITEM_TBLDAT * pItemData = reinterpret_cast<sITEM_TBLDAT*>(pItemTable->FindData(SkillOrItem));
+		if (pSkillData)
+		{
+			res->asQuickSlotData[slotID].bySlot = i;
+			res->asQuickSlotData[slotID].tblidx = pSkillData->tblidx;
+			res->asQuickSlotData[slotID].byType = (pSkillData->bySkill_Class==NTL_SKILL_CLASS_HTB?QUICK_SLOT_TYPE_HTB_SKILL:QUICK_SLOT_TYPE_SKILL);
+			slotID++;
+		}
+		else if (pItemData)
+		{
+			res->asQuickSlotData[slotID].bySlot = i;
+			res->asQuickSlotData[slotID].tblidx = pItemData->tblidx;
+			res->asQuickSlotData[slotID].hItem	= pItemData->tblidx;//Need get correct hItem
+			res->asQuickSlotData[slotID].byType = QUICK_SLOT_TYPE_ITEM;
+			slotID++;
+		}
+		i++;
+	}	
+	res->byQuickSlotCount = slotID;
+
+	packet.AdjustPacketLen(sizeof(sNTLPACKETHEADER)+(2 * sizeof(BYTE)) + (slotID * (sizeof(sQUICK_SLOT_DATA))));
 	g_pApp->Send(this->GetHandle(), &packet);
 }
 //--------------------------------------------------------------------------------------//
@@ -2293,17 +2308,17 @@ void CClientSession::SendCharSkillCasting(CNtlPacket * pPacket, CGameServer * ap
  	res->hAppointedTarget = this->GetTargetSerialId();//Get myself
 
 	//Buff Events Prepare
- 	CNtlPacket packet2(sizeof(sGU_BUFF_REGISTERED));
- 	sGU_BUFF_REGISTERED * pBuffData = (sGU_BUFF_REGISTERED*)packet2.GetPacketData();
- 	pBuffData->wOpCode = GU_BUFF_REGISTERED;
- 	pBuffData->tblidx = pSkillTblData->tblidx;
- 	pBuffData->hHandle = this->GetavatarHandle();
- 	pBuffData->dwInitialDuration = pSkillTblData->dwCoolTimeInMilliSecs;
- 	pBuffData->dwTimeRemaining	 = pSkillTblData->dwKeepTimeInMilliSecs;
- 	pBuffData->afEffectValue[0] = pSkillTblData->fSkill_Effect_Value[0];
- 	pBuffData->afEffectValue[1] = pSkillTblData->fSkill_Effect_Value[1];
- 	//pBuffData->bNeedToDisplayMessage = pSkillTblData->bDefaultDisplayOff;//Only to display...String ID bla bla not found...if you want see uncomment this line
- 	pBuffData->bySourceType = DBO_OBJECT_SOURCE_SKILL;
+	CNtlPacket packet2(sizeof(sGU_BUFF_REGISTERED));
+	sGU_BUFF_REGISTERED * pBuffData = (sGU_BUFF_REGISTERED*)packet2.GetPacketData();
+	pBuffData->wOpCode = GU_BUFF_REGISTERED;
+	pBuffData->tblidx = pSkillTblData->tblidx;
+	pBuffData->hHandle = this->GetavatarHandle();
+	pBuffData->dwInitialDuration = pSkillTblData->dwKeepTimeInMilliSecs;
+	pBuffData->dwTimeRemaining = pSkillTblData->dwCoolTimeInMilliSecs;
+	pBuffData->afEffectValue[0] = pSkillTblData->fSkill_Effect_Value[0];
+	pBuffData->afEffectValue[1] = pSkillTblData->fSkill_Effect_Value[1];
+	//pBuffData->bNeedToDisplayMessage = pSkillTblData->bDefaultDisplayOff;//Only to display...String ID bla bla not found...if you want see uncomment this line
+	pBuffData->bySourceType = DBO_OBJECT_SOURCE_SKILL;
 
 
 	packet.SetPacketLen(sizeof(sGU_CHAR_ACTION_SKILL));
@@ -3715,3 +3730,20 @@ void CClientSession::SendCharSkillBuffDrop(CNtlPacket * pPacket, CGameServer * a
  	app->UserBroadcastothers(&packet2, this);
   	app->UserBroadcastothers(&packet, this);
  }
+//-----------------------------------------------------------//
+//-----------GMT UPDATES        Luiz45  ---------------------//
+//-----------------------------------------------------------//
+void CClientSession::SendGmtUpdateReq(CNtlPacket * pPacket, CGameServer * app)
+{
+	sUG_GMT_UPDATE_REQ * req = (sUG_GMT_UPDATE_REQ*)pPacket->GetPacketData();
+	sGAME_MANIA_TIME * gmMania = (sGAME_MANIA_TIME*)pPacket->GetPacketData();
+
+	CNtlPacket packet(sizeof(sGU_GMT_UPDATE_RES));
+	sGU_GMT_UPDATE_RES * res = (sGU_GMT_UPDATE_RES*)packet.GetPacketData();	
+	res->wOpCode = GU_GMT_UPDATE_RES;
+	res->wResultCode = GAME_SUCCESS;
+
+	packet.SetPacketLen(sizeof(sGU_GMT_UPDATE_RES));
+	g_pApp->Send(this->GetHandle(), &packet);
+	app->UserBroadcastothers(&packet, this);
+}

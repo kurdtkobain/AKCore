@@ -332,6 +332,7 @@ CREATE TABLE `quickslot` (
   `slotId_30` int(10) unsigned DEFAULT '0',
   `slotId_31` int(10) unsigned DEFAULT '0',
   `slotId_32` int(10) unsigned DEFAULT '0',
+  `slotId_33` int(10) unsigned DEFAULT '0',
   `slotId_34` int(10) unsigned DEFAULT '0',
   `slotId_35` int(10) unsigned DEFAULT '0',
   `slotId_36` int(10) unsigned DEFAULT '0',
@@ -345,7 +346,8 @@ CREATE TABLE `quickslot` (
   `slotId_44` int(10) unsigned DEFAULT '0',
   `slotId_45` int(10) unsigned DEFAULT '0',
   `slotId_46` int(10) unsigned DEFAULT '0',
-  `slotId_47` int(10) unsigned DEFAULT '0',
+  `slotId_47` int(10) DEFAULT NULL,
+  `placeID` int(10) DEFAULT NULL,
   PRIMARY KEY (`pkQuick`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 
@@ -547,7 +549,8 @@ BEGIN
 					(awchCharName,account_id,byRace,byClass,byGender,byFace,byHair,byHairColor,bySkinColor, 10000);
 
 					SET char_id = LAST_INSERT_ID();
-					Insert into quickslot (charId) values(char_id);
+					INSERT INTO quickslot(`charId`)
+					VALUES(char_id);
 					INSERT INTO items (`owner_id`, `tblidx`, `place`, `pos`, `count`, `rank`, `durability`)
 					VALUES(char_id, 19901, 0, 0, 0, 1, 10),
 						    (char_id, 17001, 1, 3, 1, 1, 100);
