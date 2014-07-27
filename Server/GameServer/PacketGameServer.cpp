@@ -68,16 +68,14 @@ void CClientSession::CheckPlayerStat(CGameServer * app, sPC_TBLDAT *pTblData, in
 	app->db->setInt(7,  this->plr->pcProfile->charId);
 	app->db->execute();
 
-	int basiclife = pTblData->wBasic_LP + (pTblData->byLevel_Up_LP * level);
-	int levelcon = pTblData->byCon + (pTblData->fLevel_Up_Con * level);
-	int LP = basiclife + (levelcon * level) * .02;
+	WORD basiclife = pTblData->wBasic_LP + (pTblData->byLevel_Up_LP * level);
+	WORD levelcon = pTblData->byCon + (pTblData->fLevel_Up_Con * level);
+	WORD LP = basiclife + ((levelcon * level) * 4.7);
 
-	int basicenergy = pTblData->wBasic_EP + (pTblData->byLevel_Up_EP * level);
-	int leveleng = pTblData->byEng + (pTblData->fLevel_Up_Eng * level);
-	int EP = basicenergy + (leveleng * level) * .018;
+	WORD basicenergy = pTblData->wBasic_EP + (pTblData->byLevel_Up_EP * level);
+	WORD leveleng = pTblData->byEng + (pTblData->fLevel_Up_Eng * level);
+	WORD EP = basicenergy + ((leveleng * level) * 4.2);
 
-	printf("BaseMaxLP: %d, BaseMaxEP: %d, BaseMaxRP: %d, LP: %d\n", pTblData->wBasic_LP,pTblData->wBasic_EP,pTblData->wBasic_RP, LP);
-	
 	app->db->prepare("UPDATE characters SET BaseMaxLP = ?, BaseMaxEP = ?, BaseMaxRP = ?, BaseDodgeRate = ?, BaseAttackRate = ?, BaseBlockRate = ?, BasePhysicalCriticalRate = ?, BaseEnergyCriticalRate = ? WHERE CharID = ?");
 	app->db->setInt(1,LP);
 	app->db->setInt(2, EP);
@@ -266,8 +264,7 @@ void CClientSession::SendSlotInfo(CNtlPacket * pPacket, CGameServer * app)
 	int slotID = 0;
 	while (i < 48)
 	{
-		std::string query = "slotId_" + std::to_string(i);
-		printf("LOading slot %s\n", query.c_str());
+		std::string query = "slotId_" + std::to_string((double long)i);
 		SkillOrItem = app->db->getInt(query.c_str());
 		res->asQuickSlotData[slotID].bySlot = 255;
 		res->asQuickSlotData[slotID].tblidx = 0;		
@@ -316,38 +313,6 @@ void CClientSession::SendAvatarSkillInfo(CNtlPacket * pPacket, CGameServer * app
 		//Added because Shenron Buffs and for help to detect type of skills
 		//Note Shenron Buffs does not take ANY SLOTID
 		sSKILL_TBLDAT* pSkillData = reinterpret_cast<sSKILL_TBLDAT*>(pSkillTable->FindData(app->db->getInt("skill_id")));
-		switch (pSkillData->bySkill_Active_Type)
-		{
-		case SKILL_ACTIVE_TYPE_DD:
-			printf("a\n");
-			printf("TBLIDX %i \n", pSkillData->tblidx);
-			break;
-		case SKILL_ACTIVE_TYPE_BB:
-			printf("b\n");
-			printf("TBLIDX %i \n", pSkillData->tblidx);
-			break;
-		case SKILL_ACTIVE_TYPE_CB:
-			printf("c\n");
-			printf("TBLIDX %i \n", pSkillData->tblidx);
-			break;
-		case SKILL_ACTIVE_TYPE_DB:
-			printf("d\n");
-			printf("TBLIDX %i \n", pSkillData->tblidx);
-			break;
-		case SKILL_ACTIVE_TYPE_DC:
-			printf("e\n");
-			printf("TBLIDX %i \n", pSkillData->tblidx);
-			break;
-		case SKILL_ACTIVE_TYPE_DH:
-			printf("f\n");
-			printf("TBLIDX %i \n", pSkillData->tblidx);
-			break;
-		case SKILL_ACTIVE_TYPE_DOT:
-			printf("g\n");
-			printf("TBLIDX %i \n", pSkillData->tblidx);
-			break;
-		}
-
 		res->aSkillInfo[i].bIsRpBonusAuto = app->db->getBoolean("RpBonusAuto");
 		res->aSkillInfo[i].byRpBonusType = app->db->getInt("RpBonusType");		
 		this->gsf->DebugSkillType(pSkillData->bySkill_Active_Type);
