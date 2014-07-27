@@ -1799,7 +1799,7 @@ void CClientSession::SendCharBindReq(CNtlPacket * pPacket, CGameServer * app)
 	res->byBindType = DBO_BIND_TYPE_FIRST;
 	res->bindObjectTblidx = req->bindObjectTblidx;
 
-	res->bindWorldId = app->db->getInt("@currentWorldID");
+	res->bindWorldId = this->plr->GetWorldID();
 
 	packet.SetPacketLen( sizeof(sGU_CHAR_BIND_RES) );
 	int rc = g_pApp->Send( this->GetHandle(), &packet );
@@ -3819,4 +3819,46 @@ void CClientSession::SendGmtUpdateReq(CNtlPacket * pPacket, CGameServer * app)
 	packet.SetPacketLen(sizeof(sGU_GMT_UPDATE_RES));
 	g_pApp->Send(this->GetHandle(), &packet);
 	app->UserBroadcastothers(&packet, this);
+}
+
+void CClientSession::SendFogOfWarRes(CNtlPacket * pPacket, CGameServer * app)
+{
+	sUG_WAR_FOG_UPDATE_REQ * req = (sUG_WAR_FOG_UPDATE_REQ*)pPacket->GetPacketData();
+
+	CNtlPacket packet(sizeof(sGU_WAR_FOG_UPDATE_RES));
+	sGU_WAR_FOG_UPDATE_RES * res = (sGU_WAR_FOG_UPDATE_RES*)packet.GetPacketData();
+	res->handle = req->hObject;
+	res->wOpCode = GU_WAR_FOG_UPDATE_RES;
+	res->wResultCode = GAME_SUCCESS;
+	packet.SetPacketLen(sizeof(sGU_WAR_FOG_UPDATE_RES));;
+	g_pApp->Send(this->GetHandle(), &packet);
+}
+
+void CClientSession::SendRideOnBusRes(CNtlPacket * pPacket, CGameServer * app)
+{
+	sUG_RIDE_ON_BUS_REQ * req = (sUG_RIDE_ON_BUS_REQ*)pPacket->GetPacketData();
+
+	CNtlPacket packet(sizeof(sUG_RIDE_ON_BUS_REQ));
+	sGU_RIDE_ON_BUS_RES * res = (sGU_RIDE_ON_BUS_RES *)packet.GetPacketData();
+
+	res->hTarget = req->hTarget;
+	res->wOpCode = GU_RIDE_ON_BUS_RES;
+	res->wResultCode = GAME_SUCCESS;
+
+	packet.SetPacketLen(sizeof(sGU_RIDE_ON_BUS_RES));;
+	g_pApp->Send(this->GetHandle(), &packet);
+}
+
+void CClientSession::SendRideOffBusRes(CNtlPacket * pPacket, CGameServer * app)
+{
+	sUG_RIDE_OFF_BUS_REQ * req = (sUG_RIDE_OFF_BUS_REQ*)pPacket->GetPacketData();
+
+	CNtlPacket packet(sizeof(sUG_RIDE_OFF_BUS_REQ));
+	sGU_RIDE_OFF_BUS_RES * res = (sGU_RIDE_OFF_BUS_RES *)packet.GetPacketData();
+
+	res->wOpCode = GU_RIDE_OFF_BUS_RES;
+	res->wResultCode = GAME_SUCCESS;
+
+	packet.SetPacketLen(sizeof(sGU_RIDE_OFF_BUS_RES));;
+	g_pApp->Send(this->GetHandle(), &packet);
 }

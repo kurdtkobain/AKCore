@@ -43,7 +43,7 @@ int CClientSession::OnDispatch(CNtlPacket * pPacket)
 			CClientSession::SendAvatarCharInfo(pPacket, app);
 			CClientSession::SendAvatarItemInfo(pPacket, app);
 			CClientSession::SendAvatarSkillInfo(pPacket, app);			
-			CClientSession::SendAvatarHTBInfo(pPacket, app);
+			//CClientSession::SendAvatarHTBInfo(pPacket, app);
 			CClientSession::SendSlotInfo(pPacket, app);
 			CClientSession::SendAvatarInfoEnd(pPacket);
 		}
@@ -929,6 +929,7 @@ int CClientSession::OnDispatch(CNtlPacket * pPacket)
 		case UG_WAR_FOG_UPDATE_REQ:
 		{
 			printf("--- UG_WAR_FOG_UPDATE_REQ --- \n");
+			CClientSession::SendFogOfWarRes(pPacket, app);
 		}
 			break;
 		case UG_GUILD_FUNCTION_ADD_REQ:
@@ -996,11 +997,13 @@ int CClientSession::OnDispatch(CNtlPacket * pPacket)
 		case UG_RIDE_ON_BUS_REQ:
 		{
 			printf("--- UG_RIDE_ON_BUS_REQ --- \n");
+			CClientSession::SendRideOnBusRes(pPacket, app);
 		}
 			break;
 		case UG_RIDE_OFF_BUS_REQ:
 		{
 			printf("--- UG_RIDE_OFF_BUS_REQ --- \n");
+			CClientSession::SendRideOffBusRes(pPacket, app);
 		}
 			break;
 		case UG_TRANSFORM_CANCEL_REQ:
@@ -1584,7 +1587,6 @@ bool CGameServer::CreateTableContainer(int byLoadMethod)
 	fileNameList.SetFileName(CTableContainer::TABLE_BASIC_DROP,				"table_basic_drop_data");
 	fileNameList.SetFileName(CTableContainer::TABLE_LEGENDARY_DROP,			"table_legendary_drop_data");
 	fileNameList.SetFileName(CTableContainer::TABLE_SYSTEM_EFFECT,			"table_system_effect_data");
-
 
 
 	/*flagManager.Set(CTableContainer::TABLE_GAME_MANIA_TIME);

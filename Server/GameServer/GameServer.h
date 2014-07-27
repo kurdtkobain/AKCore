@@ -227,7 +227,9 @@ public:
 
 	//MISC
 	void						SendRollDice(CNtlPacket * pPacket, CGameServer * app);
-
+	void						SendFogOfWarRes(CNtlPacket * pPacket, CGameServer * app);
+	void						SendRideOnBusRes(CNtlPacket * pPacket, CGameServer * app);
+	void						SendRideOffBusRes(CNtlPacket * pPacket, CGameServer * app);
 	// SCOUTER
 	void						SendScouterIndicatorReq(CNtlPacket * pPacket, CGameServer * app);
 	// DRAGON BALL
