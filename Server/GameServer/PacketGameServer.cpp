@@ -505,6 +505,7 @@ void CClientSession::SendCharReadyReq(CNtlPacket * pPacket, CGameServer * app)
 	app->UserBroadcastothers(&packet, this);
 	app->UserBroadcasFromOthers(GU_OBJECT_CREATE, this);
 	app->AddUser(this->plr->GetPlayerName().c_str(), this);
+//	this->plr->_update = &boost::thread(&PlayerInfos::Update, this->plr);
 }
 
 //--------------------------------------------------------------------------------------//
@@ -769,7 +770,6 @@ void CClientSession::SendCharFalling(CNtlPacket * pPacket, CGameServer * app)
 	req->vCurDir.x;
 	req->vCurDir.z;
 	req->byMoveDirection;
-
 }
 
 //--------------------------------------------------------------------------------------//
@@ -969,7 +969,7 @@ void CClientSession::SendGameLeaveReq(CNtlPacket * pPacket, CGameServer * app)
 	sPacket->handle = this->GetavatarHandle();
 	packet.SetPacketLen( sizeof(sGU_OBJECT_DESTROY) );
 	app->UserBroadcastothers(&packet, this);
-
+	delete this->plr;
 }
 //--------------------------------------------------------------------------------------//
 //		Char exit request
@@ -1007,6 +1007,7 @@ void CClientSession::SendCharExitReq(CNtlPacket * pPacket, CGameServer * app)
 
 	packet.SetPacketLen( sizeof(sGU_CHAR_EXIT_RES) );
 	int rc = g_pApp->Send( this->GetHandle(), &packet );
+	delete this->plr;
 }
 
 //--------------------------------------------------------------------------------------//
@@ -3789,7 +3790,6 @@ void CClientSession::SendCharSkillTransformCancel(CNtlPacket * pPacket, CGameSer
 
 	if (req->bCharge)
 	{
-		this->plr->m_Thread = &boost::thread(&CClientSession::SendRpChargethread, this);
 	 	CNtlPacket packet(sizeof(sGU_UPDATE_CHAR_STATE));
 		sGU_UPDATE_CHAR_STATE * res = (sGU_UPDATE_CHAR_STATE *)packet.GetPacketData();
 		CNtlPacket packet2(sizeof(sGU_AVATAR_RP_INCREASE_START_NFY));
@@ -3805,13 +3805,17 @@ void CClientSession::SendCharSkillTransformCancel(CNtlPacket * pPacket, CGameSer
 		g_pApp->Send(this->GetHandle(), &packet);
 		packet2.SetPacketLen(sizeof(sGU_AVATAR_RP_INCREASE_START_NFY));
 		g_pApp->Send(this->GetHandle(), &packet2);
-		
+		this->plr->m_Thread = &boost::thread(&CClientSession::SendRpChargethread, this);
 		app->UserBroadcastothers(&packet, this);
 	}
-	else if (req->bCharge == false)
+	if (req->bCharge == false)
 	{
+		this->plr->m_Thread->detach();
 		this->plr->m_Thread->interrupt();
-		delete this->plr->m_Thread;
+		this->plr->m_Thread->yield();
+		this->plr->m_Thread->~thread();
+		if (this->plr->m_Thread)
+			delete this->plr->m_Thread;
 		CNtlPacket packet(sizeof(sGU_UPDATE_CHAR_STATE));
 		sGU_UPDATE_CHAR_STATE * res = (sGU_UPDATE_CHAR_STATE *)packet.GetPacketData();
 		CNtlPacket packet2(sizeof(sGU_AVATAR_RP_INCREASE_STOP_NFY));

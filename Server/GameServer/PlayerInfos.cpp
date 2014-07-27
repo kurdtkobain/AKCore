@@ -1,6 +1,45 @@
 #include "stdafx.h"
 #include "GameServer.h"
 
+void		PlayerInfos::UpdateLP()
+{
+	CNtlPacket packet(sizeof(sGU_UPDATE_CHAR_LP));
+	sGU_UPDATE_CHAR_LP * res = (sGU_UPDATE_CHAR_LP *)packet.GetPacketData();
+	
+	this->pcProfile->wCurLP += 5; // += regen
+
+	res->handle = this->avatarHandle;
+	res->wCurLP = this->pcProfile->wCurLP;
+	res->wMaxLP = this->pcProfile->avatarAttribute.wLastMaxLP;
+	res->wOpCode = GU_UPDATE_CHAR_LP;
+
+	packet.SetPacketLen(sizeof(sGU_UPDATE_CHAR_LP));
+	int i = g_pApp->Send(this->MySession, &packet);
+	printf("LP ++ %d\n", i);
+}
+
+void		PlayerInfos::Update()
+{
+	int lasttime = 0;
+	this->pcProfile->wCurLP = 1;
+	if (this)
+	{
+		while (42)
+		{
+			if (timeGetTime() >= (lasttime + 5000))
+			{
+				// do some LP regen etc
+				//if (this->fighting == false) //->>> this is the regen in NOT FIGHTING
+				//else if (this->fighting == true) //->>> this is the regen in FIGHTING
+				if (this->pcProfile->wCurLP < this->pcProfile->avatarAttribute.wBaseMaxLP)
+					this->UpdateLP();
+				lasttime = timeGetTime();
+			}
+			Sleep(10);
+		}
+	}
+}
+
 void		PlayerInfos::SavePlayerData()
 {
 	this->db = new MySQLConnWrapper;

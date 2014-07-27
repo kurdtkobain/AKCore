@@ -18,11 +18,19 @@ public:
 		this->sCharState = new sCHARSTATE;
 		this->CurRPBall = 0;
 		LastPartyHandle = -1;
+		//_update = new boost::thread();
 	};
-	~PlayerInfos(){};
+	~PlayerInfos()
+	{
+		/*TerminateThread(_update, -1);
+		if (_update)
+			delete _update;*/
+	};
 	sPC_PROFILE		*pcProfile;
 	sCHARSTATE		*sCharState;
 	HSESSION		MySession;
+	void		Update();
+	void		UpdateLP();
 	void		setPlayerStat(sPC_PROFILE* pc, sCHARSTATE *sCharSt)
 	{	
 		memcpy(this->pcProfile, pc, sizeof(sPC_PROFILE));
@@ -169,6 +177,10 @@ public:
 		g_pApp->Send(this->MySession, &packet);
 	}
 	void		LastPartyInvited(){};
+	void		SpawnMyChar()
+	{
+		this->Update();
+	};
 private:
 	MySQLConnWrapper			*db;
 public:
@@ -176,6 +188,7 @@ public:
 void		SaveMe();
 void		SavePlayerData();
 boost::thread    *m_Thread;
+boost::thread    *_update;
 private:
 	sVECTOR3			vCurLoc;
 	sVECTOR3			vCurDir;
@@ -204,5 +217,5 @@ public: // THIS NEED BE BE PRIVATE IN THE FUTUR
 	float			fLevel_Up_Dex;
 	float			fLevel_Up_Sol;
 	float			fLevel_Up_Eng;
-	int					LastPartyHandle;
+	int				LastPartyHandle;
 };
