@@ -134,9 +134,9 @@ public:
 		this->pcProfile->avatarAttribute.byBaseSol += this->fLevel_Up_Sol;
 		this->pcProfile->avatarAttribute.byBaseStr += this->fLevel_Up_Str;
 
-		this->pcProfile->avatarAttribute.wBaseMaxEP += this->byLevel_Up_EP;
+		this->pcProfile->avatarAttribute.wBaseMaxEP = (this->pcProfile->avatarAttribute.wBaseMaxEP + this->byLevel_Up_EP) * ((this->pcProfile->avatarAttribute.byLastEng * this->pcProfile->byLevel)* .018);;
 		this->pcProfile->avatarAttribute.wBaseMaxRP += this->byLevel_Up_RP;
-		this->pcProfile->avatarAttribute.wBaseMaxLP += this->byLevel_Up_LP;
+		this->pcProfile->avatarAttribute.wBaseMaxLP = (this->pcProfile->avatarAttribute.wBaseMaxLP + this->byLevel_Up_LP) * ((this->pcProfile->avatarAttribute.byLastCon * this->pcProfile->byLevel)* .02);
 
 		if (this->pcProfile->byLevel == 5)
 			this->CurRPBall = 1;
@@ -152,6 +152,21 @@ public:
 			this->CurRPBall = 6;
 		if (this->pcProfile->byLevel == 45)
 			this->CurRPBall = 7;
+
+		CNtlPacket packet(sizeof(sGU_UPDATE_CHAR_LP_EP));
+		sGU_UPDATE_CHAR_LP_EP * res = (sGU_UPDATE_CHAR_LP_EP *)packet.GetPacketData();
+		this->pcProfile->wCurEP = this->pcProfile->avatarAttribute.wBaseMaxEP;
+		this->pcProfile->wCurLP = this->pcProfile->avatarAttribute.wBaseMaxLP;
+
+		res->handle = this->avatarHandle;
+		res->wCurEP = this->pcProfile->wCurEP;
+		res->wCurLP = this->pcProfile->wCurLP;
+		res->wMaxEP = this->pcProfile->wCurEP;
+		res->wMaxLP = this->pcProfile->wCurLP;
+		res->wOpCode = GU_UPDATE_CHAR_LP_EP;
+
+		packet.SetPacketLen(sizeof(sGU_UPDATE_CHAR_LP_EP));
+		g_pApp->Send(this->MySession, &packet);
 	}
 	void		LastPartyInvited(){};
 private:

@@ -32,6 +32,7 @@ public:
 	bool						UpdateMailLock(RwUInt32 MailID, RwUInt32 LockStatus);
 	bool						UpdateCharAwayStatus(RwUInt32 CharID, RwUInt32 AwayStatus);
 	bool						SetMailAccept(RwUInt32 CharID, RwUInt32 MailID);
+	bool						UpdatePlayerLP_EP(RwUInt32 LP, RwUInt32 EP, int charid);
 	bool						UpdateSPPoint(RwUInt32 CharID, RwUInt32 point);
 	bool						InsertRemoveQuickSlot(TBLIDX SkillID, BYTE SlotID, int CharID);
 	bool						UpdatePlayerLevel(int _level, int CharID, int _exp, int _maxexp);

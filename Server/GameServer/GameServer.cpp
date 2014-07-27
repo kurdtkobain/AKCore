@@ -212,6 +212,7 @@ int CClientSession::OnDispatch(CNtlPacket * pPacket)
 		case UG_CHAR_REVIVAL_REQ:
 		{
 			printf("---  UG_CHAR_REVIVAL_REQ --- \n");
+			CClientSession::SendCharRevivalReq(pPacket, app);
 		}
 			break;
 		case UG_CHAR_SERVER_CHANGE_REQ:

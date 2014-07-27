@@ -190,6 +190,18 @@ bool	QueryClass::SetMailAccept(RwUInt32 CharID, RwUInt32 MailID)
 
 	return true;
 }
+bool	QueryClass::UpdatePlayerLP_EP(RwUInt32 LP, RwUInt32 EP, int charid)
+{
+	CGameServer * app = (CGameServer*)NtlSfxGetApp();
+
+	app->db->prepare("UPDATE characters SET CurLP=?, CurEP=? WHERE CharID=?");
+	app->db->setInt(1, LP);
+	app->db->setInt(2, EP);
+	app->db->setInt(3, charid);
+	app->db->execute();
+
+	return true;
+}
 bool	QueryClass::UpdateSPPoint(RwUInt32 CharID, RwUInt32 point)
 {
 	CGameServer * app = (CGameServer*) NtlSfxGetApp();

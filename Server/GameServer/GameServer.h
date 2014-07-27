@@ -189,6 +189,7 @@ public:
 	void						SendCharUpdateFaintingState(CNtlPacket * pPacket, CGameServer * app, RwUInt32 uiSerialId, RwUInt32 m_uiTargetSerialId);
 	void						SendCharUpdateLp(CNtlPacket * pPacket, CGameServer * app, RwUInt16 wLp, RwUInt32 m_uiTargetSerialId);
 	void						SendGmtUpdateReq(CNtlPacket * pPacket, CGameServer * app);
+	void						SendCharRevivalReq(CNtlPacket * pPacket, CGameServer * app);
 	//Guild
 	void						SendGuildCreateReq(CNtlPacket * pPacket, CGameServer * app);
 	//Party
