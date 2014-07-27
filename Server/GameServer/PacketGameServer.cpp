@@ -268,16 +268,7 @@ void CClientSession::SendSlotInfo(CNtlPacket * pPacket, CGameServer * app)
 	
 	while (i < 48)
 	{
-
-		if (_MSC_VER == 1600)
-		{
-			query = "slotId_" + std::to_string((double long)i);
-		}
-		else
-		{
-			query = "slotId_" + std::to_string(i);
-			printf("LOading slot %s\n", query.c_str());
-		}
+		query = "slotId_" + std::to_string((double long)i);
 		SkillOrItem = app->db->getInt(query.c_str());
 		res->asQuickSlotData[slotID].bySlot = 255;
 		res->asQuickSlotData[slotID].tblidx = 0;		
@@ -558,6 +549,12 @@ void CClientSession::SendEnterWorldComplete(CNtlPacket * pPacket)
 
 	packet.SetPacketLen( sizeof(sGU_ENTER_WORLD_COMPLETE) );
 	int rc = g_pApp->Send( this->GetHandle(), &packet );
+
+	CNtlPacket packet2(sizeof(sGU_AVATAR_RP_DECREASE_START_NFY));
+	sGU_AVATAR_RP_DECREASE_START_NFY * res2 = (sGU_AVATAR_RP_DECREASE_START_NFY *)packet2.GetPacketData();
+	res2->wOpCode = GU_AVATAR_RP_DECREASE_START_NFY;
+	packet2.SetPacketLen( sizeof(sGU_ENTER_WORLD_COMPLETE) );
+	g_pApp->Send( this->GetHandle(), &packet2 );
 }
 
 //--------------------------------------------------------------------------------------//
@@ -3657,8 +3654,10 @@ void	CClientSession::SendFreeBattleReq(CNtlPacket * pPacket, CGameServer * app)
 
 	packet.SetPacketLen( sizeof(sGU_FREEBATTLE_CHALLENGE_RES) );
 	g_pApp->Send( this->GetHandle(), &packet );
+	PlayerInfos *targeted = new PlayerInfos();
+	app->GetUserSession(req->hTarget, targeted);
 	packet2.SetPacketLen( sizeof(sGU_FREEBATTLE_ACCEPT_REQ) );
-	g_pApp->Send( this->GetHandle(), &packet2 );
+	g_pApp->Send( targeted->MySession, &packet2 );
 	app->UserBroadcastothers(&packet, this);
 }
 void	CClientSession::SendFreeBattleAccpetReq(CNtlPacket * pPacket, CGameServer * app)
@@ -3669,12 +3668,16 @@ void	CClientSession::SendFreeBattleAccpetReq(CNtlPacket * pPacket, CGameServer *
 	{
 		CNtlPacket packet2(sizeof(sGU_FREEBATTLE_START_NFY));
 		sGU_FREEBATTLE_START_NFY * res2 = (sGU_FREEBATTLE_START_NFY *)packet2.GetPacketData();
+
 		res2->hTarget = this->plr->GetAvatarandle();
 		res2->vRefreeLoc = this->plr->GetPosition();
-		res2->vRefreeLoc.x += rand() % 10;
+		res2->vRefreeLoc.x += rand() % 10 + 5;
+		res2->vRefreeLoc.z -= 2;
 		res2->wOpCode = GU_FREEBATTLE_START_NFY;
+
 		packet2.SetPacketLen( sizeof(sGU_FREEBATTLE_START_NFY) );
 		g_pApp->Send( this->GetHandle() , &packet2 );
+
 		app->UserBroadcastothers(&packet2, this);
 	}
 	else
@@ -3761,21 +3764,71 @@ void CClientSession::SendCharSkillTransformCancel(CNtlPacket * pPacket, CGameSer
 	//app->UserBroadcastothers(&packet, this);
 	this->gsf->printOk("Sended");*/
  }
+ void	CClientSession::SendRpChargethread()
+ {
+	 while (42)
+	 {
+		 CNtlPacket packet3(sizeof(sGU_UPDATE_CHAR_RP));
+		 sGU_UPDATE_CHAR_RP * res3 = (sGU_UPDATE_CHAR_RP *)packet3.GetPacketData();
 
+		 this->plr->pcProfile->wCurRP += 10;
+		 res3->bHitDelay = 1;
+		 res3->handle = this->GetavatarHandle();
+		 res3->wCurRP = this->plr->pcProfile->wCurRP;
+		 res3->wMaxRP = this->plr->pcProfile->avatarAttribute.wBaseMaxRP;
+		 res3->wOpCode = GU_UPDATE_CHAR_RP;
+		 packet3.SetPacketLen(sizeof(sGU_UPDATE_CHAR_RP));
+		 g_pApp->Send(this->GetHandle(), &packet3);
+		 printf("Charging\n");
+		 Sleep(1000);
+	 }
+ }
  void CClientSession::SendRpCharge(CNtlPacket *pPacket, CGameServer * app)
  {
-	 sUG_CHAR_CHARGE * req = (sUG_CHAR_CHARGE*)pPacket->GetPacketData();
- 	 CNtlPacket packet(sizeof(sGU_UPDATE_CHAR_STATE));
-	sGU_UPDATE_CHAR_STATE * res = (sGU_UPDATE_CHAR_STATE *)packet.GetPacketData();
-	
-	res->handle = this->GetHandle();
-	res->sCharState.sCharStateBase.byStateID = CHARSTATE_CHARGING;
-	res->wOpCode = GU_UPDATE_CHAR_STATE;
+	sUG_CHAR_CHARGE * req = (sUG_CHAR_CHARGE*)pPacket->GetPacketData();
 
-	g_pApp->Send(this->GetHandle(), &packet);
-	app->UserBroadcastothers(&packet, this);
- }
+	if (req->bCharge)
+	{
+		this->plr->m_Thread = &boost::thread(&CClientSession::SendRpChargethread, this);
+	 	CNtlPacket packet(sizeof(sGU_UPDATE_CHAR_STATE));
+		sGU_UPDATE_CHAR_STATE * res = (sGU_UPDATE_CHAR_STATE *)packet.GetPacketData();
+		CNtlPacket packet2(sizeof(sGU_AVATAR_RP_INCREASE_START_NFY));
+		sGU_AVATAR_RP_INCREASE_START_NFY * res2 = (sGU_AVATAR_RP_INCREASE_START_NFY *)packet2.GetPacketData();
 
+		res->handle = this->GetavatarHandle();
+		memcpy(&res->sCharState, this->plr->sCharState, sizeof(sCHARSTATE));
+		res->sCharState.sCharStateBase.byStateID = CHARSTATE_CHARGING;
+		res->wOpCode = GU_UPDATE_CHAR_STATE;
+		res2->wOpCode = GU_AVATAR_RP_INCREASE_START_NFY;
+
+		packet.SetPacketLen(sizeof(sGU_UPDATE_CHAR_STATE));
+		g_pApp->Send(this->GetHandle(), &packet);
+		packet2.SetPacketLen(sizeof(sGU_AVATAR_RP_INCREASE_START_NFY));
+		g_pApp->Send(this->GetHandle(), &packet2);
+		
+		app->UserBroadcastothers(&packet, this);
+	}
+	else if (req->bCharge == false)
+	{
+		this->plr->m_Thread->interrupt();
+		delete this->plr->m_Thread;
+		CNtlPacket packet(sizeof(sGU_UPDATE_CHAR_STATE));
+		sGU_UPDATE_CHAR_STATE * res = (sGU_UPDATE_CHAR_STATE *)packet.GetPacketData();
+		CNtlPacket packet2(sizeof(sGU_AVATAR_RP_INCREASE_STOP_NFY));
+		sGU_AVATAR_RP_INCREASE_STOP_NFY * res2 = (sGU_AVATAR_RP_INCREASE_STOP_NFY *)packet2.GetPacketData();
+
+		res->handle = this->GetavatarHandle();
+		memcpy(&res->sCharState, this->plr->sCharState, sizeof(sCHARSTATE));
+		res->sCharState.sCharStateBase.byStateID = CHARSTATE_STANDING;
+		res->wOpCode = GU_UPDATE_CHAR_STATE;
+		res2->wOpCode = GU_AVATAR_RP_INCREASE_STOP_NFY;
+		packet.SetPacketLen(sizeof(sGU_UPDATE_CHAR_STATE));
+		g_pApp->Send(this->GetHandle(), &packet);
+		packet2.SetPacketLen(sizeof(sGU_AVATAR_RP_INCREASE_STOP_NFY));
+		g_pApp->Send(this->GetHandle(), &packet2);
+		app->UserBroadcastothers(&packet, this);
+	}
+}
 //-----------------------------------------------------------------//
 //-------------------Skill/Item BUFF Drop--------------------------//
 //-----------------------------------------------------------------//
@@ -3863,25 +3916,32 @@ void CClientSession::SendRideOnBusRes(CNtlPacket * pPacket, CGameServer * app)
 
 	CNtlPacket packet(sizeof(sUG_RIDE_ON_BUS_REQ));
 	sGU_RIDE_ON_BUS_RES * res = (sGU_RIDE_ON_BUS_RES *)packet.GetPacketData();
-
 	res->hTarget = req->hTarget;
 	res->wOpCode = GU_RIDE_ON_BUS_RES;
 	res->wResultCode = GAME_SUCCESS;
-
-	packet.SetPacketLen(sizeof(sGU_RIDE_ON_BUS_RES));;
+	packet.SetPacketLen(sizeof(sGU_RIDE_ON_BUS_RES));
 	g_pApp->Send(this->GetHandle(), &packet);
 }
 
 void CClientSession::SendRideOffBusRes(CNtlPacket * pPacket, CGameServer * app)
 {
 	sUG_RIDE_OFF_BUS_REQ * req = (sUG_RIDE_OFF_BUS_REQ*)pPacket->GetPacketData();
-
 	CNtlPacket packet(sizeof(sUG_RIDE_OFF_BUS_REQ));
 	sGU_RIDE_OFF_BUS_RES * res = (sGU_RIDE_OFF_BUS_RES *)packet.GetPacketData();
-
 	res->wOpCode = GU_RIDE_OFF_BUS_RES;
 	res->wResultCode = GAME_SUCCESS;
-
 	packet.SetPacketLen(sizeof(sGU_RIDE_OFF_BUS_RES));;
 	g_pApp->Send(this->GetHandle(), &packet);
+}
+
+void CClientSession::SendBusLocation(CNtlPacket * pPacket, CGameServer * app)
+{
+	CNtlPacket packet(sizeof(sGU_BUS_LOCATION_NFY));
+	sGU_BUS_LOCATION_NFY * res = (sGU_BUS_LOCATION_NFY *)packet.GetPacketData();
+
+	res->busTblidx;
+	res->hSubject;
+	res->vCurDir;
+	res->vCurLoc;
+	res->wOpCode;
 }

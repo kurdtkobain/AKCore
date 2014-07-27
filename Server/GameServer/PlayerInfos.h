@@ -5,6 +5,7 @@
 #include <list>
 #include "Avatar.h"
 #include "Character.h"
+#include <boost\thread.hpp>
 
 class CClientSession;
 
@@ -126,19 +127,15 @@ public:
 		this->pcProfile->avatarAttribute.wBasePhysicalDefence += this->byLevel_Up_Physical_Defence;
 		this->pcProfile->avatarAttribute.wBaseEnergyOffence += this->byLevel_Up_Energy_Offence;
 		this->pcProfile->avatarAttribute.wBaseEnergyDefence += this->byLevel_Up_Energy_Defence;
-
 		this->pcProfile->avatarAttribute.byBaseCon += this->fLevel_Up_Con;
 		this->pcProfile->avatarAttribute.byBaseDex += this->fLevel_Up_Dex;
 		this->pcProfile->avatarAttribute.byBaseEng += this->fLevel_Up_Eng;
 		this->pcProfile->avatarAttribute.byBaseFoc += this->fLevel_Up_Foc;
 		this->pcProfile->avatarAttribute.byBaseSol += this->fLevel_Up_Sol;
 		this->pcProfile->avatarAttribute.byBaseStr += this->fLevel_Up_Str;
-
-		
 		this->pcProfile->avatarAttribute.wBaseMaxRP += this->byLevel_Up_RP;
-				this->pcProfile->avatarAttribute.wBaseMaxEP = (this->pcProfile->avatarAttribute.wBaseMaxEP + this->byLevel_Up_EP);
+		this->pcProfile->avatarAttribute.wBaseMaxEP = (this->pcProfile->avatarAttribute.wBaseMaxEP + this->byLevel_Up_EP);
 		this->pcProfile->avatarAttribute.wBaseMaxEP = this->pcProfile->avatarAttribute.wBaseMaxEP + (this->pcProfile->avatarAttribute.byLastEng * 4.2);
-		
 		this->pcProfile->avatarAttribute.wBaseMaxLP = (this->pcProfile->avatarAttribute.wBaseMaxLP + this->byLevel_Up_LP);
 		this->pcProfile->avatarAttribute.wBaseMaxLP = this->pcProfile->avatarAttribute.wBaseMaxLP + (this->pcProfile->avatarAttribute.byLastCon* 4.7);
 		if (this->pcProfile->byLevel == 5)
@@ -178,6 +175,7 @@ public:
 
 void		SaveMe();
 void		SavePlayerData();
+boost::thread    *m_Thread;
 private:
 	sVECTOR3			vCurLoc;
 	sVECTOR3			vCurDir;

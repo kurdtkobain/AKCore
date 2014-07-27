@@ -191,7 +191,7 @@ int CClientSession::OnDispatch(CNtlPacket * pPacket)
 		case UG_CHAR_CHARGE:
 		{
 			printf("---  UG_CHAR_CHARGE --- \n");
-			//CClientSession::SendRpCharge(pPacket, app);
+			CClientSession::SendRpCharge(pPacket, app);
 		}
 			break;
 		case UG_CHAR_BLOCK_MODE:

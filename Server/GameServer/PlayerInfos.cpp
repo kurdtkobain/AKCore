@@ -215,8 +215,6 @@ void		PlayerInfos::setZero()
 
 void		PlayerInfos::calculeMyStat(CGameServer * app)
 {
-
-
 	app->db->prepare("SELECT * FROM items WHERE owner_ID = ? AND place=7");
 	app->db->setInt(1, this->pcProfile->charId);
 	app->db->execute();
