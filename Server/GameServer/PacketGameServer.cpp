@@ -3971,11 +3971,9 @@ void CClientSession::SendCharDashMouse(CNtlPacket * pPacket, CGameServer * app)
 
 	//Response
 	this->plr->pcProfile->wCurEP = (this->plr->pcProfile->wCurEP - 50);
-	this->plr->sCharState->sCharStateBase.vCurDir.x = req->vCurDir.x;
-	this->plr->sCharState->sCharStateBase.vCurDir.z = req->vCurDir.z;
-	this->plr->sCharState->sCharStateBase.vCurLoc.x = req->vCurLoc.x;
-	this->plr->sCharState->sCharStateBase.vCurLoc.z = req->vCurLoc.z;
-	this->plr->sCharState->sCharStateBase.vCurLoc.y = req->vCurLoc.y;
+	this->plr->sCharState->sCharStateBase.vCurLoc.x = req->vDestLoc.x;
+	this->plr->sCharState->sCharStateBase.vCurLoc.z = req->vDestLoc.z;
+	this->plr->sCharState->sCharStateBase.vCurLoc.y = req->vDestLoc.y;
 	res->handle = this->GetavatarHandle();
 	res->wOpCode = GU_UPDATE_CHAR_EP;
 	res->wCurEP = this->plr->pcProfile->wCurEP;//Or some number to get right xD
