@@ -237,15 +237,19 @@ public:
 	void						SendCharSkillAction(CNtlPacket * pPacket, CGameServer * app, int _skillid);
 	void						SendCharSkillRes(CNtlPacket * pPacket, CGameServer * app);
 	void						SendCharSkillCasting(CNtlPacket * pPacket, CGameServer * app, int _skillid);
- 	void						SendCharSkillTransformCancel(CNtlPacket * pPacket, CGameServer * app);
+	void						SendCharSkillTransformCancel(CNtlPacket * pPacket, CGameServer * app);
 	void						SendSocialSkillRes(CNtlPacket *pPacket, CGameServer * app);
 	void						SendRpCharge(CNtlPacket *pPacket, CGameServer * app);
 	void						SendCharSkillBuffDrop(CNtlPacket *pPacket, CGameServer * app);
 
+	//HTB
+	void						SendCharSkillHTBLearn(CNtlPacket * pPacket, CGameServer * app);
+	void						SendHTBStartReq(CNtlPacket * pPacket, CGameServer * app);
+
 	// QuickSlots
 	void						SendCharUpdQuickSlot(CNtlPacket * pPacket, CGameServer * app);
  	void						SendCharDelQuickSlot(CNtlPacket * pPacket, CGameServer * app);
-
+	
 	// MUDOSA
 	void						SendGambleBuyReq(CNtlPacket * pPacket, CGameServer * app);
 	// BANK

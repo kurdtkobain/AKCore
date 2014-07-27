@@ -109,6 +109,7 @@ void CClientSession::SendAvatarCharInfo(CNtlPacket * pPacket, CGameServer * app)
 	res->wOpCode = GU_AVATAR_CHAR_INFO;
 	res->handle = this->plr->GetAvatarandle();
 	res->sPcProfile.tblidx = pTblData->tblidx;
+	res->sPcProfile.bChangeClass = app->db->getBoolean("ChangeClass");
 	res->sPcProfile.bIsAdult = app->db->getBoolean("Adult");
 	res->sPcProfile.charId = app->db->getInt("CharID");
 	wcscpy_s(res->sPcProfile.awchName, NTL_MAX_SIZE_CHAR_NAME_UNICODE, s2ws(app->db->getString("CharName")).c_str() );
@@ -351,8 +352,41 @@ void CClientSession::SendAvatarSkillInfo(CNtlPacket * pPacket, CGameServer * app
 		i++;
 	}
 }
+//--------------------------------------------------------------------------------------//
+//		SendAvatarHTBInfo Luiz45
+//--------------------------------------------------------------------------------------//
+void CClientSession::SendAvatarHTBInfo(CNtlPacket * pPacket, CGameServer* app)
+{
+	size_t i = 0;
+	printf("Send skill info\n");
+	app->db->prepare("SELECT * FROM skills WHERE owner_id = ? ORDER BY SlotID ASC");
+	app->db->setInt(1, this->plr->pcProfile->charId);
+	app->db->execute();
+	
+	CNtlPacket packet(sizeof(sGU_AVATAR_HTB_INFO));
+	sGU_AVATAR_HTB_INFO * res = (sGU_AVATAR_HTB_INFO *)packet.GetPacketData();
+	res->wOpCode = GU_AVATAR_HTB_INFO;
+	res->byHTBSkillCount = 2;//Always TWO per Race/Class
+	CSkillTable * pSkillTable = app->g_pTableContainer->GetSkillTable();
+	while (app->db->fetch())
+	{
+		//Added because Shenron Buffs and for help to detect type of skills
+		//Note Shenron Buffs does not take ANY SLOTID
+		sSKILL_TBLDAT* pSkillData = reinterpret_cast<sSKILL_TBLDAT*>(pSkillTable->FindData(app->db->getInt("skill_id")));
+		this->gsf->DebugSkillType(pSkillData->bySkill_Active_Type);
+		
+		if (pSkillData->bySkill_Class == NTL_SKILL_CLASS_HTB)
+		{
+			res->aHTBSkillnfo[i].bySlotId = app->db->getInt("SlotID");
+			res->aHTBSkillnfo[i].dwTimeRemaining = app->db->getInt("TimeRemaining");
+			res->aHTBSkillnfo[i].skillId = pSkillData->tblidx;
+			packet.AdjustPacketLen(sizeof(sNTLPACKETHEADER)+(2 * sizeof(BYTE)) + (res->byHTBSkillCount * sizeof(sITEM_PROFILE)));
+			g_pApp->Send(this->GetHandle(), &packet);
 
-
+			i++;
+		}		
+	}
+}
 //--------------------------------------------------------------------------------------//
 //		SendAvatarInfoEnd
 //--------------------------------------------------------------------------------------//
@@ -2516,7 +2550,27 @@ void CClientSession::SendCharLearnSkillReq(CNtlPacket * pPacket, CGameServer * a
 
 }
 
+//--------------------------------------------------------------------------------------//
+//		Char learn HTB skill
+//--------------------------------------------------------------------------------------//
+void CClientSession::SendCharSkillHTBLearn(CNtlPacket * pPacket, CGameServer * app)
+{
+	sUG_HTB_LEARN_REQ * req = (sUG_HTB_LEARN_REQ*)pPacket->GetPacketData();
 
+	CNtlPacket packetHTB(sizeof(sGU_HTB_LEARN_RES));
+	sGU_HTB_LEARN_RES * res = (sGU_HTB_LEARN_RES*)packetHTB.GetPacketData();
+	
+	CHTBSetTable * pHTBTable = app->g_pTableContainer->GetHTBSetTable();
+	sHTB_SET_TBLDAT *pHTBSetTblData = reinterpret_cast<sHTB_SET_TBLDAT*>(pHTBTable->FindData(req->skillId));	
+
+	res->skillId	  = pHTBSetTblData->tblidx;
+	res->bySkillSlot  = pHTBSetTblData->bySlot_Index;
+	res->wOpCode	  = GU_HTB_LEARN_RES;
+	res->wResultCode  = GAME_SUCCESS;
+	packetHTB.SetPacketLen(sizeof(sGU_HTB_LEARN_RES));
+	g_pApp->Send(this->GetHandle(), &packetHTB);
+	app->qry->InsertNewSkill(pHTBSetTblData->tblidx, this->plr->pcProfile->charId, pHTBSetTblData->bySlot_Index, 0, 0);
+}
 //--------------------------------------------------------------------------------------//
 //		MOVE ITEM
 //--------------------------------------------------------------------------------------//
@@ -3360,7 +3414,8 @@ void CClientSession::SendCharDelQuickSlot(CNtlPacket * pPacket, CGameServer * ap
 
 	CNtlPacket packet(sizeof(sGU_QUICK_SLOT_DEL_NFY));
 	sGU_QUICK_SLOT_DEL_NFY * response = (sGU_QUICK_SLOT_DEL_NFY*)packet.GetPacketData();
-	app->qry->InsertRemoveQuickSlot(0, req->bySlotID, this->plr->pcProfile->charId);
+	if (req->bySlotID<=47)
+		app->qry->InsertRemoveQuickSlot(0, req->bySlotID, this->plr->pcProfile->charId);
 
 	response->bySlotID = req->bySlotID;
 	response->wOpCode = GU_QUICK_SLOT_DEL_NFY;
@@ -3730,6 +3785,24 @@ void CClientSession::SendCharSkillBuffDrop(CNtlPacket * pPacket, CGameServer * a
  	app->UserBroadcastothers(&packet2, this);
   	app->UserBroadcastothers(&packet, this);
  }
+//-----------------------------------------------------------//
+//-----------HTB SKILL REQ/RES  Luiz45  ---------------------//
+//-----------------------------------------------------------//
+void CClientSession::SendHTBStartReq(CNtlPacket * pPacket, CGameServer * app)
+{
+	sUG_HTB_START_REQ * req = (sUG_HTB_START_REQ*)pPacket->GetPacketData();
+
+	CNtlPacket packet(sizeof(sGU_HTB_START_RES));
+	sGU_HTB_START_RES * resp = (sGU_HTB_START_RES*)packet.GetPacketData();
+
+	resp->bySkillSlot = req->bySkillSlot;
+	resp->wOpCode = GU_HTB_START_RES;
+	resp->wResultCode = GAME_SUCCESS;
+
+	packet.SetPacketLen(sizeof(sGU_HTB_START_RES));
+	g_pApp->Send(this->GetHandle(), &packet);
+	app->UserBroadcastothers(&packet, this);
+}
 //-----------------------------------------------------------//
 //-----------GMT UPDATES        Luiz45  ---------------------//
 //-----------------------------------------------------------//

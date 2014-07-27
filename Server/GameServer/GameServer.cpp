@@ -277,11 +277,13 @@ int CClientSession::OnDispatch(CNtlPacket * pPacket)
 		case UG_HTB_START_REQ:
 		{
 			printf("--- UG_HTB_START_REQ --- \n");
+			CClientSession::SendHTBStartReq(pPacket, app);
 		}
 			break;
 		case UG_HTB_LEARN_REQ:
 		{
 			printf("--- UG_HTB_LEARN_REQ --- \n");
+			CClientSession::SendCharSkillHTBLearn(pPacket, app);
 		}
 			break;
 		case UG_HTB_FORWARD_REQ:
@@ -333,6 +335,7 @@ int CClientSession::OnDispatch(CNtlPacket * pPacket)
 		case UG_ITEM_USE_REQ:
 		{
 			printf("--- UG_ITEM_USE_REQ --- \n");
+			CClientSession::SendItemUseReq(pPacket, app);
 		}
 			break;
 		case UG_ITEM_UPGRADE_REQ:
