@@ -235,7 +235,6 @@ public:
 	void						SendRideOnBusRes(CNtlPacket * pPacket, CGameServer * app);
 	void						SendRideOffBusRes(CNtlPacket * pPacket, CGameServer * app);
 	void						SendBusLocation(CNtlPacket * pPacket, CGameServer * app);
-	void						SendRpChargethread();
 	// SCOUTER
 	void						SendScouterIndicatorReq(CNtlPacket * pPacket, CGameServer * app);
 	// DRAGON BALL

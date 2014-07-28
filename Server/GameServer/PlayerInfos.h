@@ -20,6 +20,7 @@ public:
 		this->CurRPBall = 0;
 		LastPartyHandle = -1;
 		dwThreadId = 0;
+		ChargingID = 1;
 	};
 	~PlayerInfos()
 	{
@@ -184,9 +185,10 @@ public:
 
 void		SaveMe();
 void		SavePlayerData();
-boost::thread    *m_Thread;
-HANDLE          hThread;
-DWORD			dwThreadId;
+HANDLE		Charging_Thread;
+HANDLE      hThread;
+DWORD		dwThreadId;
+DWORD		ChargingID;
 private:
 	sVECTOR3			vCurLoc;
 	sVECTOR3			vCurDir;

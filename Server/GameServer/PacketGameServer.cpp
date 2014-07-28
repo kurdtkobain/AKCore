@@ -3765,23 +3765,28 @@ void CClientSession::SendCharSkillTransformCancel(CNtlPacket * pPacket, CGameSer
 	//app->UserBroadcastothers(&packet, this);
 	this->gsf->printOk("Sended");*/
  }
- void	CClientSession::SendRpChargethread()
+ DWORD WINAPI	SendRpChargethread(LPVOID arg)
  {
+	 CClientSession* session = (CClientSession*)arg;
+	 session->plr->pcProfile->wCurRP = 0;
 	 while (42)
 	 {
-		 CNtlPacket packet3(sizeof(sGU_UPDATE_CHAR_RP));
-		 sGU_UPDATE_CHAR_RP * res3 = (sGU_UPDATE_CHAR_RP *)packet3.GetPacketData();
+		CNtlPacket packet3(sizeof(sGU_UPDATE_CHAR_RP));
+		sGU_UPDATE_CHAR_RP * res3 = (sGU_UPDATE_CHAR_RP *)packet3.GetPacketData();
 
-		 this->plr->pcProfile->wCurRP += 10;
-		 res3->bHitDelay = 1;
-		 res3->handle = this->GetavatarHandle();
-		 res3->wCurRP = this->plr->pcProfile->wCurRP;
-		 res3->wMaxRP = this->plr->pcProfile->avatarAttribute.wBaseMaxRP;
-		 res3->wOpCode = GU_UPDATE_CHAR_RP;
-		 packet3.SetPacketLen(sizeof(sGU_UPDATE_CHAR_RP));
-		 g_pApp->Send(this->GetHandle(), &packet3);
-		 printf("Charging\n");
-		 Sleep(1000);
+		session->plr->pcProfile->wCurRP += 10;
+		//res3->bHitDelay = 5;
+		res3->handle = session->GetavatarHandle();
+		res3->wCurRP = session->plr->pcProfile->wCurRP;
+		if (session->plr->getNumberOfRPBall() > 0)
+			res3->wMaxRP = (session->plr->pcProfile->avatarAttribute.wBaseMaxRP / session->plr->getNumberOfRPBall());
+		else
+			res3->wMaxRP = session->plr->pcProfile->avatarAttribute.wBaseMaxRP;
+		res3->wOpCode = GU_UPDATE_CHAR_RP;
+		packet3.SetPacketLen(sizeof(sGU_UPDATE_CHAR_RP));
+		g_pApp->Send(session->plr->MySession, &packet3);
+		printf("Charging: %d / %d\n", session->plr->pcProfile->wCurRP, session->plr->pcProfile->avatarAttribute.wBaseMaxRP);
+		Sleep(100);
 	 }
  }
  void CClientSession::SendRpCharge(CNtlPacket *pPacket, CGameServer * app)
@@ -3794,28 +3799,34 @@ void CClientSession::SendCharSkillTransformCancel(CNtlPacket * pPacket, CGameSer
 		sGU_UPDATE_CHAR_STATE * res = (sGU_UPDATE_CHAR_STATE *)packet.GetPacketData();
 		CNtlPacket packet2(sizeof(sGU_AVATAR_RP_INCREASE_START_NFY));
 		sGU_AVATAR_RP_INCREASE_START_NFY * res2 = (sGU_AVATAR_RP_INCREASE_START_NFY *)packet2.GetPacketData();
+		CNtlPacket packet3(sizeof(sGU_UPDATE_CHAR_MAX_RP));
+		sGU_UPDATE_CHAR_MAX_RP * res3 = (sGU_UPDATE_CHAR_MAX_RP *)packet3.GetPacketData();
 
 		res->handle = this->GetavatarHandle();
 		memcpy(&res->sCharState, this->plr->sCharState, sizeof(sCHARSTATE));
 		res->sCharState.sCharStateBase.byStateID = CHARSTATE_CHARGING;
 		res->wOpCode = GU_UPDATE_CHAR_STATE;
 		res2->wOpCode = GU_AVATAR_RP_INCREASE_START_NFY;
-
+		res3->hSubject = this->GetavatarHandle();
+		res3->wMaxRp = this->plr->pcProfile->avatarAttribute.wBaseMaxRP;
+		res3->wOpCode = GU_UPDATE_CHAR_MAX_RP;
 		packet.SetPacketLen(sizeof(sGU_UPDATE_CHAR_STATE));
 		g_pApp->Send(this->GetHandle(), &packet);
 		packet2.SetPacketLen(sizeof(sGU_AVATAR_RP_INCREASE_START_NFY));
 		g_pApp->Send(this->GetHandle(), &packet2);
-		this->plr->m_Thread = &boost::thread(&CClientSession::SendRpChargethread, this);
+		packet3.SetPacketLen(sizeof(sGU_UPDATE_CHAR_MAX_RP));
+		g_pApp->Send(this->GetHandle(), &packet3);
+		this->plr->Charging_Thread = CreateThread(NULL, 0, SendRpChargethread, (LPVOID)this, 0, &this->plr->ChargingID);
+		if (this->plr->Charging_Thread == NULL)
+			printf("Can't create thread\n");
 		app->UserBroadcastothers(&packet, this);
 	}
 	if (req->bCharge == false)
 	{
-		this->plr->m_Thread->detach();
-		this->plr->m_Thread->interrupt();
-		this->plr->m_Thread->yield();
-		this->plr->m_Thread->~thread();
-		if (this->plr->m_Thread)
-			delete this->plr->m_Thread;
+		if (TerminateThread(this->plr->Charging_Thread, 1) == 0)
+			printf("Can't kill thread\n");
+		else
+			CloseHandle(this->plr->Charging_Thread);
 		CNtlPacket packet(sizeof(sGU_UPDATE_CHAR_STATE));
 		sGU_UPDATE_CHAR_STATE * res = (sGU_UPDATE_CHAR_STATE *)packet.GetPacketData();
 		CNtlPacket packet2(sizeof(sGU_AVATAR_RP_INCREASE_STOP_NFY));
