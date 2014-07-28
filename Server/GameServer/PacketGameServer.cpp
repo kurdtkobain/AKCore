@@ -505,7 +505,7 @@ void CClientSession::SendCharReadyReq(CNtlPacket * pPacket, CGameServer * app)
 	app->UserBroadcastothers(&packet, this);
 	app->UserBroadcasFromOthers(GU_OBJECT_CREATE, this);
 	app->AddUser(this->plr->GetPlayerName().c_str(), this);
-//	this->plr->_update = &boost::thread(&PlayerInfos::Update, this->plr);
+	this->plr->SpawnMyChar();
 }
 
 //--------------------------------------------------------------------------------------//

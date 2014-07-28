@@ -17,12 +17,12 @@ void		PlayerInfos::UpdateLP()
 	int i = g_pApp->Send(this->MySession, &packet);
 	printf("LP ++ %d\n", i);
 }
-
-void		PlayerInfos::Update()
+DWORD WINAPI	Update(LPVOID arg)
 {
+	PlayerInfos* plr = (PlayerInfos*)arg;
 	int lasttime = 0;
-	this->pcProfile->wCurLP = 1;
-	if (this)
+	plr->pcProfile->wCurLP = 1;
+	if (plr)
 	{
 		while (42)
 		{
@@ -31,15 +31,20 @@ void		PlayerInfos::Update()
 				// do some LP regen etc
 				//if (this->fighting == false) //->>> this is the regen in NOT FIGHTING
 				//else if (this->fighting == true) //->>> this is the regen in FIGHTING
-				if (this->pcProfile->wCurLP < this->pcProfile->avatarAttribute.wBaseMaxLP)
-					this->UpdateLP();
+				if (plr->pcProfile->wCurLP < plr->pcProfile->avatarAttribute.wBaseMaxLP)
+					plr->UpdateLP();
 				lasttime = timeGetTime();
 			}
-			Sleep(10);
 		}
 	}
+	return 0;
 }
-
+void		PlayerInfos::SpawnMyChar()
+{
+	this->hThread = CreateThread(NULL, 0, Update, (LPVOID)this, 0, &this->dwThreadId);
+	if (this->hThread == NULL)
+        printf("Can't create thread\n");
+};
 void		PlayerInfos::SavePlayerData()
 {
 	this->db = new MySQLConnWrapper;

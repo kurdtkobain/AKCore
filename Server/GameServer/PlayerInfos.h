@@ -1,11 +1,12 @@
 #include "stdafx.h"
-//#include <boost/thread.hpp>
-//#include <boost/date_time.hpp>
 #include "Vector.h"
 #include <list>
+#include <cstdio>
+#include <cstdlib>
 #include "Avatar.h"
 #include "Character.h"
 #include <boost\thread.hpp>
+#include <iostream>
 
 class CClientSession;
 
@@ -18,18 +19,17 @@ public:
 		this->sCharState = new sCHARSTATE;
 		this->CurRPBall = 0;
 		LastPartyHandle = -1;
-		//_update = new boost::thread();
+		dwThreadId = 0;
 	};
 	~PlayerInfos()
 	{
-		/*TerminateThread(_update, -1);
-		if (_update)
-			delete _update;*/
+		if (TerminateThread(hThread, 1) == 0)
+			printf("Can't kill thread\n");
+		CloseHandle(hThread);
 	};
 	sPC_PROFILE		*pcProfile;
 	sCHARSTATE		*sCharState;
 	HSESSION		MySession;
-	void		Update();
 	void		UpdateLP();
 	void		setPlayerStat(sPC_PROFILE* pc, sCHARSTATE *sCharSt)
 	{	
@@ -177,10 +177,7 @@ public:
 		g_pApp->Send(this->MySession, &packet);
 	}
 	void		LastPartyInvited(){};
-	void		SpawnMyChar()
-	{
-		this->Update();
-	};
+	void		SpawnMyChar();
 private:
 	MySQLConnWrapper			*db;
 public:
@@ -188,7 +185,8 @@ public:
 void		SaveMe();
 void		SavePlayerData();
 boost::thread    *m_Thread;
-boost::thread    *_update;
+HANDLE          hThread;
+DWORD			dwThreadId;
 private:
 	sVECTOR3			vCurLoc;
 	sVECTOR3			vCurDir;
