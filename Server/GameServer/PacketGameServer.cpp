@@ -1831,11 +1831,12 @@ void CClientSession::SendPortalStartReq(CNtlPacket * pPacket, CGameServer * app)
 		if ((rand() %100) >= 60)
 		{
 			res2->aPortalID[i] = pPortalTblData->tblidx;
+			res2->byCount = i;
 			i++;
 		}
 	}
 	res2->wOpCode = GU_PORTAL_INFO;
-	res2->byCount = i;
+	
 
 	packet2.SetPacketLen( sizeof(sGU_PORTAL_INFO));
 	int rc = g_pApp->Send( this->GetHandle(), &packet2);
@@ -1856,7 +1857,7 @@ void CClientSession::SendPortalAddReq(CNtlPacket * pPacket, CGameServer * app)
 	res->wOpCode = GU_PORTAL_ADD_RES;
 	res->wResultCode = GAME_SUCCESS;
 	res->hNpcHandle = req->handle;
-	res->PortalID = 1;
+	res->PortalID = 255;
 
 	packet.SetPacketLen( sizeof(sGU_PORTAL_ADD_RES) );
 	int rc = g_pApp->Send( this->GetHandle(), &packet );
@@ -1918,23 +1919,10 @@ void CClientSession::SendPortalTelReq(CNtlPacket * pPacket, CGameServer * app)
 		app->db->setInt(6, this->plr->pcProfile->charId);
 		app->db->execute();
 
-		res3->handle = this->GetavatarHandle();
-		res3->wOpCode = GU_UPDATE_CHAR_STATE;
-		res3->sCharState.sCharStateBase.byStateID = CHARSTATE_TELEPORTING;
-		res3->sCharState.sCharStateBase.vCurLoc.x = this->plr->GetPosition().x;
-		res3->sCharState.sCharStateBase.vCurLoc.y = this->plr->GetPosition().y;
-		res3->sCharState.sCharStateBase.vCurLoc.z = this->plr->GetPosition().z;
-		res3->sCharState.sCharStateBase.vCurDir.x = this->plr->GetDirection().x;
-		res3->sCharState.sCharStateBase.vCurDir.y = this->plr->GetDirection().y;
-		res3->sCharState.sCharStateBase.vCurDir.z = this->plr->GetDirection().z;
-		res3->sCharState.sCharStateDetail.sCharStateTeleporting.byTeleportType = TELEPORT_TYPE_NPC_PORTAL;
 		
 		g_pApp->Send( this->GetHandle(), &packet );
 		g_pApp->Send( this->GetHandle(), &packet2 );
-		g_pApp->Send( this->GetHandle(), &packet3 );
-		app->UserBroadcast(&packet);
-		app->UserBroadcast(&packet2);
-		//app->UserBroadcast(&packet);
+		
 	}
 	else
 	{

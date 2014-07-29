@@ -9,7 +9,7 @@ void		PlayerInfos::UpdateLP()
 	CNtlPacket packet2(sizeof(sGU_UPDATE_CHAR_LP_STATUS_NFY));
 	sGU_UPDATE_CHAR_LP_STATUS_NFY * res2 = (sGU_UPDATE_CHAR_LP_STATUS_NFY *)packet2.GetPacketData();
 
-	this->pcProfile->wCurLP += 5; // += regen
+	this->pcProfile->wCurLP += this->pcProfile->avatarAttribute.wBaseLpRegen; // += regen
 	if (this->pcProfile->wCurLP > this->pcProfile->avatarAttribute.wBaseMaxLP)
 		this->pcProfile->wCurLP = this->pcProfile->avatarAttribute.wBaseMaxLP;
 
@@ -34,7 +34,7 @@ void	    PlayerInfos::UpdateEP()
 	CNtlPacket packet(sizeof(sGU_UPDATE_CHAR_EP));
 	sGU_UPDATE_CHAR_EP * res = (sGU_UPDATE_CHAR_EP *)packet.GetPacketData();
 
-	this->pcProfile->wCurEP += 5; // += regen
+	this->pcProfile->wCurEP += this->pcProfile->avatarAttribute.wBaseEpRegen; // += regen
 	if (this->pcProfile->wCurEP > this->pcProfile->avatarAttribute.wBaseMaxEP)
 		this->pcProfile->wCurEP = this->pcProfile->avatarAttribute.wBaseMaxEP;
 
