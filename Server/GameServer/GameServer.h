@@ -51,7 +51,6 @@
 #include <MMSystem.h>
 #include <iostream>
 #include <map>
-#include <boost\thread.hpp>
 
 enum APP_LOG
 {

@@ -2280,7 +2280,7 @@ void CClientSession::SendCharSkillAction(CNtlPacket * pPacket, CGameServer * app
 	CSkillTable *pSkillTbl = app->g_pTableContainer->GetSkillTable();
 	
 	int skillID = _skillID;
-
+	this->plr->checkBuff(skillID);
 	sSKILL_TBLDAT *pSkillTblData = reinterpret_cast<sSKILL_TBLDAT*>(pSkillTbl->FindData(skillID));
 	res->wOpCode = GU_CHAR_ACTION_SKILL;
 	res->handle = this->GetavatarHandle();

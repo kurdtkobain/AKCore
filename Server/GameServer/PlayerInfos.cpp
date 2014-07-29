@@ -1,54 +1,48 @@
 #include "stdafx.h"
 #include "GameServer.h"
 
+void		PlayerInfos::SendPlayerLifeAndEP()
+{
+	CNtlPacket packet(sizeof(sGU_UPDATE_CHAR_LP_EP));
+	sGU_UPDATE_CHAR_LP_EP * res = (sGU_UPDATE_CHAR_LP_EP *)packet.GetPacketData();
+
+	res->handle = this->avatarHandle;
+	res->wCurEP = this->pcProfile->wCurEP;
+	res->wCurLP = this->pcProfile->wCurLP;
+	res->wMaxEP = this->pcProfile->avatarAttribute.wBaseMaxEP;
+	res->wMaxLP = this->pcProfile->avatarAttribute.wBaseMaxLP;
+	res->wOpCode = GU_UPDATE_CHAR_LP_EP;
+
+	packet.SetPacketLen(sizeof(sGU_UPDATE_CHAR_LP_EP));
+	g_pApp->Send(this->MySession, &packet);
+}
+
 void		PlayerInfos::UpdateLP()
 {
 	if (this->pcProfile->avatarAttribute.wBaseLpRegen <= 0)
-		this->pcProfile->avatarAttribute.wBaseLpRegen = 10;
-	CNtlPacket packet(sizeof(sGU_UPDATE_CHAR_LP));
-	sGU_UPDATE_CHAR_LP * res = (sGU_UPDATE_CHAR_LP *)packet.GetPacketData();
-
-	CNtlPacket packet2(sizeof(sGU_UPDATE_CHAR_LP_STATUS_NFY));
-	sGU_UPDATE_CHAR_LP_STATUS_NFY * res2 = (sGU_UPDATE_CHAR_LP_STATUS_NFY *)packet2.GetPacketData();
+		this->pcProfile->avatarAttribute.wBaseLpRegen = (this->pcProfile->avatarAttribute.wBaseMaxLP * 0.03);
 
 	this->pcProfile->wCurLP += this->pcProfile->avatarAttribute.wBaseLpRegen; // += regen
 	if (this->pcProfile->wCurLP > this->pcProfile->avatarAttribute.wBaseMaxLP)
 		this->pcProfile->wCurLP = this->pcProfile->avatarAttribute.wBaseMaxLP;
-
-	res->handle = this->avatarHandle;
-	res->wCurLP = this->pcProfile->wCurLP;
-	res->wMaxLP = this->pcProfile->avatarAttribute.wBaseMaxLP;
-	res->wOpCode = GU_UPDATE_CHAR_LP;
-
-	res2->bEmergency = false;
-	res2->handle = this->GetAvatarandle();
-	res2->wOpCode = GU_UPDATE_CHAR_LP_STATUS_NFY;
-
-	packet.SetPacketLen(sizeof(sGU_UPDATE_CHAR_LP));
-	g_pApp->Send(this->MySession, &packet);
-
-	packet2.SetPacketLen(sizeof(sGU_UPDATE_CHAR_LP_STATUS_NFY));
-	g_pApp->Send(this->MySession, &packet2);
 }
 
 void	    PlayerInfos::UpdateEP()
 {
 	if (this->pcProfile->avatarAttribute.wBaseEpRegen <= 0)
-		this->pcProfile->avatarAttribute.wBaseEpRegen = 10;
-	CNtlPacket packet(sizeof(sGU_UPDATE_CHAR_EP));
-	sGU_UPDATE_CHAR_EP * res = (sGU_UPDATE_CHAR_EP *)packet.GetPacketData();
+		this->pcProfile->avatarAttribute.wBaseEpRegen = (this->pcProfile->avatarAttribute.wBaseMaxEP * 0.03);
 
 	this->pcProfile->wCurEP += this->pcProfile->avatarAttribute.wBaseEpRegen; // += regen
 	if (this->pcProfile->wCurEP > this->pcProfile->avatarAttribute.wBaseMaxEP)
 		this->pcProfile->wCurEP = this->pcProfile->avatarAttribute.wBaseMaxEP;
-
-	res->handle = this->avatarHandle;
-	res->wCurEP = this->pcProfile->wCurEP;
-	res->wMaxEP = this->pcProfile->avatarAttribute.wBaseMaxEP;
-	res->wOpCode = GU_UPDATE_CHAR_EP;
-
-	packet.SetPacketLen(sizeof(sGU_UPDATE_CHAR_EP));
-	g_pApp->Send(this->MySession, &packet);
+}
+void		PlayerInfos::checkBuff(int skill)
+{
+	if (skill == 120103 || skill == 120101 || skill == 120102)
+	{
+		this->isKaioken = true;
+		this->sCharState->sCharStateBase.aspectState.sAspectStateDetail.sKaioken.byRepeatingCount += 1;
+	}
 }
 DWORD WINAPI	Update(LPVOID arg)
 {
@@ -58,16 +52,21 @@ DWORD WINAPI	Update(LPVOID arg)
 	{
 		while (true)
 		{
-			if (timeGetTime() >= (lasttime + 5000))
+			if (timeGetTime() >= (lasttime + 1000))
 			{
 				// do some LP regen etc
 				//if (this->fighting == false) //->>> this is the regen in NOT FIGHTING
 				//else if (this->fighting == true) //->>> this is the regen in FIGHTING
-				if (plr->pcProfile->wCurLP <= plr->pcProfile->avatarAttribute.wBaseMaxLP)
+				if (plr->pcProfile->wCurLP < plr->pcProfile->avatarAttribute.wBaseMaxLP || plr->pcProfile->wCurLP > plr->pcProfile->avatarAttribute.wBaseMaxLP)
 					plr->UpdateLP();
-				if (plr->pcProfile->wCurEP <= plr->pcProfile->avatarAttribute.wBaseMaxEP)
-					plr->UpdateEP();				
-				
+				if (plr->pcProfile->wCurEP < plr->pcProfile->avatarAttribute.wBaseMaxEP || plr->pcProfile->wCurEP > plr->pcProfile->avatarAttribute.wBaseMaxEP)
+					plr->UpdateEP();
+				if (plr->isKaioken == true) /* TEST */
+				{
+					plr->pcProfile->wCurLP -= (500 * plr->sCharState->sCharStateBase.aspectState.sAspectStateDetail.sKaioken.byRepeatingCount);
+					plr->pcProfile->wCurEP -= (500 * plr->sCharState->sCharStateBase.aspectState.sAspectStateDetail.sKaioken.byRepeatingCount);
+				}
+				plr->SendPlayerLifeAndEP();
 				lasttime = timeGetTime();				
 			}
 		}

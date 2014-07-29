@@ -5,7 +5,6 @@
 #include <cstdlib>
 #include "Avatar.h"
 #include "Character.h"
-#include <boost\thread.hpp>
 #include <iostream>
 
 class CClientSession;
@@ -22,6 +21,7 @@ public:
 		dwThreadId = 0;
 		ChargingID = 1;
 		CurRPBallOk = 0;
+		isKaioken = false;
 	};
 	~PlayerInfos()
 	{
@@ -223,6 +223,8 @@ public:
 	 	g_pApp->Send(this->MySession, &packet6);
 		printf("RpBallOk: %d\n", this->getRpBallOk());
 	};
+	void		SendPlayerLifeAndEP();
+	void		checkBuff(int skill);
 private:
 	MySQLConnWrapper			*db;
 public:
@@ -233,6 +235,7 @@ HANDLE		Charging_Thread;
 HANDLE      hThread;
 DWORD		dwThreadId;
 DWORD		ChargingID;
+bool		isKaioken;
 private:
 	sVECTOR3			vCurLoc;
 	sVECTOR3			vCurDir;
