@@ -3,6 +3,8 @@
 
 void		PlayerInfos::UpdateLP()
 {
+	if (this->pcProfile->avatarAttribute.wBaseLpRegen <= 0)
+		this->pcProfile->avatarAttribute.wBaseLpRegen = 10;
 	CNtlPacket packet(sizeof(sGU_UPDATE_CHAR_LP));
 	sGU_UPDATE_CHAR_LP * res = (sGU_UPDATE_CHAR_LP *)packet.GetPacketData();
 
@@ -31,6 +33,8 @@ void		PlayerInfos::UpdateLP()
 
 void	    PlayerInfos::UpdateEP()
 {
+	if (this->pcProfile->avatarAttribute.wBaseEpRegen <= 0)
+		this->pcProfile->avatarAttribute.wBaseEpRegen = 10;
 	CNtlPacket packet(sizeof(sGU_UPDATE_CHAR_EP));
 	sGU_UPDATE_CHAR_EP * res = (sGU_UPDATE_CHAR_EP *)packet.GetPacketData();
 
@@ -61,7 +65,6 @@ DWORD WINAPI	Update(LPVOID arg)
 				//else if (this->fighting == true) //->>> this is the regen in FIGHTING
 				if (plr->pcProfile->wCurLP <= plr->pcProfile->avatarAttribute.wBaseMaxLP)
 					plr->UpdateLP();
-
 				if (plr->pcProfile->wCurEP <= plr->pcProfile->avatarAttribute.wBaseMaxEP)
 					plr->UpdateEP();				
 				

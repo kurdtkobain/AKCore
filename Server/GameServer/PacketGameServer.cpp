@@ -75,8 +75,6 @@ void CClientSession::CheckPlayerStat(CGameServer * app, sPC_TBLDAT *pTblData, in
 	WORD basicenergy = pTblData->wBasic_EP + (pTblData->byLevel_Up_EP * level);
 	WORD leveleng = pTblData->byEng + (pTblData->fLevel_Up_Eng * level);
 	WORD EP = basicenergy + ((leveleng * level) * 4.2);
-
-	printf("BaseMaxLP: %d, BaseMaxEP: %d, BaseMaxRP: %d, LP: %d\n", pTblData->wBasic_LP,pTblData->wBasic_EP,pTblData->wBasic_RP, LP);
 	
 	app->db->prepare("UPDATE characters SET BaseMaxLP = ?, BaseMaxEP = ?, BaseMaxRP = ?, BaseDodgeRate = ?, BaseAttackRate = ?, BaseBlockRate = ?, BasePhysicalCriticalRate = ?, BaseEnergyCriticalRate = ? WHERE CharID = ?");
 	app->db->setInt(1,LP);
@@ -2459,7 +2457,7 @@ void CGameServer::UpdateClient(CNtlPacket * pPacket, CClientSession * pSession)
 //--------------------------------------------------------------------------------------//
 void CClientSession::SendCharToggleFighting(CNtlPacket * pPacket, CGameServer * app)
 {
-	printf("IM HERER");
+	/*printf("IM HERER");
 //CHAR_TOGG_FIGHTING
     //	app->mob->AddToWorld(pPacket, this);
 	sUG_CHAR_TOGG_FIGHTING * req = (sUG_CHAR_TOGG_FIGHTING *)pPacket->GetPacketData();
@@ -2491,7 +2489,7 @@ void CClientSession::SendCharToggleFighting(CNtlPacket * pPacket, CGameServer * 
 		res->bFightMode = true;
 
 	packet2.SetPacketLen(sizeof(sGU_CHAR_FIGHTMODE));
-	g_pApp->Send(this->GetHandle(), &packet2);
+	g_pApp->Send(this->GetHandle(), &packet2);*/
 }
 
 //--------------------------------------------------------------------------------------//
@@ -3825,25 +3823,53 @@ void CClientSession::SendCharSkillTransformCancel(CNtlPacket * pPacket, CGameSer
  DWORD WINAPI	SendRpChargethread(LPVOID arg)
  {
 	 CClientSession* session = (CClientSession*)arg;
-	 //session->plr->pcProfile->wCurRP = 0;
+	 bool isRpBall = false;
 	 while (42)
 	 {
 		CNtlPacket packet3(sizeof(sGU_UPDATE_CHAR_RP));
 		sGU_UPDATE_CHAR_RP * res3 = (sGU_UPDATE_CHAR_RP *)packet3.GetPacketData();
 
-		session->plr->pcProfile->wCurRP += 10;
-		//res3->bHitDelay = 5;
+		session->plr->pcProfile->wCurRP += 1;
+		if (session->plr->getNumberOfRPBall() >= 1)
+		{
+			res3->wMaxRP = (session->plr->pcProfile->avatarAttribute.wBaseMaxRP / session->plr->getNumberOfRPBall());
+			isRpBall = true;
+			if (session->plr->pcProfile->wCurRP > (session->plr->pcProfile->avatarAttribute.wBaseMaxRP/ session->plr->getNumberOfRPBall()))
+				session->plr->pcProfile->wCurRP = session->plr->pcProfile->avatarAttribute.wBaseMaxRP / session->plr->getNumberOfRPBall();
+		}
+		else
+		{
+			res3->wMaxRP = session->plr->pcProfile->avatarAttribute.wBaseMaxRP;
+			isRpBall = false;
+			if (session->plr->pcProfile->wCurRP > session->plr->pcProfile->avatarAttribute.wBaseMaxRP)
+				session->plr->pcProfile->wCurRP = session->plr->pcProfile->avatarAttribute.wBaseMaxRP;
+			res3->bHitDelay = false;
+		}
+		if (isRpBall == true)
+		{
+			if (session->plr->pcProfile->wCurRP >= (session->plr->pcProfile->avatarAttribute.wBaseMaxRP / session->plr->getNumberOfRPBall()))
+			{
+				if (session->plr->getRpBallOk() < 8 && session->plr->getRpBallOk() < session->plr->getNumberOfRPBall())
+				{
+					res3->bHitDelay = true;
+					session->plr->pcProfile->wCurRP = 0;
+					session->plr->UpdateRpBallOk(0); // 0 for increase ! 1 for decrease !
+				}
+				else
+				{
+					res3->bHitDelay = false;
+					session->plr->pcProfile->wCurRP = (session->plr->pcProfile->avatarAttribute.wBaseMaxRP / session->plr->getNumberOfRPBall());
+				}
+			}
+			
+		}
 		res3->handle = session->GetavatarHandle();
 		res3->wCurRP = session->plr->pcProfile->wCurRP;
-		if (session->plr->getNumberOfRPBall() > 0)
-			res3->wMaxRP = (session->plr->pcProfile->avatarAttribute.wBaseMaxRP / session->plr->getNumberOfRPBall());
-		else
-			res3->wMaxRP = session->plr->pcProfile->avatarAttribute.wBaseMaxRP;
+		
 		res3->wOpCode = GU_UPDATE_CHAR_RP;
 		packet3.SetPacketLen(sizeof(sGU_UPDATE_CHAR_RP));
 		g_pApp->Send(session->plr->MySession, &packet3);
-		printf("Charging: %d / %d\n", session->plr->pcProfile->wCurRP, session->plr->pcProfile->avatarAttribute.wBaseMaxRP);
-		Sleep(100);
+		Sleep(5);
 	 }
  }
  void CClientSession::SendRpCharge(CNtlPacket *pPacket, CGameServer * app)

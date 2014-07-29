@@ -21,6 +21,7 @@ public:
 		LastPartyHandle = -1;
 		dwThreadId = 0;
 		ChargingID = 1;
+		CurRPBallOk = 0;
 	};
 	~PlayerInfos()
 	{
@@ -113,7 +114,10 @@ public:
 			this->CurRPBall = 6;
 		else if (this->pcProfile->byLevel >= 45)
 			this->CurRPBall = 7;
-		this->UpdateRPBall();
+		else if (this->pcProfile->byLevel < 5)
+			this->CurRPBall = 0;
+		if (this->pcProfile->byLevel >= 5)
+			this->UpdateRPBall();
 	};
 	void		SetLevelup(sPC_TBLDAT *Data)
 	{
@@ -130,6 +134,13 @@ public:
 		this->fLevel_Up_Foc = Data->fLevel_Up_Foc;
 		this->fLevel_Up_Sol = Data->fLevel_Up_Sol;
 		this->fLevel_Up_Str = Data->fLevel_Up_Str;
+
+		/* TEMPORARY */
+		this->pcProfile->avatarAttribute.wBaseLpRegen = 15;
+		this->pcProfile->avatarAttribute.wBaseEpRegen = 15;
+		this->pcProfile->avatarAttribute.wLastEpRegen = 15;
+		this->pcProfile->avatarAttribute.wLastLpRegen = 15;
+		/* TEMPORARY */
 	};
 	void		LevelUpPlayer()
 	{
@@ -162,6 +173,8 @@ public:
 			this->CurRPBall = 6;
 		if (this->pcProfile->byLevel == 45)
 			this->CurRPBall = 7;
+		else if (this->pcProfile->byLevel < 5)
+			this->CurRPBall = 0;
 
 		CNtlPacket packet(sizeof(sGU_UPDATE_CHAR_LP_EP));
 		sGU_UPDATE_CHAR_LP_EP * res = (sGU_UPDATE_CHAR_LP_EP *)packet.GetPacketData();
@@ -180,6 +193,36 @@ public:
 	}
 	void		LastPartyInvited(){};
 	void		SpawnMyChar();
+	void		setRpBallOk(int rp){CurRPBallOk = rp;};
+	int			getRpBallOk(){return CurRPBallOk;};
+	void		UpdateRpBallOk(int moreOrLess /* 0+ 1- */)
+	{
+		CNtlPacket packet6(sizeof(sGU_UPDATE_CHAR_RP_BALL));	
+	 	sGU_UPDATE_CHAR_RP_BALL * ball = (sGU_UPDATE_CHAR_RP_BALL*)packet6.GetPacketData();
+
+		if (moreOrLess == 0)
+		{
+			if (this->getRpBallOk() <= this->getNumberOfRPBall());
+			{
+				this->setRpBallOk(this->getRpBallOk() + 1);
+				ball->bDropByTime = true;
+			}
+		}
+		else
+		{
+			if (this->getRpBallOk() >= 1)
+			{
+				this->setRpBallOk(this->getRpBallOk() - 1);
+				ball->bDropByTime = true;
+			}
+		}
+		ball->byCurRPBall = this->getRpBallOk();
+		ball->handle = this->GetAvatarandle();
+		ball->wOpCode = GU_UPDATE_CHAR_RP_BALL;
+		packet6.SetPacketLen(sizeof(sGU_UPDATE_CHAR_RP_BALL));
+	 	g_pApp->Send(this->MySession, &packet6);
+		printf("RpBallOk: %d\n", this->getRpBallOk());
+	};
 private:
 	MySQLConnWrapper			*db;
 public:
@@ -203,6 +246,7 @@ private:
 	RwUInt32			avatarHandle;
 	CGameServer *		app;
 	int					CurRPBall;
+	int					CurRPBallOk;
 public: // THIS NEED BE BE PRIVATE IN THE FUTUR
 	BYTE			byLevel_Up_LP;
 	BYTE			byLevel_Up_EP;
