@@ -47,28 +47,21 @@ void		PlayerInfos::checkBuff(int skill)
 DWORD WINAPI	Update(LPVOID arg)
 {
 	PlayerInfos* plr = (PlayerInfos*)arg;
-	int lasttime = 0;
 	if (plr)
 	{
 		while (true)
 		{
-			if (timeGetTime() >= (lasttime + 1000))
+			if (plr->pcProfile->wCurLP < plr->pcProfile->avatarAttribute.wBaseMaxLP || plr->pcProfile->wCurLP > plr->pcProfile->avatarAttribute.wBaseMaxLP)
+				plr->UpdateLP();
+			if (plr->pcProfile->wCurEP < plr->pcProfile->avatarAttribute.wBaseMaxEP || plr->pcProfile->wCurEP > plr->pcProfile->avatarAttribute.wBaseMaxEP)
+				plr->UpdateEP();
+			if (plr->isKaioken == true) /* TEST */
 			{
-				// do some LP regen etc
-				//if (this->fighting == false) //->>> this is the regen in NOT FIGHTING
-				//else if (this->fighting == true) //->>> this is the regen in FIGHTING
-				if (plr->pcProfile->wCurLP < plr->pcProfile->avatarAttribute.wBaseMaxLP || plr->pcProfile->wCurLP > plr->pcProfile->avatarAttribute.wBaseMaxLP)
-					plr->UpdateLP();
-				if (plr->pcProfile->wCurEP < plr->pcProfile->avatarAttribute.wBaseMaxEP || plr->pcProfile->wCurEP > plr->pcProfile->avatarAttribute.wBaseMaxEP)
-					plr->UpdateEP();
-				if (plr->isKaioken == true) /* TEST */
-				{
-					plr->pcProfile->wCurLP -= (500 * plr->sCharState->sCharStateBase.aspectState.sAspectStateDetail.sKaioken.byRepeatingCount);
-					plr->pcProfile->wCurEP -= (500 * plr->sCharState->sCharStateBase.aspectState.sAspectStateDetail.sKaioken.byRepeatingCount);
-				}
-				plr->SendPlayerLifeAndEP();
-				lasttime = timeGetTime();				
+				plr->pcProfile->wCurLP -= (500 * plr->sCharState->sCharStateBase.aspectState.sAspectStateDetail.sKaioken.byRepeatingCount);
+				plr->pcProfile->wCurEP -= (500 * plr->sCharState->sCharStateBase.aspectState.sAspectStateDetail.sKaioken.byRepeatingCount);
 			}
+			plr->SendPlayerLifeAndEP();				
+			Sleep(1000);
 		}
 	}
 	return 0;
