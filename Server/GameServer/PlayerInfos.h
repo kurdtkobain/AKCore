@@ -225,6 +225,10 @@ public:
 	};
 	void		SendPlayerLifeAndEP();
 	void		checkBuff(int skill);
+	void		TransformCancel(){
+		this->isKaioken = false;
+		this->sCharState->sCharStateBase.aspectState.sAspectStateDetail.sKaioken.byRepeatingCount = 0;
+	};
 private:
 	MySQLConnWrapper			*db;
 public:

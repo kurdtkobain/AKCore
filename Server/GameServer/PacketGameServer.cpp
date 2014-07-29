@@ -3802,6 +3802,7 @@ void CClientSession::SendCharSkillTransformCancel(CNtlPacket * pPacket, CGameSer
 	//Sending to others
 	app->UserBroadcastothers(&packet, this);
 	app->UserBroadcastothers(&packet2, this);
+	this->plr->TransformCancel();
 }
 
 
