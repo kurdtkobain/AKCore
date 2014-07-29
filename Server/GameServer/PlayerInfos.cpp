@@ -5,35 +5,67 @@ void		PlayerInfos::UpdateLP()
 {
 	CNtlPacket packet(sizeof(sGU_UPDATE_CHAR_LP));
 	sGU_UPDATE_CHAR_LP * res = (sGU_UPDATE_CHAR_LP *)packet.GetPacketData();
-	
+
+	CNtlPacket packet2(sizeof(sGU_UPDATE_CHAR_LP_STATUS_NFY));
+	sGU_UPDATE_CHAR_LP_STATUS_NFY * res2 = (sGU_UPDATE_CHAR_LP_STATUS_NFY *)packet2.GetPacketData();
+
 	this->pcProfile->wCurLP += 5; // += regen
+	if (this->pcProfile->wCurLP > this->pcProfile->avatarAttribute.wBaseMaxLP)
+		this->pcProfile->wCurLP = this->pcProfile->avatarAttribute.wBaseMaxLP;
 
 	res->handle = this->avatarHandle;
 	res->wCurLP = this->pcProfile->wCurLP;
-	res->wMaxLP = this->pcProfile->avatarAttribute.wLastMaxLP;
+	res->wMaxLP = this->pcProfile->avatarAttribute.wBaseMaxLP;
 	res->wOpCode = GU_UPDATE_CHAR_LP;
 
+	res2->bEmergency = false;
+	res2->handle = this->GetAvatarandle();
+	res2->wOpCode = GU_UPDATE_CHAR_LP_STATUS_NFY;
+
 	packet.SetPacketLen(sizeof(sGU_UPDATE_CHAR_LP));
-	int i = g_pApp->Send(this->MySession, &packet);
-	printf("LP ++ %d\n", i);
+	g_pApp->Send(this->MySession, &packet);
+
+	packet2.SetPacketLen(sizeof(sGU_UPDATE_CHAR_LP_STATUS_NFY));
+	g_pApp->Send(this->MySession, &packet2);
+}
+
+void	    PlayerInfos::UpdateEP()
+{
+	CNtlPacket packet(sizeof(sGU_UPDATE_CHAR_EP));
+	sGU_UPDATE_CHAR_EP * res = (sGU_UPDATE_CHAR_EP *)packet.GetPacketData();
+
+	this->pcProfile->wCurEP += 5; // += regen
+	if (this->pcProfile->wCurEP > this->pcProfile->avatarAttribute.wBaseMaxEP)
+		this->pcProfile->wCurEP = this->pcProfile->avatarAttribute.wBaseMaxEP;
+
+	res->handle = this->avatarHandle;
+	res->wCurEP = this->pcProfile->wCurEP;
+	res->wMaxEP = this->pcProfile->avatarAttribute.wBaseMaxEP;
+	res->wOpCode = GU_UPDATE_CHAR_EP;
+
+	packet.SetPacketLen(sizeof(sGU_UPDATE_CHAR_EP));
+	g_pApp->Send(this->MySession, &packet);
 }
 DWORD WINAPI	Update(LPVOID arg)
 {
 	PlayerInfos* plr = (PlayerInfos*)arg;
 	int lasttime = 0;
-	plr->pcProfile->wCurLP = 1;
 	if (plr)
 	{
-		while (42)
+		while (true)
 		{
 			if (timeGetTime() >= (lasttime + 5000))
 			{
 				// do some LP regen etc
 				//if (this->fighting == false) //->>> this is the regen in NOT FIGHTING
 				//else if (this->fighting == true) //->>> this is the regen in FIGHTING
-				if (plr->pcProfile->wCurLP < plr->pcProfile->avatarAttribute.wBaseMaxLP)
+				if (plr->pcProfile->wCurLP <= plr->pcProfile->avatarAttribute.wBaseMaxLP)
 					plr->UpdateLP();
-				lasttime = timeGetTime();
+
+				if (plr->pcProfile->wCurEP <= plr->pcProfile->avatarAttribute.wBaseMaxEP)
+					plr->UpdateEP();				
+				
+				lasttime = timeGetTime();				
 			}
 		}
 	}

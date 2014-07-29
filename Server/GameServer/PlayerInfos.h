@@ -32,6 +32,7 @@ public:
 	sCHARSTATE		*sCharState;
 	HSESSION		MySession;
 	void		UpdateLP();
+	void		UpdateEP();
 	void		setPlayerStat(sPC_PROFILE* pc, sCHARSTATE *sCharSt)
 	{	
 		memcpy(this->pcProfile, pc, sizeof(sPC_PROFILE));
