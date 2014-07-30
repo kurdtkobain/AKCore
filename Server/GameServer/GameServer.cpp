@@ -1468,7 +1468,7 @@ int CClientSession::OnDispatch(CNtlPacket * pPacket)
 bool CGameServer::CreateTableContainer(int byLoadMethod)
 {
 	GsFunctionsClass *gs = new GsFunctionsClass();
-	gs->printOk("==== LOADING GAME TABLES ... ==== \n");
+	gs->printOk("==== LOADING GAME TABLES ... ====");
 
   CNtlBitFlagManager flagManager;
     if (false == flagManager.Create(CTableContainer::TABLE_COUNT))
@@ -1609,12 +1609,37 @@ bool CGameServer::CreateTableContainer(int byLoadMethod)
     bool bResult = FALSE;
     bResult = g_pTableContainer->Create(flagManager, (char*)str.c_str(), &fileNameList, eLoadMethod, GetACP(), NULL);
 	g_pTableContainer->SaveToFile(flagManager, &fileNameList, false); 
-	gs->printOk("==== LOADING GAMETABLES COMPLETE ==== \n");                                                                                              
+	gs->printOk("==== LOADING GAMETABLES COMPLETE ====");                                                                                              
 	mob->Create();
 	delete gs;
 	return bResult;
 }
+void	CleanDatabase()
+{
+	CGameServer * app = (CGameServer*) NtlSfxGetApp();
+	MySQLConnWrapper *db = new MySQLConnWrapper;
+	db->setConfig(app->GetConfigFileHost(), app->GetConfigFileUser(), app->GetConfigFilePassword(), app->GetConfigFileDatabase());
+	db->connect();
+	db->switchDb(app->GetConfigFileDatabase());
+	MySQLConnWrapper *db2 = new MySQLConnWrapper;
+	db2->setConfig(app->GetConfigFileHost(), app->GetConfigFileUser(), app->GetConfigFilePassword(), app->GetConfigFileDatabase());
+	db2->connect();
+	db2->switchDb(app->GetConfigFileDatabase());
 
+	db->prepare("SELECT * FROM characters");
+	db->execute();
+	while (db->fetch())
+	{
+		db2->prepare("UPDATE characters SET OnlineID = ? , isOnline=? WHERE CharID = ?");
+		db2->setInt(1, 0);
+		db2->setInt(2, 0);
+		db2->setInt(3, db->getInt("CharID"));
+		db2->execute();
+	}
+	GsFunctionsClass *gs = new GsFunctionsClass();
+	gs->printOk("==== ONLINEID / ISONLINE CLEARED ==== ");
+	delete gs, db, db2;
+}
 //-----------------------------------------------------------------------------------
 //		GameServerMain
 //-----------------------------------------------------------------------------------
@@ -1648,7 +1673,7 @@ int GameServerMain(int argc, _TCHAR* argv[])
 	app.db->setConfig(app.GetConfigFileHost(), app.GetConfigFileUser(), app.GetConfigFilePassword(), app.GetConfigFileDatabase());
 	app.db->connect();
 	app.db->switchDb(app.GetConfigFileDatabase());
-
+	CleanDatabase();
 	// NEW CLASS
 	app.mob = new MobActivity();
 	
