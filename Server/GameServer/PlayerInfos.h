@@ -22,6 +22,9 @@ public:
 		ChargingID = 1;
 		CurRPBallOk = 0;
 		isKaioken = false;
+		isSsj = false;
+		isMajin = false;
+		isGreatNamek = false;
 	};
 	~PlayerInfos()
 	{
@@ -225,8 +228,13 @@ public:
 	};
 	void		SendPlayerLifeAndEP();
 	void		checkBuff(int skill);
-	void		TransformCancel(){
+	void		TransformCancel()
+	{
 		this->isKaioken = false;
+		this->isSsj = false;
+		this->isMajin = false;
+		this->isGreatNamek = false;
+
 		this->sCharState->sCharStateBase.aspectState.sAspectStateDetail.sKaioken.byRepeatingCount = 0;
 	};
 private:
@@ -240,6 +248,9 @@ HANDLE      hThread;
 DWORD		dwThreadId;
 DWORD		ChargingID;
 bool		isKaioken;
+bool		isSsj;
+bool		isMajin;
+bool		isGreatNamek;
 private:
 	sVECTOR3			vCurLoc;
 	sVECTOR3			vCurDir;

@@ -364,8 +364,6 @@ void		PlayerInfos::calculeMyStat(CGameServer * app)
 	app->db->setInt(6,  this->pcProfile->charId);
 	app->db->execute();
 
-	
-
 	app->db->prepare("SELECT * FROM characters WHERE CharID = ?");
 	app->db->setInt(1, this->pcProfile->charId);
 	app->db->execute();

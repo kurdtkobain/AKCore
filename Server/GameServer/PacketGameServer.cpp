@@ -2263,11 +2263,49 @@ void CClientSession::SendCharSkillRes(CNtlPacket * pPacket, CGameServer * app)
 	packet.SetPacketLen(sizeof(sGU_CHAR_SKILL_RES));
 	int rc = g_pApp->Send(this->GetHandle(), &packet);
 	app->UserBroadcast(&packet);
-	if ((skillDataOriginal->dwKeepTimeInMilliSecs != 0) || (skillDataOriginal->dwTransform_Use_Info_Bit_Flag==1))
+
+	switch (skillDataOriginal->bySkill_Active_Type)
+	{
+	case SKILL_ACTIVE_TYPE_DD:
+		{
+			printf("SKILL_ACTIVE_TYPE_DD\n");
+			SendCharSkillAction(pPacket, app, skillID);
+		}break;
+	case SKILL_ACTIVE_TYPE_BB:
+		{
+			printf("SKILL_ACTIVE_TYPE_BB\n");
+			SendCharSkillCasting(pPacket, app, skillID);
+		}break;
+	case SKILL_ACTIVE_TYPE_CB:
+		{
+			printf("SKILL_ACTIVE_TYPE_CB\n");
+			SendCharSkillAction(pPacket, app, skillID);
+		}break;
+	case SKILL_ACTIVE_TYPE_DB:
+		{
+			printf("SKILL_ACTIVE_TYPE_DB\n");
+			SendCharSkillCasting(pPacket, app, skillID);
+		}break;
+	case SKILL_ACTIVE_TYPE_DC:
+		{
+			printf("SKILL_ACTIVE_TYPE_DC\n");
+			SendCharSkillCasting(pPacket, app, skillID);
+		}break;
+	case SKILL_ACTIVE_TYPE_DH:
+		{
+			printf("SKILL_ACTIVE_TYPE_DH\n");
+			SendCharSkillCasting(pPacket, app, skillID);
+		}break;
+	case SKILL_ACTIVE_TYPE_DOT:
+		{
+			printf("SKILL_ACTIVE_TYPE_DOT\n");
+			SendCharSkillAction(pPacket, app, skillID);
+		}break;
+	}
+	/*if ((skillDataOriginal->dwKeepTimeInMilliSecs != 0) || (skillDataOriginal->dwTransform_Use_Info_Bit_Flag==1))
 		SendCharSkillCasting(pPacket, app, skillID);
  	else
- 		SendCharSkillAction(pPacket, app, skillID);
- 		
+ 		SendCharSkillAction(pPacket, app, skillID);*/
 }
 //--------------------------------------------------------------------------------------//
 //		Char Skill Send
@@ -2280,7 +2318,6 @@ void CClientSession::SendCharSkillAction(CNtlPacket * pPacket, CGameServer * app
 	CSkillTable *pSkillTbl = app->g_pTableContainer->GetSkillTable();
 	
 	int skillID = _skillID;
-	this->plr->checkBuff(skillID);
 	sSKILL_TBLDAT *pSkillTblData = reinterpret_cast<sSKILL_TBLDAT*>(pSkillTbl->FindData(skillID));
 	res->wOpCode = GU_CHAR_ACTION_SKILL;
 	res->handle = this->GetavatarHandle();
@@ -2364,7 +2401,6 @@ void CClientSession::SendCharSkillAction(CNtlPacket * pPacket, CGameServer * app
 //-------------------------------------------------------------------//
 void CClientSession::SendCharSkillCasting(CNtlPacket * pPacket, CGameServer * app, int _skillID)
 {
-	printf("USE SKILL\n");
 	//Skill Events Prepare
  	CNtlPacket packet(sizeof(sGU_CHAR_ACTION_SKILL));
  	CSkillTable *pSkillTbl = app->g_pTableContainer->GetSkillTable();
@@ -2425,6 +2461,7 @@ void CClientSession::SendCharSkillCasting(CNtlPacket * pPacket, CGameServer * ap
   	app->UserBroadcastothers(&packet, this);	
 	app->UserBroadcastothers(&packet3, this);
 	app->UserBroadcastothers(&packet4, this);
+	this->plr->checkBuff(skillID);
 }
 
 void CGameServer::UpdateClient(CNtlPacket * pPacket, CClientSession * pSession)
