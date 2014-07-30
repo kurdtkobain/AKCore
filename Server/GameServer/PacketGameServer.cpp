@@ -1873,55 +1873,63 @@ void CClientSession::SendPortalTelReq(CNtlPacket * pPacket, CGameServer * app)
 	packet3.SetPacketLen( sizeof(sGU_UPDATE_CHAR_STATE) );
 	
 	sPORTAL_TBLDAT* pPortalTblData = (sPORTAL_TBLDAT*)app->g_pTableContainer->GetPortalTable()->FindData(req->byPoint);
-	if (req->byPoint == pPortalTblData->tblidx)
+	if (pPortalTblData)
 	{
-		//pPortalTblData->adwPointZenny;
-		//pPortalTblData->dwPointName;
-		//pPortalTblData->szPointNameText;
-		//pPortalTblData->vMap;
-		res->vDir = pPortalTblData->vDir;
-		res->vLoc = pPortalTblData->vLoc;
-		res->byPoint = pPortalTblData->tblidx;
-		res->worldID = pPortalTblData->worldId;
-		res->wOpCode = GU_PORTAL_RES;
-		res->wResultCode = GAME_SUCCESS;
-		res->hNpcHandle = this->GetTargetSerialId();
+		if (req->byPoint == pPortalTblData->tblidx)
+		{
+			//pPortalTblData->adwPointZenny;
+			//pPortalTblData->dwPointName;
+			//pPortalTblData->szPointNameText;
+			//pPortalTblData->vMap;
+			res->vDir = pPortalTblData->vDir;
+			res->vLoc = pPortalTblData->vLoc;
+			res->byPoint = pPortalTblData->tblidx;
+			res->worldID = pPortalTblData->worldId;
+			res->wOpCode = GU_PORTAL_RES;
+			res->wResultCode = GAME_SUCCESS;
+			res->hNpcHandle = this->GetTargetSerialId();
 
-		res2->bIsToMoveAnotherServer = false;
-		//res2->sWorldInfo.sRuleInfo.byRuleType = GAMERULE_NORMAL;
-		//res2->sWorldInfo.hTriggerObjectOffset = 100000;
-		//res2->sWorldInfo.tblidx = this->plr->GetWorldTableID();
-		//res2->sWorldInfo.worldID = res->worldID;
-		res2->vNewDir.x = res->vDir.x;
-		res2->vNewDir.y = res->vDir.y;
-		res2->vNewDir.z = res->vDir.z;
-		res2->vNewLoc.x = res->vLoc.x;
-		res2->vNewLoc.y = res->vLoc.y;
-		res2->vNewLoc.z = res->vLoc.z;
-		res2->wOpCode = GU_CHAR_TELEPORT_RES;
-		res2->wResultCode = GAME_SUCCESS;
-		//res2->sWorldInfo.sRuleInfo.sTimeQuestRuleInfo;
+			res2->bIsToMoveAnotherServer = false;
+			//res2->sWorldInfo.sRuleInfo.byRuleType = GAMERULE_NORMAL;
+			//res2->sWorldInfo.hTriggerObjectOffset = 100000;
+			//res2->sWorldInfo.tblidx = this->plr->GetWorldTableID();
+			//res2->sWorldInfo.worldID = res->worldID;
+			res2->vNewDir.x = res->vDir.x;
+			res2->vNewDir.y = res->vDir.y;
+			res2->vNewDir.z = res->vDir.z;
+			res2->vNewLoc.x = res->vLoc.x;
+			res2->vNewLoc.y = res->vLoc.y;
+			res2->vNewLoc.z = res->vLoc.z;
+			res2->wOpCode = GU_CHAR_TELEPORT_RES;
+			res2->wResultCode = GAME_SUCCESS;
+			//res2->sWorldInfo.sRuleInfo.sTimeQuestRuleInfo;
 
-		this->plr->SetPosition(res2->vNewLoc, res2->vNewDir);
-		app->db->prepare("UPDATE characters SET CurLocX=? , CurLocY=? , CurLocZ=? , CurDirX=? , CurDirZ=? WHERE CharID = ?");
-		app->db->setInt(1, res->vLoc.x);
-		app->db->setInt(2, res->vLoc.y);
-		app->db->setInt(3, res->vLoc.z);
-		app->db->setInt(4, res->vDir.x);
-		app->db->setInt(5, res->vDir.z);
-		app->db->setInt(6, this->plr->pcProfile->charId);
-		app->db->execute();
+			this->plr->SetPosition(res2->vNewLoc, res2->vNewDir);
+			app->db->prepare("UPDATE characters SET CurLocX=? , CurLocY=? , CurLocZ=? , CurDirX=? , CurDirZ=? WHERE CharID = ?");
+			app->db->setInt(1, res->vLoc.x);
+			app->db->setInt(2, res->vLoc.y);
+			app->db->setInt(3, res->vLoc.z);
+			app->db->setInt(4, res->vDir.x);
+			app->db->setInt(5, res->vDir.z);
+			app->db->setInt(6, this->plr->pcProfile->charId);
+			app->db->execute();
 		
-		g_pApp->Send( this->GetHandle(), &packet );
-		g_pApp->Send( this->GetHandle(), &packet2 );
-		
+			g_pApp->Send( this->GetHandle(), &packet );
+			g_pApp->Send( this->GetHandle(), &packet2 );
+		}
+		else
+		{
+			res->wOpCode = GU_PORTAL_RES;
+			res->wResultCode = GAME_PORTAL_NOT_EXIST;
+			g_pApp->Send( this->GetHandle(), &packet );
+			this->gsf->printError("An error is occured in SendPortalTelReq: GAME_PORTAL_NOT_EXIST");
+		}
 	}
 	else
 	{
 		res->wOpCode = GU_PORTAL_RES;
 		res->wResultCode = GAME_PORTAL_NOT_EXIST;
 		g_pApp->Send( this->GetHandle(), &packet );
-		this->gsf->printError("An error is occured in SendPortalTelReq: GAME_PORTAL_NOT_EXIST");
 	}
 }
 
@@ -3955,6 +3963,11 @@ void CClientSession::SendCharSkillTransformCancel(CNtlPacket * pPacket, CGameSer
 		packet2.SetPacketLen(sizeof(sGU_AVATAR_RP_INCREASE_STOP_NFY));
 		g_pApp->Send(this->GetHandle(), &packet2);
 		app->UserBroadcastothers(&packet, this);
+		CNtlPacket packet5(sizeof(sGU_AVATAR_RP_DECREASE_START_NFY));
+		sGU_AVATAR_RP_DECREASE_START_NFY * res5 = (sGU_AVATAR_RP_DECREASE_START_NFY *)packet5.GetPacketData();
+		res5->wOpCode = GU_AVATAR_RP_DECREASE_START_NFY;
+		packet5.SetPacketLen(sizeof(sGU_AVATAR_RP_DECREASE_START_NFY));
+		g_pApp->Send(this->GetHandle(), &packet5);
 	}
 }
 //-----------------------------------------------------------------//

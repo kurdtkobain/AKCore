@@ -216,7 +216,7 @@ public:
 			if (this->getRpBallOk() >= 1)
 			{
 				this->setRpBallOk(this->getRpBallOk() - 1);
-				ball->bDropByTime = true;
+				ball->bDropByTime = false;
 			}
 		}
 		ball->byCurRPBall = this->getRpBallOk();
@@ -224,7 +224,6 @@ public:
 		ball->wOpCode = GU_UPDATE_CHAR_RP_BALL;
 		packet6.SetPacketLen(sizeof(sGU_UPDATE_CHAR_RP_BALL));
 	 	g_pApp->Send(this->MySession, &packet6);
-		printf("RpBallOk: %d\n", this->getRpBallOk());
 	};
 	void		SendPlayerLifeAndEP();
 	void		checkBuff(int skill);
@@ -237,6 +236,7 @@ public:
 
 		this->sCharState->sCharStateBase.aspectState.sAspectStateDetail.sKaioken.byRepeatingCount = 0;
 	};
+	void		UpdateRP();
 private:
 	MySQLConnWrapper			*db;
 public:

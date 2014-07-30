@@ -16,7 +16,22 @@ void		PlayerInfos::SendPlayerLifeAndEP()
 	packet.SetPacketLen(sizeof(sGU_UPDATE_CHAR_LP_EP));
 	g_pApp->Send(this->MySession, &packet);
 }
-
+void		PlayerInfos::UpdateRP()
+{
+	CNtlPacket packet(sizeof(sGU_UPDATE_CHAR_RP));
+	sGU_UPDATE_CHAR_RP * res = (sGU_UPDATE_CHAR_RP *)packet.GetPacketData();
+	
+	res->bHitDelay = false;
+	res->handle = this->avatarHandle;
+	res->wCurRP = this->pcProfile->wCurRP;
+	if (getNumberOfRPBall() >= 1)
+		res->wMaxRP = (this->pcProfile->avatarAttribute.wBaseMaxRP / this->getNumberOfRPBall());
+	else
+		res->wMaxRP = this->pcProfile->avatarAttribute.wBaseMaxRP;
+	res->wOpCode = GU_UPDATE_CHAR_RP;
+	packet.SetPacketLen(sizeof(sGU_UPDATE_CHAR_RP));
+	g_pApp->Send(this->MySession, &packet);
+}
 void		PlayerInfos::UpdateLP()
 {
 	if (this->pcProfile->avatarAttribute.wBaseLpRegen <= 0)
@@ -55,6 +70,19 @@ DWORD WINAPI	Update(LPVOID arg)
 				plr->UpdateLP();
 			if (plr->pcProfile->wCurEP < plr->pcProfile->avatarAttribute.wBaseMaxEP || plr->pcProfile->wCurEP > plr->pcProfile->avatarAttribute.wBaseMaxEP)
 				plr->UpdateEP();
+			if ((plr->pcProfile->wCurRP > 0) || plr->getRpBallOk() > 0)
+			{
+				if (plr->pcProfile->wCurRP <= 0)
+					if (plr->getRpBallOk() > 0)
+					{
+						plr->UpdateRpBallOk(1);
+						plr->pcProfile->wCurRP = (plr->pcProfile->avatarAttribute.wBaseMaxRP / plr->getNumberOfRPBall()) - 1;
+					}
+					else;
+				else
+					plr->pcProfile->wCurRP -= 1;
+				plr->UpdateRP();
+			}
 			if (plr->isKaioken == true) /* TEST */
 			{
 				plr->pcProfile->wCurLP -= (500 * plr->sCharState->sCharStateBase.aspectState.sAspectStateDetail.sKaioken.byRepeatingCount);
