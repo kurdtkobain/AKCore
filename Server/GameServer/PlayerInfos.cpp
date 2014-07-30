@@ -61,7 +61,7 @@ DWORD WINAPI	Update(LPVOID arg)
 				plr->pcProfile->wCurEP -= (500 * plr->sCharState->sCharStateBase.aspectState.sAspectStateDetail.sKaioken.byRepeatingCount);
 			}
 			plr->SendPlayerLifeAndEP();				
-			Sleep(10000);///Calm down guys at least only 10 seconds...its so fast second by second
+			Sleep(1000);// And no it's every second, it's only the amount regen is too high (this->pcProfile->avatarAttribute.wBaseMaxEP * 0.03) 3% every seconds it's for make some test this is not the last "release"
 		}
 	}
 	return 0;
