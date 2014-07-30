@@ -23,6 +23,7 @@ void CClientSession::SendGameEnterReq(CNtlPacket * pPacket, CGameServer * app)
 	this->plr->pcProfile->charId = req->charId;
 	this->plr->SetAccountID(req->accountId);
 	this->plr->setMyAPP(app);
+	this->plr->myCCSession = this;
 	avatarHandle = AcquireSerialId();
 
 	this->plr->StoreHandle(avatarHandle);
@@ -335,7 +336,6 @@ void CClientSession::SendAvatarSkillInfo(CNtlPacket * pPacket, CGameServer * app
 void CClientSession::SendAvatarHTBInfo(CNtlPacket * pPacket, CGameServer* app)
 {
 	size_t i = 0;
-	printf("Send skill info\n");
 	app->db->prepare("SELECT * FROM skills WHERE owner_id = ? ORDER BY SlotID ASC");
 	app->db->setInt(1, this->plr->pcProfile->charId);
 	app->db->execute();
@@ -350,8 +350,6 @@ void CClientSession::SendAvatarHTBInfo(CNtlPacket * pPacket, CGameServer* app)
 		//Added because Shenron Buffs and for help to detect type of skills
 		//Note Shenron Buffs does not take ANY SLOTID
 		sSKILL_TBLDAT* pSkillData = reinterpret_cast<sSKILL_TBLDAT*>(pSkillTable->FindData(app->db->getInt("skill_id")));
-		this->gsf->DebugSkillType(pSkillData->bySkill_Active_Type);
-		
 		if (pSkillData->bySkill_Class == NTL_SKILL_CLASS_HTB)
 		{
 			res->aHTBSkillnfo[i].bySlotId = app->db->getInt("SlotID");
@@ -2150,7 +2148,6 @@ void CClientSession::SendCharUpdateLp(CNtlPacket * pPacket, CGameServer * app, R
 
 			app->UserBroadcastothers(&packet, this);
 			g_pApp->Send( this->GetHandle() , &packet );
-			delete targetPlr;
 		}
 	}*/
 }
@@ -3133,7 +3130,6 @@ void	CClientSession::SendScouterIndicatorReq(CNtlPacket * pPacket, CGameServer *
 		{
 			res->dwRetValue = this->gsf->CalculePowerLevelPlayer(targetPlr);
 			res->wResultCode = GAME_SUCCESS;
-			delete targetPlr;
 		}
 		else
 			res->wResultCode = GAME_SCOUTER_TARGET_FAIL;

@@ -30,7 +30,8 @@ public:
 	{
 		if (TerminateThread(hThread, 1) == 0)
 			printf("Can't kill thread\n");
-		CloseHandle(hThread);
+		if (hThread)
+			CloseHandle(hThread);
 	};
 	sPC_PROFILE		*pcProfile;
 	sCHARSTATE		*sCharState;
@@ -251,6 +252,7 @@ bool		isKaioken;
 bool		isSsj;
 bool		isMajin;
 bool		isGreatNamek;
+CClientSession *myCCSession;
 private:
 	sVECTOR3			vCurLoc;
 	sVECTOR3			vCurDir;

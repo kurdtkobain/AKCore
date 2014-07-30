@@ -15,6 +15,7 @@ void		PlayerInfos::SendPlayerLifeAndEP()
 
 	packet.SetPacketLen(sizeof(sGU_UPDATE_CHAR_LP_EP));
 	g_pApp->Send(this->MySession, &packet);
+	app->UserBroadcastothers(&packet, this->myCCSession);
 }
 void		PlayerInfos::UpdateRP()
 {
@@ -31,6 +32,7 @@ void		PlayerInfos::UpdateRP()
 	res->wOpCode = GU_UPDATE_CHAR_RP;
 	packet.SetPacketLen(sizeof(sGU_UPDATE_CHAR_RP));
 	g_pApp->Send(this->MySession, &packet);
+	app->UserBroadcastothers(&packet, this->myCCSession);
 }
 void		PlayerInfos::UpdateLP()
 {
