@@ -1826,16 +1826,11 @@ void CClientSession::SendPortalStartReq(CNtlPacket * pPacket, CGameServer * app)
 	for ( CTable::TABLEIT itPortal = pPortalTbl->Begin(); itPortal != pPortalTbl->End(); ++itPortal )
 	{
 		sPORTAL_TBLDAT* pPortalTblData = (sPORTAL_TBLDAT*) itPortal->second;
-		if ((rand() %100) >= 60)
-		{
-			res2->aPortalID[i] = pPortalTblData->tblidx;
-			res2->byCount = i;
-			i++;
-		}
+		res2->aPortalID[i] = pPortalTblData->tblidx;
+		res2->byCount = i;
+		i++;
 	}
 	res2->wOpCode = GU_PORTAL_INFO;
-	
-
 	packet2.SetPacketLen( sizeof(sGU_PORTAL_INFO));
 	int rc = g_pApp->Send( this->GetHandle(), &packet2);
 	Sleep(1);
@@ -1916,7 +1911,6 @@ void CClientSession::SendPortalTelReq(CNtlPacket * pPacket, CGameServer * app)
 		app->db->setInt(5, res->vDir.z);
 		app->db->setInt(6, this->plr->pcProfile->charId);
 		app->db->execute();
-
 		
 		g_pApp->Send( this->GetHandle(), &packet );
 		g_pApp->Send( this->GetHandle(), &packet2 );
@@ -3183,8 +3177,6 @@ void	CClientSession::SendDragonBallCheckReq(CNtlPacket * pPacket, CGameServer * 
 	}
 	if (i == 7)
 	{
-		
-	
 		zone->wOpCode = GU_AVATAR_ZONE_INFO;
 		zone->zoneInfo.bIsDark = true;
 		zone->zoneInfo.zoneId = 0; // 0 namek start zone
