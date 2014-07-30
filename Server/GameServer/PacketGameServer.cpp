@@ -3967,14 +3967,115 @@ void CClientSession::SendHTBStartReq(CNtlPacket * pPacket, CGameServer * app)
 {
 	sUG_HTB_START_REQ * req = (sUG_HTB_START_REQ*)pPacket->GetPacketData();
 
+	app->db->prepare("SELECT * FROM skills WHERE owner_id = ? AND SlotID= ?");
+	app->db->setInt(1, this->plr->pcProfile->charId);
+	app->db->setInt(2, req->bySkillSlot);
+	app->db->execute();
+	app->db->fetch();
+
 	CNtlPacket packet(sizeof(sGU_HTB_START_RES));
 	sGU_HTB_START_RES * resp = (sGU_HTB_START_RES*)packet.GetPacketData();
 
-	resp->bySkillSlot = req->bySkillSlot;
+	int skillTbl = app->db->getInt("skill_id");
+	CSkillTable * pSkillTable = app->g_pTableContainer->GetSkillTable();
+	sHTB_SET_TBLDAT *pHTBSetTblData = reinterpret_cast<sHTB_SET_TBLDAT*>(pSkillTable->FindData(skillTbl));
+
 	resp->wOpCode = GU_HTB_START_RES;
 	resp->wResultCode = GAME_SUCCESS;
+	resp->bySkillSlot = req->bySkillSlot;
 
 	packet.SetPacketLen(sizeof(sGU_HTB_START_RES));
+
+	g_pApp->Send(this->GetHandle(), &packet);
+	app->UserBroadcastothers(&packet, this);
+	//Initiate our HTB Skill
+	SendCharUpdateHTBState(skillTbl, app);
+}
+//-----------------------------------------------------------//
+//-----------HTB States/Steps   Luiz45  ---------------------//
+//-----------------------------------------------------------//
+void CClientSession::SendCharUpdateHTBState(int SkillID,CGameServer * app)
+{
+	CNtlPacket packet(sizeof(sGU_UPDATE_CHAR_STATE));
+	sGU_UPDATE_CHAR_STATE * respA = (sGU_UPDATE_CHAR_STATE*)packet.GetPacketData();
+
+	//Setting Our Location
+	respA->wOpCode = GU_UPDATE_CHAR_STATE;
+	respA->handle = this->GetavatarHandle();
+	respA->sCharState.sCharStateBase.byStateID = CHARSTATE_HTB;
+	respA->sCharState.sCharStateBase.vCurLoc.x = this->plr->sCharState->sCharStateBase.vCurLoc.x;
+	respA->sCharState.sCharStateBase.vCurLoc.y = this->plr->sCharState->sCharStateBase.vCurLoc.y;
+	respA->sCharState.sCharStateBase.vCurLoc.z = this->plr->sCharState->sCharStateBase.vCurLoc.z;
+	respA->sCharState.sCharStateBase.vCurDir.x = this->plr->sCharState->sCharStateBase.vCurDir.x;
+	respA->sCharState.sCharStateBase.vCurDir.y = this->plr->sCharState->sCharStateBase.vCurDir.y;
+	respA->sCharState.sCharStateBase.vCurDir.z = this->plr->sCharState->sCharStateBase.vCurDir.z;
+
+	CHTBSetTable *pHTBSetTbl = app->g_pTableContainer->GetHTBSetTable();
+	sHTB_SET_TBLDAT *pHTBSetTblData = reinterpret_cast<sHTB_SET_TBLDAT*>(pHTBSetTbl->FindData(SkillID));
+
+	respA->sCharState.sCharStateDetail.sCharStateHTB.hTarget = m_uiTargetSerialId;
+	respA->sCharState.sCharStateDetail.sCharStateHTB.byStepCount = pHTBSetTblData->bySetCount;
+	respA->sCharState.sCharStateDetail.sCharStateHTB.byCurStep = 0;
+	respA->sCharState.sCharStateDetail.sCharStateHTB.byResultCount = 0;
+	respA->sCharState.sCharStateDetail.sCharStateHTB.HTBId = pHTBSetTblData->tblidx;
+
+	//Extract from Client Code
+	RwInt8 byResultCount = 0;
+	for (RwInt32 i = 0; i < pHTBSetTblData->bySetCount; ++i)
+	{
+		if (pHTBSetTblData->aHTBAction[i].skillTblidx != INVALID_TBLIDX)
+		{
+			respA->sCharState.sCharStateDetail.sCharStateHTB.aHTBSkillResult[byResultCount].byStep = i;
+			respA->sCharState.sCharStateDetail.sCharStateHTB.aHTBSkillResult[byResultCount].sSkillResult.byAttackResult = BATTLE_ATTACK_RESULT_HIT;
+			respA->sCharState.sCharStateDetail.sCharStateHTB.aHTBSkillResult[byResultCount].sSkillResult.effectResult1.fResultValue = 100;
+			respA->sCharState.sCharStateDetail.sCharStateHTB.aHTBSkillResult[byResultCount].sSkillResult.effectResult2.fResultValue = 100;
+			respA->sCharState.sCharStateDetail.sCharStateHTB.aHTBSkillResult[byResultCount].sSkillResult.vShift.x = 0.0f;
+			respA->sCharState.sCharStateDetail.sCharStateHTB.aHTBSkillResult[byResultCount].sSkillResult.vShift.y = 0.0f;
+			respA->sCharState.sCharStateDetail.sCharStateHTB.aHTBSkillResult[byResultCount].sSkillResult.vShift.z = 0.0f;
+
+			respA->sCharState.sCharStateDetail.sCharStateHTB.byResultCount++;
+			byResultCount++;
+		}
+	}
+	packet.SetPacketLen(sizeof(sGU_UPDATE_CHAR_STATE));
+	g_pApp->Send(this->GetHandle(), &packet);
+	app->UserBroadcastothers(&packet, this);
+
+
+}
+//-----------------------------------------------------------//
+//-----------HTB SKILL REQ/RES  Luiz45  ---------------------//
+//-----------------------------------------------------------//
+void CClientSession::SendHTBSendbagState(CGameServer * app)
+{
+	//Extract from client codes
+	CNtlPacket packet(sizeof(sGU_UPDATE_CHAR_STATE));
+	sGU_UPDATE_CHAR_STATE * respA = (sGU_UPDATE_CHAR_STATE*)packet.GetPacketData();
+	respA->wOpCode = GU_UPDATE_CHAR_STATE;
+	respA->handle = this->GetavatarHandle();
+	respA->sCharState.sCharStateBase.byStateID = CHARSTATE_SANDBAG;
+	respA->sCharState.sCharStateBase.vCurLoc.x = this->plr->sCharState->sCharStateBase.vCurLoc.x;
+	respA->sCharState.sCharStateBase.vCurLoc.y = this->plr->sCharState->sCharStateBase.vCurLoc.y;
+	respA->sCharState.sCharStateBase.vCurLoc.z = this->plr->sCharState->sCharStateBase.vCurLoc.z;
+	respA->sCharState.sCharStateBase.vCurDir.x = this->plr->sCharState->sCharStateBase.vCurDir.x;
+	respA->sCharState.sCharStateBase.vCurDir.y = this->plr->sCharState->sCharStateBase.vCurDir.y;
+	respA->sCharState.sCharStateBase.vCurDir.z = this->plr->sCharState->sCharStateBase.vCurDir.z;
+
+	packet.SetPacketLen(sizeof(sGU_UPDATE_CHAR_STATE));
+	g_pApp->Send(this->GetHandle(), &packet);
+	app->UserBroadcastothers(&packet, this);
+}
+//-----------------------------------------------------------//
+//-----------Advance Steps HTB? Luiz45  ---------------------//
+//-----------------------------------------------------------//
+void CClientSession::SendHTBFoward(CNtlPacket * pPacket, CGameServer * app)
+{
+	CNtlPacket packet(sizeof(sGU_HTB_FORWARD_RES));
+	sGU_HTB_FORWARD_RES * res = (sGU_HTB_FORWARD_RES*)packet.GetPacketData();
+	res->wOpCode = GU_HTB_FORWARD_RES;
+	res->wResultCode = GAME_SUCCESS;
+
+	packet.SetPacketLen(sizeof(sGU_HTB_FORWARD_RES));
 	g_pApp->Send(this->GetHandle(), &packet);
 	app->UserBroadcastothers(&packet, this);
 }

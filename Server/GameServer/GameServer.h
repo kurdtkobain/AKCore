@@ -251,6 +251,9 @@ public:
 	//HTB
 	void						SendCharSkillHTBLearn(CNtlPacket * pPacket, CGameServer * app);
 	void						SendHTBStartReq(CNtlPacket * pPacket, CGameServer * app);
+	void						SendHTBFoward(CNtlPacket * pPacket, CGameServer * app);
+	void						SendCharUpdateHTBState(int SkillID, CGameServer * app);
+	void						SendHTBSendbagState(CGameServer * app);
 
 	// QuickSlots
 	void						SendCharUpdQuickSlot(CNtlPacket * pPacket, CGameServer * app);

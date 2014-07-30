@@ -61,7 +61,7 @@ DWORD WINAPI	Update(LPVOID arg)
 				plr->pcProfile->wCurEP -= (500 * plr->sCharState->sCharStateBase.aspectState.sAspectStateDetail.sKaioken.byRepeatingCount);
 			}
 			plr->SendPlayerLifeAndEP();				
-			Sleep(1000);
+			Sleep(10000);///Calm down guys at least only 10 seconds...its so fast second by second
 		}
 	}
 	return 0;

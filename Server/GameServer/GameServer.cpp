@@ -292,6 +292,7 @@ int CClientSession::OnDispatch(CNtlPacket * pPacket)
 		case UG_HTB_FORWARD_REQ:
 		{
 			printf("--- UG_HTB_FORWARD_REQ --- \n");
+			CClientSession::SendHTBFoward(pPacket, app);
 		}
 			break;
 		case UG_HTB_RP_BALL_USE_REQ:
