@@ -1676,7 +1676,7 @@ int GameServerMain(int argc, _TCHAR* argv[])
 	CleanDatabase();
 	// NEW CLASS
 	app.mob = new MobActivity();
-	
+	app.mob->app = &app;
 	app.Start();
 	Sleep(500);
 	std::cout << "\n\n" << std::endl;

@@ -23,7 +23,9 @@ class CNtlPacket;
 class MobActivity
 {
 public:
-	MobActivity(){};
+	MobActivity(){
+	dwThreadId = 2;
+	};
 	~MobActivity(){};
 
 	bool						Create();
@@ -37,7 +39,6 @@ public:
 	bool						UpdateDeathStatus(RwUInt32 MobID, bool death_status);
 	void						SpawnNpcAtLogin(CNtlPacket * pPacket, CClientSession * pSession);
 	void						SpawnMonsterAtLogin(CNtlPacket * pPacket, CClientSession * pSession);
-
 typedef struct _CreatureData
 {
 	TBLIDX			MonsterID;
@@ -144,13 +145,15 @@ typedef struct _CreatureData
 	RwUInt32		DisplayID;
 
 }CreatureData;
-
+HANDLE      mobThread;
+DWORD		dwThreadId;
 typedef std::list<CreatureData*> MONSTERLIST;
 typedef MONSTERLIST::iterator MONSTERLISTIT;
 MONSTERLIST					m_monsterList;
-
+CGameServer*				app;
 DWORD						last_mobMove;
 CreatureData*				GetMobByHandle(RwUInt32 m_uiTargetSerialId);
+void						RunMobThread(CreatureData* cr);
 };
 
 #endif

@@ -11,7 +11,29 @@ RwUInt32		MobActivity::AcquireMOBSerialId(void)
 
 	return m_uiSerialId;
 }
-
+DWORD WINAPI	UpdateMob(LPVOID arg)
+{
+	CGameServer * app = (CGameServer*) NtlSfxGetApp();
+	MobActivity::CreatureData* mob = (MobActivity::CreatureData*)arg;
+	while(42)
+	{
+		if (mob)
+		{
+			if (mob->isSpawned == true)
+			{
+				if (mob->IsDead == false)
+				{
+					
+				}
+			}
+		}
+		Sleep(1000);
+	}
+}
+void		MobActivity::RunMobThread(CreatureData* cr)
+{
+	this->mobThread = CreateThread(NULL, 0, UpdateMob, (LPVOID)cr, 0, &this->dwThreadId);
+}
 /// CREATE MONSTER LIST ///
 bool		MobActivity::Create()
 {
@@ -46,11 +68,10 @@ bool		MobActivity::Create()
 			cr->Walk_Speed = pMOBTblData->fWalk_Speed;
 			cr->Walk_Speed_origin = pMOBTblData->fWalk_Speed_Origin;
 			cr->Spawn_Cool_Time = pMOBSpwnTblData->wSpawn_Cool_Time * 1000;
-
 			m_monsterList.push_back(cr);
+			RunMobThread(cr);
 		}
 	}
-
 	return true;
 }
 /// CREATE MONSTER LIST END ///
