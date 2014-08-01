@@ -18,6 +18,38 @@ bool	GsFunctionsClass::DeleteItemByUIdPlacePos(CNtlPacket * pPacket, CClientSess
 
 	return true;
 }
+/*
+* TODO: Get the right Effect for each thing
+*/
+int     GsFunctionsClass::GetBattleResultEffect(int RpEffect)
+{
+	switch (RpEffect)
+	{
+	case DBO_RP_BONUS_TYPE_KNOCKDOWN:
+		return BATTLE_ATTACK_RESULT_KNOCKDOWN;
+	
+	case DBO_RP_BONUS_TYPE_RESULT_PLUS:
+		return BATTLE_ATTACK_RESULT_CRITICAL_HIT;
+
+	case DBO_RP_BONUS_TYPE_EP_MINUS:
+		return BATTLE_ATTACK_TYPE_ENERGY;
+
+	case DBO_RP_BONUS_TYPE_KEEP_TIME_PLUS:
+		return BATTLE_ATTACK_TYPE_ENERGY;
+
+	case DBO_RP_BONUS_TYPE_GUARD_CRASH:
+		return BATTLE_ATTACK_RESULT_CRITICAL_HIT;
+
+	case DBO_RP_BONUS_TYPE_CASTING_TIME_MINUS:
+		return BATTLE_ATTACK_TYPE_ENERGY;
+
+	case DBO_RP_BONUS_TYPE_COOL_TIME_MINUS:
+		return BATTLE_ATTACK_TYPE_ENERGY;
+
+	default:
+		return BATTLE_ATTACK_RESULT_HIT;
+	}
+}
 bool	GsFunctionsClass::UpdateCharMoney(CNtlPacket * pPacket, CClientSession * pSession, RwUInt32 ChangeType, RwUInt32 MoneyAmount, RwUInt32 AvatarHandle)
 {
 	CGameServer * app = (CGameServer*) NtlSfxGetApp();

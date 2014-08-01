@@ -57,11 +57,12 @@ public:
 	void						printError(const char* err);
 	void						printOk(const char* err);
 	void						printDebug(const char* dbg);
-  	//Items
-  
-  	//Skills Like Debug
-  	void						DebugSkillType(BYTE skillActType);
+	//Items
+
+	//Skills Like Debug
+	void						DebugSkillType(BYTE skillActType);
 	int							GetTotalSlotSkill(int charID);
+	int							GetBattleResultEffect(int RpEffect);
 };
 
 #endif

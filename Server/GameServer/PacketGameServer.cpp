@@ -2261,44 +2261,43 @@ void CClientSession::SendCharSkillRes(CNtlPacket * pPacket, CGameServer * app)
 
 	packet.SetPacketLen(sizeof(sGU_CHAR_SKILL_RES));
 	int rc = g_pApp->Send(this->GetHandle(), &packet);
-	app->UserBroadcast(&packet);
-
+	app->UserBroadcast(&packet);	
 	switch (skillDataOriginal->bySkill_Active_Type)
 	{
 	case SKILL_ACTIVE_TYPE_DD:
 		{
 			printf("SKILL_ACTIVE_TYPE_DD\n");
-			SendCharSkillAction(pPacket, app, skillID);
+			SendCharSkillAction(pPacket, app, skillID, pCharSkillReq->byRpBonusType);
 		}break;
 	case SKILL_ACTIVE_TYPE_BB:
 		{
 			printf("SKILL_ACTIVE_TYPE_BB\n");
-			SendCharSkillCasting(pPacket, app, skillID);
+			SendCharSkillCasting(pPacket, app, skillID, pCharSkillReq->byRpBonusType);
 		}break;
 	case SKILL_ACTIVE_TYPE_CB:
 		{
 			printf("SKILL_ACTIVE_TYPE_CB\n");
-			SendCharSkillAction(pPacket, app, skillID);
+			SendCharSkillAction(pPacket, app, skillID, pCharSkillReq->byRpBonusType);
 		}break;
 	case SKILL_ACTIVE_TYPE_DB:
 		{
 			printf("SKILL_ACTIVE_TYPE_DB\n");
-			SendCharSkillCasting(pPacket, app, skillID);
+			SendCharSkillCasting(pPacket, app, skillID, pCharSkillReq->byRpBonusType);
 		}break;
 	case SKILL_ACTIVE_TYPE_DC:
 		{
 			printf("SKILL_ACTIVE_TYPE_DC\n");
-			SendCharSkillCasting(pPacket, app, skillID);
+			SendCharSkillCasting(pPacket, app, skillID, pCharSkillReq->byRpBonusType);
 		}break;
 	case SKILL_ACTIVE_TYPE_DH:
 		{
 			printf("SKILL_ACTIVE_TYPE_DH\n");
-			SendCharSkillCasting(pPacket, app, skillID);
+			SendCharSkillCasting(pPacket, app, skillID, pCharSkillReq->byRpBonusType);
 		}break;
 	case SKILL_ACTIVE_TYPE_DOT:
 		{
 			printf("SKILL_ACTIVE_TYPE_DOT\n");
-			SendCharSkillAction(pPacket, app, skillID);
+			SendCharSkillAction(pPacket, app, skillID, pCharSkillReq->byRpBonusType);
 		}break;
 	}
 	/*if ((skillDataOriginal->dwKeepTimeInMilliSecs != 0) || (skillDataOriginal->dwTransform_Use_Info_Bit_Flag==1))
@@ -2309,7 +2308,7 @@ void CClientSession::SendCharSkillRes(CNtlPacket * pPacket, CGameServer * app)
 //--------------------------------------------------------------------------------------//
 //		Char Skill Send
 //--------------------------------------------------------------------------------------//
-void CClientSession::SendCharSkillAction(CNtlPacket * pPacket, CGameServer * app, int _skillID)
+void CClientSession::SendCharSkillAction(CNtlPacket * pPacket, CGameServer * app, int _skillID, int RpSelectedType)
 {
 	CNtlPacket packet(sizeof(sGU_CHAR_ACTION_SKILL));
 	sGU_CHAR_ACTION_SKILL * res = (sGU_CHAR_ACTION_SKILL *)packet.GetPacketData();	
@@ -2325,13 +2324,15 @@ void CClientSession::SendCharSkillAction(CNtlPacket * pPacket, CGameServer * app
 	res->skillId = skillID;
 	res->dwLpEpEventId = skillID;
 	res->bySkillResultCount = 1;
+
+	res->byRpBonusType = RpSelectedType;
 	res->aSkillResult[0].hTarget = this->GetTargetSerialId();
-	res->aSkillResult[0].byAttackResult = BATTLE_ATTACK_RESULT_HIT;
+	res->aSkillResult[0].byAttackResult = this->gsf->GetBattleResultEffect(RpSelectedType);
 	res->aSkillResult[0].effectResult1.fResultValue = pSkillTblData->fSkill_Effect_Value[0];
 	res->aSkillResult[0].effectResult2.fResultValue = pSkillTblData->fSkill_Effect_Value[1];
 	res->aSkillResult[0].byBlockedAction = 255;
 	res->aSkillResult[1].hTarget = this->GetTargetSerialId() +1;
-	res->aSkillResult[1].byAttackResult = BATTLE_ATTACK_RESULT_HIT;
+	res->aSkillResult[1].byAttackResult = this->gsf->GetBattleResultEffect(RpSelectedType);
 	res->aSkillResult[1].effectResult1.fResultValue = pSkillTblData->fSkill_Effect_Value[0];
 	res->aSkillResult[1].effectResult2.fResultValue = pSkillTblData->fSkill_Effect_Value[1];
 	res->aSkillResult[1].byBlockedAction = 255;
@@ -2361,7 +2362,7 @@ void CClientSession::SendCharSkillAction(CNtlPacket * pPacket, CGameServer * app
 	//Preparing packets
 	packet.SetPacketLen(sizeof(sGU_CHAR_ACTION_SKILL));
 	packet2.SetPacketLen(sizeof(sGU_UPDATE_CHAR_EP));
-	packet3.SetPacketLen(sizeof(sGU_UPDATE_CHAR_EP));
+	packet3.SetPacketLen(sizeof(sGU_UPDATE_CHAR_LP));
 	int rc = g_pApp->Send(this->GetHandle(), &packet);
 	g_pApp->Send(this->GetHandle(), &packet2);
 	g_pApp->Send(this->GetHandle(), &packet3);
@@ -2409,6 +2410,7 @@ void CClientSession::SendCharSkillCasting(CNtlPacket * pPacket, CGameServer * ap
  	
  	res->skillId = pSkillTblData->tblidx;
  	res->wResultCode = GAME_SUCCESS;
+	res->byRpBonusType = RpSelectedType;//Untested
  	res->wOpCode = GU_CHAR_ACTION_SKILL;
  	res->handle = this->GetavatarHandle();//My Handle
  	res->hAppointedTarget = this->GetTargetSerialId();//Get myself
@@ -4056,6 +4058,8 @@ void CClientSession::SendCharUpdateHTBState(int SkillID,CGameServer * app)
 	respA->sCharState.sCharStateDetail.sCharStateHTB.byCurStep = 0;
 	respA->sCharState.sCharStateDetail.sCharStateHTB.byResultCount = 0;
 	respA->sCharState.sCharStateDetail.sCharStateHTB.HTBId = pHTBSetTblData->tblidx;
+	CSkillTable *pSkillTbl = app->g_pTableContainer->GetSkillTable();
+	sSKILL_TBLDAT *pSkillTblData = reinterpret_cast<sSKILL_TBLDAT*>(pSkillTbl->FindData(SkillID));
 
 	//Extract from Client Code
 	RwInt8 byResultCount = 0;
@@ -4065,12 +4069,15 @@ void CClientSession::SendCharUpdateHTBState(int SkillID,CGameServer * app)
 		{
 			respA->sCharState.sCharStateDetail.sCharStateHTB.aHTBSkillResult[byResultCount].byStep = i;
 			respA->sCharState.sCharStateDetail.sCharStateHTB.aHTBSkillResult[byResultCount].sSkillResult.byAttackResult = BATTLE_ATTACK_RESULT_HIT;
-			respA->sCharState.sCharStateDetail.sCharStateHTB.aHTBSkillResult[byResultCount].sSkillResult.effectResult1.fResultValue = 100;
-			respA->sCharState.sCharStateDetail.sCharStateHTB.aHTBSkillResult[byResultCount].sSkillResult.effectResult2.fResultValue = 100;
+			respA->sCharState.sCharStateDetail.sCharStateHTB.aHTBSkillResult[byResultCount].sSkillResult.effectResult1.fResultValue = pSkillTblData->fSkill_Effect_Value[0];
+			respA->sCharState.sCharStateDetail.sCharStateHTB.aHTBSkillResult[byResultCount].sSkillResult.effectResult2.fResultValue = pSkillTblData->fSkill_Effect_Value[1];
 			respA->sCharState.sCharStateDetail.sCharStateHTB.aHTBSkillResult[byResultCount].sSkillResult.vShift.x = 0.0f;
 			respA->sCharState.sCharStateDetail.sCharStateHTB.aHTBSkillResult[byResultCount].sSkillResult.vShift.y = 0.0f;
 			respA->sCharState.sCharStateDetail.sCharStateHTB.aHTBSkillResult[byResultCount].sSkillResult.vShift.z = 0.0f;
+			respA->sCharState.sCharStateDetail.sCharStateHTB.aHTBSkillResult[byResultCount].sSkillResult.byBlockedAction = 255;
 
+			this->plr->sCharState->sCharStateDetail.sCharStateHTB.aHTBSkillResult[byResultCount].sSkillResult.effectResult1.fResultValue = pSkillTblData->fSkill_Effect_Value[0];
+			this->plr->sCharState->sCharStateDetail.sCharStateHTB.aHTBSkillResult[byResultCount].sSkillResult.effectResult2.fResultValue = pSkillTblData->fSkill_Effect_Value[1];
 			respA->sCharState.sCharStateDetail.sCharStateHTB.byResultCount++;
 			byResultCount++;
 		}
@@ -4104,12 +4111,81 @@ void CClientSession::SendHTBSendbagState(CGameServer * app)
 	app->UserBroadcastothers(&packet, this);
 }
 //-----------------------------------------------------------//
+//SendHTBRpBall Player vs Player HTB Choice   Luiz45  -------//
+//-----------------------------------------------------------//
+void CClientSession::SendHTBRpBall(CNtlPacket * pPacket, CGameServer * app)
+{
+	sUG_HTB_RP_BALL_USE_REQ * req = (sUG_HTB_RP_BALL_USE_REQ*)pPacket->GetPacketData();
+
+	CNtlPacket packet(sizeof(sGU_HTB_RP_BALL_USE_RES));
+	sGU_HTB_RP_BALL_USE_RES * res1 = (sGU_HTB_RP_BALL_USE_RES*)packet.GetPacketData();
+
+	res1->byRpBallCount = req->byRpBallCount;
+	res1->wOpCode = GU_HTB_RP_BALL_USE_RES;
+	res1->wResultCode = GAME_SUCCESS;
+
+	CNtlPacket packet2(sizeof(sGU_HTB_RP_BALL_USED_NFY));
+	sGU_HTB_RP_BALL_USED_NFY * res2 = (sGU_HTB_RP_BALL_USED_NFY*)packet2.GetPacketData();
+
+	CNtlPacket packet3(sizeof(sGU_HTB_RP_BALL_RESULT_DECIDED_NFY));
+	sGU_HTB_RP_BALL_RESULT_DECIDED_NFY * res3 = (sGU_HTB_RP_BALL_RESULT_DECIDED_NFY*)packet3.GetPacketData();
+
+	res2->byRpBallCount = req->byRpBallCount;
+	res2->hSubject = this->GetavatarHandle();
+	res2->wOpCode = GU_HTB_RP_BALL_USED_NFY;
+
+	res3->hAttacker = this->GetavatarHandle();
+	res3->hWinner = this->GetavatarHandle();
+	res3->byTargetRpBallUsed = req->byRpBallCount;
+	res3->wOpCode = GU_HTB_RP_BALL_RESULT_DECIDED_NFY;
+
+	packet2.SetPacketLen(sizeof(sGU_HTB_RP_BALL_USED_NFY));
+	packet3.SetPacketLen(sizeof(sGU_HTB_RP_BALL_RESULT_DECIDED_NFY));
+	packet.SetPacketLen(sizeof(sGU_HTB_RP_BALL_USE_RES));
+	g_pApp->Send(this->GetHandle(), &packet2);
+	g_pApp->Send(this->GetHandle(), &packet3);
+	g_pApp->Send(this->GetHandle(), &packet);
+
+	app->UserBroadcastothers(&packet2, this);
+	app->UserBroadcastothers(&packet3, this);
+	app->UserBroadcastothers(&packet, this);
+	
+}
+//-----------------------------------------------------------//
 //-----------Advance Steps HTB? Luiz45  ---------------------//
 //-----------------------------------------------------------//
 void CClientSession::SendHTBFoward(CNtlPacket * pPacket, CGameServer * app)
 {
 	CNtlPacket packet(sizeof(sGU_HTB_FORWARD_RES));
 	sGU_HTB_FORWARD_RES * res = (sGU_HTB_FORWARD_RES*)packet.GetPacketData();
+
+	float newLP = 0;
+	int stepNow = this->plr->sCharState->sCharStateDetail.sCharStateHTB.byStepCount;
+
+	if (IsMonsterInsideList(m_uiTargetSerialId) == true)
+	{
+		MobActivity::CreatureData *lol = app->mob->GetMobByHandle(m_uiTargetSerialId);
+		if (lol != NULL)
+		{
+			lol->FightMode = true;
+			newLP = (float)lol->CurLP;
+			newLP -= this->plr->sCharState->sCharStateDetail.sCharStateHTB.aHTBSkillResult[stepNow].sSkillResult.effectResult1.DD_DOT_fDamage + 100;
+			printf("LP: %f, damage: %f\n", newLP, this->plr->sCharState->sCharStateDetail.sCharStateHTB.aHTBSkillResult[stepNow].sSkillResult.effectResult1.DD_DOT_fDamage + 100);
+			if (newLP <= 0 || (newLP > lol->MaxLP))
+			{
+				lol->IsDead = true;
+				CClientSession::SendMobLoot(&packet, app, m_uiTargetSerialId);
+				this->gsf->printOk("DIE MOTHER FUCKER");
+				SendCharUpdateFaintingState(&packet, app, this->GetavatarHandle(), m_uiTargetSerialId);
+			}
+			else if (newLP > 0 && lol->IsDead == false)
+			{
+				SendCharUpdateLp(&packet, app, newLP, m_uiTargetSerialId);
+			}
+		}
+	}
+
+	this->plr->sCharState->sCharStateDetail.sCharStateHTB.byStepCount++;
 	res->wOpCode = GU_HTB_FORWARD_RES;
 	res->wResultCode = GAME_SUCCESS;
 

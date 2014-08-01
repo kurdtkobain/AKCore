@@ -240,9 +240,9 @@ public:
 	void						SendDragonBallCheckReq(CNtlPacket * pPacket, CGameServer * app);
 	void						SendDragonBallRewardReq(CNtlPacket * pPacket, CGameServer * app);
 	// SKILL
-	void						SendCharSkillAction(CNtlPacket * pPacket, CGameServer * app, int _skillid);
+	void						SendCharSkillAction(CNtlPacket * pPacket, CGameServer * app, int _skillid, int RpSelectedType);
 	void						SendCharSkillRes(CNtlPacket * pPacket, CGameServer * app);
-	void						SendCharSkillCasting(CNtlPacket * pPacket, CGameServer * app, int _skillid);
+	void						SendCharSkillCasting(CNtlPacket * pPacket, CGameServer * app, int _skillid, int RpSelectedType);
 	void						SendCharSkillTransformCancel(CNtlPacket * pPacket, CGameServer * app);
 	void						SendSocialSkillRes(CNtlPacket *pPacket, CGameServer * app);
 	void						SendRpCharge(CNtlPacket *pPacket, CGameServer * app);
@@ -252,6 +252,7 @@ public:
 	void						SendCharSkillHTBLearn(CNtlPacket * pPacket, CGameServer * app);
 	void						SendHTBStartReq(CNtlPacket * pPacket, CGameServer * app);
 	void						SendHTBFoward(CNtlPacket * pPacket, CGameServer * app);
+	void						SendHTBRpBall(CNtlPacket * pPacket, CGameServer * app);
 	void						SendCharUpdateHTBState(int SkillID, CGameServer * app);
 	void						SendHTBSendbagState(CGameServer * app);
 

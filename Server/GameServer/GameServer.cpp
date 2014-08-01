@@ -297,7 +297,8 @@ int CClientSession::OnDispatch(CNtlPacket * pPacket)
 			break;
 		case UG_HTB_RP_BALL_USE_REQ:
 		{
-			printf("--- UG_HTB_RP_BALL_USE_REQ --- \n");
+			printf("--- UG_HTB_RP_BALL_USE_REQ --- \n");	
+			CClientSession::SendHTBRpBall(pPacket,app);
 		}
 			break;
 		case UG_BUFF_DROP_REQ:
