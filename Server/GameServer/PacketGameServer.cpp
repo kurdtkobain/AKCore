@@ -378,6 +378,43 @@ void CClientSession::SendCharRevivalReq(CNtlPacket * pPacket, CGameServer * app)
 	g_pApp->Send(this->GetHandle(), &packet);
 }
 //--------------------------------------------------------------------------------------//
+//		SendAvatarBuffInfo Luiz45
+//--------------------------------------------------------------------------------------//
+void CClientSession::SendAvatarBuffInfo(CNtlPacket * pPacket, CGameServer * app)
+{
+	CNtlPacket packet(sizeof(sGU_AVATAR_BUFF_INFO));
+	sGU_AVATAR_BUFF_INFO * res = (sGU_AVATAR_BUFF_INFO *)packet.GetPacketData();
+
+	CSkillTable * pSkillTable = app->g_pTableContainer->GetSkillTable();
+	int iCountBuff = 0;
+
+	app->db->prepare("SELECT * FROM skills WHERE owmner_id = ?");
+	app->db->setInt(1, this->plr->pcProfile->charId);
+	app->db->execute();
+	while (app->db->fetch())
+	{
+		int SkillId = app->db->getInt("skill_id");	
+		int iTimeRemaining = app->db->getInt("TimeRemaining");
+		sSKILL_TBLDAT * pSkillBuffData = reinterpret_cast<sSKILL_TBLDAT*>(pSkillTable->FindData(SkillId));
+		if (iCountBuff == ((NTL_MAX_BLESS_BUFF_CHARACTER_HAS + NTL_MAX_CURSE_BUFF_CHARACTER_HAS)-1))
+			break;
+		if ((pSkillBuffData->byBuff_Group != INVALID_BUFF_GROUP) && (iTimeRemaining!=0))
+		{
+			res->aBuffInfo[iCountBuff].bySourceType = DBO_OBJECT_SOURCE_SKILL;//Need Check
+			res->aBuffInfo[iCountBuff].dwInitialDuration = pSkillBuffData->dwKeepTimeInMilliSecs;
+			res->aBuffInfo[iCountBuff].dwTimeRemaining = (iTimeRemaining*1000);//to MilliSeconds
+			res->aBuffInfo[iCountBuff].afEffectValue[0] = pSkillBuffData->fSkill_Effect_Value[0];
+			res->aBuffInfo[iCountBuff].afEffectValue[1] = pSkillBuffData->fSkill_Effect_Value[1];
+			res->aBuffInfo[iCountBuff].sourceTblidx = pSkillBuffData->tblidx;
+			iCountBuff++;
+		}
+	}
+	res->byBuffCount = iCountBuff;
+	res->wOpCode = GU_AVATAR_BUFF_INFO;
+	packet.SetPacketLen(sizeof(sGU_AVATAR_BUFF_INFO));
+	g_pApp->Send(this->GetHandle(), &packet);
+}
+//--------------------------------------------------------------------------------------//
 //		SendAvatarInfoEnd
 //--------------------------------------------------------------------------------------//
 void CClientSession::SendAvatarInfoEnd(CNtlPacket * pPacket)
@@ -2399,7 +2436,7 @@ void CClientSession::SendCharSkillAction(CNtlPacket * pPacket, CGameServer * app
 //-------------------------------------------------------------------//
 //----------Fixed Casting Buff/Transform Skills - Luiz45-------------//
 //-------------------------------------------------------------------//
-void CClientSession::SendCharSkillCasting(CNtlPacket * pPacket, CGameServer * app, int _skillID)
+void CClientSession::SendCharSkillCasting(CNtlPacket * pPacket, CGameServer * app, int _skillID,int RpSelectedType)
 {
 	//Skill Events Prepare
  	CNtlPacket packet(sizeof(sGU_CHAR_ACTION_SKILL));

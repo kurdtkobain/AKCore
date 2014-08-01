@@ -144,6 +144,7 @@ public:
 	void						SendAvatarItemInfo(CNtlPacket * pPacket, CGameServer * app);
 	void						SendAvatarSkillInfo(CNtlPacket * pPacket, CGameServer * app);
 	void						SendAvatarHTBInfo(CNtlPacket * pPacket, CGameServer * app);
+	void						SendAvatarBuffInfo(CNtlPacket * pPacket, CGameServer * app);
 	void						SendSlotInfo(CNtlPacket * pPacket, CGameServer * app);
 	void						SendAvatarInfoEnd(CNtlPacket * pPacket);
 	void						SendAuthCommunityServer(CNtlPacket * pPacket, CGameServer * app);

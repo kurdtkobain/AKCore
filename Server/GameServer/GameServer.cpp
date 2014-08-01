@@ -43,6 +43,7 @@ int CClientSession::OnDispatch(CNtlPacket * pPacket)
 			CClientSession::SendAvatarCharInfo(pPacket, app);
 			CClientSession::SendAvatarItemInfo(pPacket, app);
 			CClientSession::SendAvatarSkillInfo(pPacket, app);			
+			CClientSession::SendAvatarBuffInfo(pPacket, app);
 			CClientSession::SendAvatarHTBInfo(pPacket, app);
 			CClientSession::SendSlotInfo(pPacket, app);
 			CClientSession::SendAvatarInfoEnd(pPacket);
