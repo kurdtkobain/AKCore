@@ -1,6 +1,48 @@
 #include "stdafx.h"
 #include "GameServer.h"
 
+bool		CClientSession::CheckMyPlayerAggro(PlayerInfos *mePlr)
+{
+	CGameServer * app = (CGameServer*) NtlSfxGetApp();
+	MyMonsterList * mymonsterlist;
+	for( MYMONSTERLISTIT it = my_monsterList.begin(); it != my_monsterList.end(); it++ )
+	{
+		mymonsterlist = (*it);
+		sVECTOR3 posMo;
+		posMo.x = mymonsterlist->Position.x;
+		posMo.y = mymonsterlist->Position.y;
+		posMo.z = mymonsterlist->Position.z;
+		MobActivity::CreatureData* myMob = NULL;
+		myMob = app->mob->GetMobByHandle(mymonsterlist->MonsterID);
+		if (myMob->IsDead == false && myMob->isAggro == false)
+		{
+			float distance = app->mob->Distance(posMo, mePlr->GetPosition());
+			if (distance <= 10)
+			{
+				myMob->target = mePlr->GetAvatarandle();
+				myMob->isAggro = true;
+				myMob->isAggroByPlayer(plr, app);
+				return true;
+			}
+		}
+		else if (myMob->isAggro == true && mePlr->GetAvatarandle() == myMob->target)
+		{
+			float distance = app->mob->Distance(posMo, mePlr->GetPosition());
+			if (distance > 10)
+			{
+				myMob->target = 0;
+				myMob->isAggro = false;
+				return false;
+			}
+		}
+		else
+		{
+			printf("i don;t know\n");
+			break;
+		}
+	}
+	return false;
+}
 bool	GsFunctionsClass::DeleteItemByUIdPlacePos(CNtlPacket * pPacket, CClientSession * pSession, RwUInt32 UniqueID, RwUInt32 Place, RwUInt32 Pos)
 {
 	CGameServer * app = (CGameServer*) NtlSfxGetApp();

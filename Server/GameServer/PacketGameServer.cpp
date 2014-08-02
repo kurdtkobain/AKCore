@@ -3734,7 +3734,7 @@ void	CClientSession::SendZennyPickUpReq(CNtlPacket * pPacket, CGameServer * app)
 		//res->dwOriginalZenny = amnt;
 		this->plr->pcProfile->dwZenny += (amnt + res->dwBonusZenny);
 		res->dwZenny = this->plr->pcProfile->dwZenny;
-		res->dwAcquisitionZenny = res->dwZenny;
+		res->dwAcquisitionZenny = amnt + res->dwBonusZenny;
 		res->wResultCode = ZENNY_CHANGE_TYPE_PICK;
 
 		app->qry->SetPlusMoney(this->plr->pcProfile->charId, res->dwAcquisitionZenny);

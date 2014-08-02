@@ -19,6 +19,7 @@ public:
 		this->CurRPBall = 0;
 		LastPartyHandle = -1;
 		dwThreadId = 0;
+		dwThreadIdAggro = 2;
 		ChargingID = 1;
 		CurRPBallOk = 0;
 		isKaioken = false;
@@ -29,9 +30,13 @@ public:
 	~PlayerInfos()
 	{
 		if (TerminateThread(hThread, 1) == 0)
-			printf("Can't kill thread\n");
+			printf("Can't kill thread regen\n");
 		if (hThread)
 			CloseHandle(hThread);
+		if (TerminateThread(hThreadAggro, 1) == 0)
+			printf("Can't kill thread aggro\n");
+		if (hThreadAggro)
+			CloseHandle(hThreadAggro);
 	};
 	sPC_PROFILE		*pcProfile;
 	sCHARSTATE		*sCharState;
@@ -246,7 +251,9 @@ void		SaveMe();
 void		SavePlayerData();
 HANDLE		Charging_Thread;
 HANDLE      hThread;
+HANDLE      hThreadAggro;
 DWORD		dwThreadId;
+DWORD		dwThreadIdAggro;
 DWORD		ChargingID;
 bool		isKaioken;
 bool		isSsj;

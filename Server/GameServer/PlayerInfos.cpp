@@ -61,6 +61,23 @@ void		PlayerInfos::checkBuff(int skill)
 		this->sCharState->sCharStateBase.aspectState.sAspectStateDetail.sKaioken.byRepeatingCount += 1;
 	}
 }
+DWORD WINAPI	Aggro(LPVOID arg)
+{
+	PlayerInfos* plr = (PlayerInfos*)arg;
+	CGameServer * app = (CGameServer*) NtlSfxGetApp();
+	if (plr)
+	{
+		while (true)
+		{
+			if ((plr->myCCSession->CheckMyPlayerAggro(plr)) == true)
+			{
+				printf("UHU\n");
+			}
+			Sleep(1);
+		}
+	}
+	return 0;
+}
 DWORD WINAPI	Update(LPVOID arg)
 {
 	PlayerInfos* plr = (PlayerInfos*)arg;
@@ -100,7 +117,10 @@ void		PlayerInfos::SpawnMyChar()
 {
 	this->hThread = CreateThread(NULL, 0, Update, (LPVOID)this, 0, &this->dwThreadId);
 	if (this->hThread == NULL)
-        printf("Can't create thread\n");
+        printf("Can't create thread Regen\n");
+	this->hThreadAggro = CreateThread(NULL, 0, Aggro, (LPVOID)this, 0, &this->dwThreadIdAggro);
+	if (this->hThreadAggro == NULL)
+        printf("Can't create thread Aggro\n");
 };
 void		PlayerInfos::SavePlayerData()
 {

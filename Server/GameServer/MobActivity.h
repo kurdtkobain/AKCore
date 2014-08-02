@@ -24,7 +24,6 @@ class MobActivity
 {
 public:
 	MobActivity(){
-	dwThreadId = 2;
 	};
 	~MobActivity(){};
 
@@ -143,17 +142,17 @@ typedef struct _CreatureData
 	DWORD			KilledTime;
 	bool			isSpawned;
 	RwUInt32		DisplayID;
-
+	RwUInt32			target;
+	CNtlVector		curPos;
+	bool			isAggro;
+	void			isAggroByPlayer(PlayerInfos *plr, CGameServer *app);
 }CreatureData;
-HANDLE      mobThread;
-DWORD		dwThreadId;
 typedef std::list<CreatureData*> MONSTERLIST;
 typedef MONSTERLIST::iterator MONSTERLISTIT;
 MONSTERLIST					m_monsterList;
 CGameServer*				app;
 DWORD						last_mobMove;
 CreatureData*				GetMobByHandle(RwUInt32 m_uiTargetSerialId);
-void						RunMobThread(CreatureData* cr);
 };
 
 #endif
