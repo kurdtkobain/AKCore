@@ -4,8 +4,10 @@
 bool		CClientSession::CheckMyPlayerAggro(PlayerInfos *mePlr)
 {
 	CGameServer * app = (CGameServer*) NtlSfxGetApp();
-	MyMonsterList * mymonsterlist;
-	for( MYMONSTERLISTIT it = my_monsterList.begin(); it != my_monsterList.end(); it++ )
+	MyMonsterList* mymonsterlist = new MyMonsterList();
+	MYMONSTERLIST *mymonsterlistBIS = new MYMONSTERLIST;
+	mePlr->myCCSession->FillNewList(mymonsterlistBIS);
+	for( MYMONSTERLISTIT it = mymonsterlistBIS->begin(); it != mymonsterlistBIS->end(); it++ )
 	{
 		mymonsterlist = (*it);
 		sVECTOR3 posMo;
@@ -14,7 +16,7 @@ bool		CClientSession::CheckMyPlayerAggro(PlayerInfos *mePlr)
 		posMo.z = mymonsterlist->Position.z;
 		MobActivity::CreatureData* myMob = NULL;
 		myMob = app->mob->GetMobByHandle(mymonsterlist->MonsterID);
-		if (myMob->IsDead == false && myMob->isAggro == false)
+		if (myMob->isSpawned == true && myMob->IsDead == false && myMob->isAggro == false)
 		{
 			float distance = app->mob->Distance(posMo, mePlr->GetPosition());
 			if (distance <= 10)
@@ -22,23 +24,29 @@ bool		CClientSession::CheckMyPlayerAggro(PlayerInfos *mePlr)
 				myMob->target = mePlr->GetAvatarandle();
 				myMob->isAggro = true;
 				myMob->isAggroByPlayer(plr, app);
+				delete mymonsterlistBIS;
 				return true;
 			}
 		}
-		else if (myMob->isAggro == true && mePlr->GetAvatarandle() == myMob->target)
+		else if (myMob->isSpawned == true && myMob->isAggro == true && mePlr->GetAvatarandle() == myMob->target && myMob->IsDead == false)
 		{
 			float distance = app->mob->Distance(posMo, mePlr->GetPosition());
 			if (distance > 10)
 			{
 				myMob->target = 0;
 				myMob->isAggro = false;
+				delete mymonsterlistBIS;
 				return false;
 			}
 		}
+		else if (myMob->isAggro == true && mePlr->GetAvatarandle() != myMob->target && myMob->IsDead == false);
+		else if (myMob->IsDead == false);
+		else if (myMob->isSpawned == false);
 		else
 		{
 			printf("i don;t know\n");
-			break;
+			delete mymonsterlistBIS;
+			return false;
 		}
 	}
 	return false;
@@ -61,37 +69,37 @@ bool	GsFunctionsClass::DeleteItemByUIdPlacePos(CNtlPacket * pPacket, CClientSess
 	return true;
 }
 /*
-* TODO: Get the right Effect for each thing
-*/
-int     GsFunctionsClass::GetBattleResultEffect(int RpEffect)
-{
-	switch (RpEffect)
-	{
-	case DBO_RP_BONUS_TYPE_KNOCKDOWN:
-		return BATTLE_ATTACK_RESULT_KNOCKDOWN;
-	
-	case DBO_RP_BONUS_TYPE_RESULT_PLUS:
-		return BATTLE_ATTACK_RESULT_CRITICAL_HIT;
-
-	case DBO_RP_BONUS_TYPE_EP_MINUS:
-		return BATTLE_ATTACK_TYPE_ENERGY;
-
-	case DBO_RP_BONUS_TYPE_KEEP_TIME_PLUS:
-		return BATTLE_ATTACK_TYPE_ENERGY;
-
-	case DBO_RP_BONUS_TYPE_GUARD_CRASH:
-		return BATTLE_ATTACK_RESULT_CRITICAL_HIT;
-
-	case DBO_RP_BONUS_TYPE_CASTING_TIME_MINUS:
-		return BATTLE_ATTACK_TYPE_ENERGY;
-
-	case DBO_RP_BONUS_TYPE_COOL_TIME_MINUS:
-		return BATTLE_ATTACK_TYPE_ENERGY;
-
-	default:
-		return BATTLE_ATTACK_RESULT_HIT;
-	}
-}
+ * TODO: Get the right Effect for each thing
+ */
+ int     GsFunctionsClass::GetBattleResultEffect(int RpEffect)
+ {
+ 	switch (RpEffect)
+ 	{
+ 	case DBO_RP_BONUS_TYPE_KNOCKDOWN:
+ 		return BATTLE_ATTACK_RESULT_KNOCKDOWN;
+ 	
+ 	case DBO_RP_BONUS_TYPE_RESULT_PLUS:
+ 		return BATTLE_ATTACK_RESULT_CRITICAL_HIT;
+ 
+ 	case DBO_RP_BONUS_TYPE_EP_MINUS:
+ 		return BATTLE_ATTACK_TYPE_ENERGY;
+ 
+ 	case DBO_RP_BONUS_TYPE_KEEP_TIME_PLUS:
+ 		return BATTLE_ATTACK_TYPE_ENERGY;
+ 
+ 	case DBO_RP_BONUS_TYPE_GUARD_CRASH:
+ 		return BATTLE_ATTACK_RESULT_CRITICAL_HIT;
+ 
+ 	case DBO_RP_BONUS_TYPE_CASTING_TIME_MINUS:
+ 		return BATTLE_ATTACK_TYPE_ENERGY;
+ 
+ 	case DBO_RP_BONUS_TYPE_COOL_TIME_MINUS:
+ 		return BATTLE_ATTACK_TYPE_ENERGY;
+ 
+ 	default:
+ 		return BATTLE_ATTACK_RESULT_HIT;
+ 	}
+ }
 bool	GsFunctionsClass::UpdateCharMoney(CNtlPacket * pPacket, CClientSession * pSession, RwUInt32 ChangeType, RwUInt32 MoneyAmount, RwUInt32 AvatarHandle)
 {
 	CGameServer * app = (CGameServer*) NtlSfxGetApp();

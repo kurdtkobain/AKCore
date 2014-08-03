@@ -351,8 +351,6 @@ typedef struct _MyMonsterList
 typedef std::list<MyMonsterList*> MYMONSTERLIST;
 typedef MYMONSTERLIST::iterator MYMONSTERLISTIT;
 MYMONSTERLIST					my_monsterList;
-
-
 	void		InsertIntoMyNpcList(TBLIDX NpcSpawnID, CNtlVector Position)
 	{
 		MyNpcList * mynl = new MyNpcList;
@@ -375,16 +373,22 @@ MYMONSTERLIST					my_monsterList;
 		}
 		return false;
 	}
-typedef struct _MyNpcList
-{
-	TBLIDX			NpcID;
-	CNtlVector		Position;
+	typedef struct _MyNpcList
+	{
+		TBLIDX			NpcID;
+		CNtlVector		Position;
 
-}MyNpcList;
-typedef std::list<MyNpcList*> MYNPCLIST;
-typedef MYNPCLIST::iterator MYNPCLISTIT;
-MYNPCLIST					my_npcList;
-
+	}MyNpcList;
+	typedef std::list<MyNpcList*> MYNPCLIST;
+	typedef MYNPCLIST::iterator MYNPCLISTIT;
+	MYNPCLIST					my_npcList;
+	void		FillNewList(MYMONSTERLIST *mylist)
+	{
+		for( MYMONSTERLISTIT it = my_monsterList.begin(); it != my_monsterList.end(); it++ )
+		{
+			mylist->push_back(*it);
+		}
+	}
 };
 //---------------------------------------------------------------------------------------------------//
 //---------------------------------------------------------------------------------------------------//
@@ -517,7 +521,7 @@ public:
 	}
 	int					OnAppStart()
 	{
-
+		dwThreadId = 0;
 		if(CreateTableContainer(1))
 		{
 			return NTL_SUCCESS;
@@ -658,6 +662,12 @@ public:
 		else
 			return amount_zenny[handle];
 	}
+	DWORD			ThreadRequest()
+	{
+		dwThreadId += 1;
+		return dwThreadId;
+	};
+	DWORD		dwThreadId;
 	typedef std::map<CNtlString, CClientSession*> USERLIST;
 	typedef USERLIST::value_type USERVAL;
 	typedef USERLIST::iterator USERIT;

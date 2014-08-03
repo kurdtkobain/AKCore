@@ -377,7 +377,6 @@ void CClientSession::SendCharRevivalReq(CNtlPacket * pPacket, CGameServer * app)
 	packet.SetPacketLen(sizeof(sGU_CHAR_REVIVAL_RES));
 	g_pApp->Send(this->GetHandle(), &packet);
 }
-//--------------------------------------------------------------------------------------//
 //		SendAvatarBuffInfo Luiz45
 //--------------------------------------------------------------------------------------//
 void CClientSession::SendAvatarBuffInfo(CNtlPacket * pPacket, CGameServer * app)
@@ -2298,7 +2297,8 @@ void CClientSession::SendCharSkillRes(CNtlPacket * pPacket, CGameServer * app)
 
 	packet.SetPacketLen(sizeof(sGU_CHAR_SKILL_RES));
 	int rc = g_pApp->Send(this->GetHandle(), &packet);
-	app->UserBroadcast(&packet);	
+	app->UserBroadcast(&packet);
+
 	switch (skillDataOriginal->bySkill_Active_Type)
 	{
 	case SKILL_ACTIVE_TYPE_DD:
@@ -2361,7 +2361,6 @@ void CClientSession::SendCharSkillAction(CNtlPacket * pPacket, CGameServer * app
 	res->skillId = skillID;
 	res->dwLpEpEventId = skillID;
 	res->bySkillResultCount = 1;
-
 	res->byRpBonusType = RpSelectedType;
 	res->aSkillResult[0].hTarget = this->GetTargetSerialId();
 	res->aSkillResult[0].byAttackResult = this->gsf->GetBattleResultEffect(RpSelectedType);
@@ -2436,7 +2435,7 @@ void CClientSession::SendCharSkillAction(CNtlPacket * pPacket, CGameServer * app
 //-------------------------------------------------------------------//
 //----------Fixed Casting Buff/Transform Skills - Luiz45-------------//
 //-------------------------------------------------------------------//
-void CClientSession::SendCharSkillCasting(CNtlPacket * pPacket, CGameServer * app, int _skillID,int RpSelectedType)
+void CClientSession::SendCharSkillCasting(CNtlPacket * pPacket, CGameServer * app, int _skillID, int RpSelectedType)
 {
 	//Skill Events Prepare
  	CNtlPacket packet(sizeof(sGU_CHAR_ACTION_SKILL));
@@ -3972,9 +3971,10 @@ void CClientSession::SendCharSkillTransformCancel(CNtlPacket * pPacket, CGameSer
 		g_pApp->Send(this->GetHandle(), &packet2);
 		packet3.SetPacketLen(sizeof(sGU_UPDATE_CHAR_MAX_RP));
 		g_pApp->Send(this->GetHandle(), &packet3);
+		this->plr->ChargingID = app->ThreadRequest();
 		this->plr->Charging_Thread = CreateThread(NULL, 0, SendRpChargethread, (LPVOID)this, 0, &this->plr->ChargingID);
 		if (this->plr->Charging_Thread == NULL)
-			printf("Can't create thread\n");
+			printf("Can't create thread charging\n");
 		app->UserBroadcastothers(&packet, this);
 	}
 	if (req->bCharge == false)
@@ -4096,8 +4096,7 @@ void CClientSession::SendCharUpdateHTBState(int SkillID,CGameServer * app)
 	respA->sCharState.sCharStateDetail.sCharStateHTB.byResultCount = 0;
 	respA->sCharState.sCharStateDetail.sCharStateHTB.HTBId = pHTBSetTblData->tblidx;
 	CSkillTable *pSkillTbl = app->g_pTableContainer->GetSkillTable();
-	sSKILL_TBLDAT *pSkillTblData = reinterpret_cast<sSKILL_TBLDAT*>(pSkillTbl->FindData(SkillID));
-
+ 	sSKILL_TBLDAT *pSkillTblData = reinterpret_cast<sSKILL_TBLDAT*>(pSkillTbl->FindData(SkillID));
 	//Extract from Client Code
 	RwInt8 byResultCount = 0;
 	for (RwInt32 i = 0; i < pHTBSetTblData->bySetCount; ++i)
@@ -4114,7 +4113,8 @@ void CClientSession::SendCharUpdateHTBState(int SkillID,CGameServer * app)
 			respA->sCharState.sCharStateDetail.sCharStateHTB.aHTBSkillResult[byResultCount].sSkillResult.byBlockedAction = 255;
 
 			this->plr->sCharState->sCharStateDetail.sCharStateHTB.aHTBSkillResult[byResultCount].sSkillResult.effectResult1.fResultValue = pSkillTblData->fSkill_Effect_Value[0];
-			this->plr->sCharState->sCharStateDetail.sCharStateHTB.aHTBSkillResult[byResultCount].sSkillResult.effectResult2.fResultValue = pSkillTblData->fSkill_Effect_Value[1];
+ 			this->plr->sCharState->sCharStateDetail.sCharStateHTB.aHTBSkillResult[byResultCount].sSkillResult.effectResult2.fResultValue = pSkillTblData->fSkill_Effect_Value[1];
+  			
 			respA->sCharState.sCharStateDetail.sCharStateHTB.byResultCount++;
 			byResultCount++;
 		}
@@ -4147,7 +4147,7 @@ void CClientSession::SendHTBSendbagState(CGameServer * app)
 	g_pApp->Send(this->GetHandle(), &packet);
 	app->UserBroadcastothers(&packet, this);
 }
-//-----------------------------------------------------------//
+ //-----------------------------------------------------------//
 //SendHTBRpBall Player vs Player HTB Choice   Luiz45  -------//
 //-----------------------------------------------------------//
 void CClientSession::SendHTBRpBall(CNtlPacket * pPacket, CGameServer * app)
@@ -4195,7 +4195,6 @@ void CClientSession::SendHTBFoward(CNtlPacket * pPacket, CGameServer * app)
 {
 	CNtlPacket packet(sizeof(sGU_HTB_FORWARD_RES));
 	sGU_HTB_FORWARD_RES * res = (sGU_HTB_FORWARD_RES*)packet.GetPacketData();
-
 	float newLP = 0;
 	int stepNow = this->plr->sCharState->sCharStateDetail.sCharStateHTB.byStepCount;
 

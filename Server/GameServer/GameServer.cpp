@@ -42,7 +42,7 @@ int CClientSession::OnDispatch(CNtlPacket * pPacket)
 			CClientSession::SendGameEnterReq(pPacket, app);
 			CClientSession::SendAvatarCharInfo(pPacket, app);
 			CClientSession::SendAvatarItemInfo(pPacket, app);
-			CClientSession::SendAvatarSkillInfo(pPacket, app);			
+			CClientSession::SendAvatarSkillInfo(pPacket, app);
 			CClientSession::SendAvatarBuffInfo(pPacket, app);
 			CClientSession::SendAvatarHTBInfo(pPacket, app);
 			CClientSession::SendSlotInfo(pPacket, app);
@@ -298,7 +298,7 @@ int CClientSession::OnDispatch(CNtlPacket * pPacket)
 			break;
 		case UG_HTB_RP_BALL_USE_REQ:
 		{
-			printf("--- UG_HTB_RP_BALL_USE_REQ --- \n");	
+			printf("--- UG_HTB_RP_BALL_USE_REQ --- \n");
 			CClientSession::SendHTBRpBall(pPacket,app);
 		}
 			break;

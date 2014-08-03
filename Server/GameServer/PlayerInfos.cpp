@@ -115,6 +115,9 @@ DWORD WINAPI	Update(LPVOID arg)
 }
 void		PlayerInfos::SpawnMyChar()
 {
+	this->dwThreadId = this->app->ThreadRequest();
+	this->dwThreadIdAggro = this->app->ThreadRequest();
+	printf("creating thread : %d %d\n", this->dwThreadId, this->dwThreadIdAggro);
 	this->hThread = CreateThread(NULL, 0, Update, (LPVOID)this, 0, &this->dwThreadId);
 	if (this->hThread == NULL)
         printf("Can't create thread Regen\n");

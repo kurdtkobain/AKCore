@@ -55,15 +55,48 @@ bool		MobActivity::Create()
 }
 void		MobActivity::CreatureData::isAggroByPlayer(PlayerInfos *plr, CGameServer *app)
 {
-	while (this->isAggro == true)
-	{
+
 		sVECTOR3 myPos;
 		myPos.x = this->curPos.x;
 		myPos.y = this->curPos.y;
 		myPos.z = this->curPos.z;
 		float dist = app->mob->Distance(myPos, plr->GetPosition());
-		if (dist <= 10 && dist > 1)
+		if (dist <= 20 && dist > 1)
 		{
+			CNtlPacket packet(sizeof(sGU_UPDATE_CHAR_STATE));
+			sGU_UPDATE_CHAR_STATE * res = (sGU_UPDATE_CHAR_STATE *)packet.GetPacketData();
+
+			res->wOpCode = GU_UPDATE_CHAR_STATE;
+			res->handle = this->MonsterSpawnID;
+			res->sCharState.sCharStateBase.bFightMode = true;
+			res->sCharState.sCharStateBase.byStateID = CHARSTATE_DESTMOVE;
+			res->sCharState.sCharStateDetail.sCharStateDestMove.byDestLocCount = 1;
+			res->sCharState.sCharStateDetail.sCharStateDestMove.avDestLoc[0].x = plr->GetPosition().x - 1;
+			res->sCharState.sCharStateDetail.sCharStateDestMove.avDestLoc[0].y = plr->GetPosition().y - 1;
+			res->sCharState.sCharStateDetail.sCharStateDestMove.avDestLoc[0].z = plr->GetPosition().z - 1;
+			res->sCharState.sCharStateDetail.sCharStateDestMove.bHaveSecondDestLoc = false;
+
+			packet.SetPacketLen( sizeof(sGU_UPDATE_CHAR_STATE) );
+			app->UserBroadcast(&packet);
+
+			if(dist <= 2)
+			{
+				CNtlPacket packet(sizeof(sGU_UPDATE_CHAR_STATE));
+				sGU_UPDATE_CHAR_STATE * res = (sGU_UPDATE_CHAR_STATE *)packet.GetPacketData();
+
+				res->wOpCode = GU_UPDATE_CHAR_STATE;
+				res->handle = this->MonsterSpawnID;
+				res->sCharState.sCharStateBase.bFightMode = true;	
+				//app->pSession->SendMobActionAttack(this->MonsterSpawnID, this->target, &packet);
+				packet.SetPacketLen( sizeof(sGU_UPDATE_CHAR_STATE) );
+				app->UserBroadcast(&packet);
+
+			}
+		}
+		else if (dist > 20)
+		{
+			this->target = 0;
+			this->isAggro = false;
 			CNtlPacket packet(sizeof(sGU_UPDATE_CHAR_STATE));
 			sGU_UPDATE_CHAR_STATE * res = (sGU_UPDATE_CHAR_STATE *)packet.GetPacketData();
 
@@ -72,19 +105,13 @@ void		MobActivity::CreatureData::isAggroByPlayer(PlayerInfos *plr, CGameServer *
 			res->sCharState.sCharStateBase.bFightMode = false;
 			res->sCharState.sCharStateBase.byStateID = CHARSTATE_DESTMOVE;
 			res->sCharState.sCharStateDetail.sCharStateDestMove.byDestLocCount = 1;
-			res->sCharState.sCharStateDetail.sCharStateDestMove.avDestLoc[0] = plr->GetPosition();
+			res->sCharState.sCharStateDetail.sCharStateDestMove.avDestLoc[0].x = this->Spawn_Loc.x;
+			res->sCharState.sCharStateDetail.sCharStateDestMove.avDestLoc[0].y = this->Spawn_Loc.y;
+			res->sCharState.sCharStateDetail.sCharStateDestMove.avDestLoc[0].z = this->Spawn_Loc.z;
 			res->sCharState.sCharStateDetail.sCharStateDestMove.bHaveSecondDestLoc = false;
-
 			packet.SetPacketLen( sizeof(sGU_UPDATE_CHAR_STATE) );
 			app->UserBroadcast(&packet);
 		}
-		else if (dist > 10)
-		{
-			this->target = 0;
-			this->isAggro = false;
-		}
-		Sleep(10);
-	}
 }
 /// CREATE MONSTER LIST END ///
 float		MobActivity::Distance(const sVECTOR3 mycurPos, const CNtlVector othercurPos)
@@ -308,6 +335,9 @@ bool		MobActivity::UpdateDeathStatus(RwUInt32 MobID, bool death_status)
 			{
 				if(death_status == true)
 				{
+					creaturelist->isSpawned = false;
+					creaturelist->isAggro = false;
+					creaturelist->target = 0;
 					creaturelist->KilledTime = timeGetTime();
 					creaturelist->IsDead = death_status;
 					creaturelist->CurLP = creaturelist->MaxLP;
