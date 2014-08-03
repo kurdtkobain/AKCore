@@ -387,7 +387,7 @@ void CClientSession::SendAvatarBuffInfo(CNtlPacket * pPacket, CGameServer * app)
 	CSkillTable * pSkillTable = app->g_pTableContainer->GetSkillTable();
 	int iCountBuff = 0;
 
-	app->db->prepare("SELECT * FROM skills WHERE owmner_id = ?");
+	app->db->prepare("SELECT * FROM skills WHERE owner_id = ?");
 	app->db->setInt(1, this->plr->pcProfile->charId);
 	app->db->execute();
 	while (app->db->fetch())
