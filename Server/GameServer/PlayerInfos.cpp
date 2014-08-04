@@ -429,11 +429,11 @@ void PlayerInfos::UpdateAttribute(RwUInt32 Handle, RwUInt32 Attribute, RwUInt32 
         CNtlPacket packet(sizeof(sGU_AVATAR_ATTRIBUTE_UPDATE));
         sGU_AVATAR_ATTRIBUTE_UPDATE * res = (sGU_AVATAR_ATTRIBUTE_UPDATE *)packet.GetPacketData();
 
-        res->wOpCode = GU_AVATAR_ATTRIBUTE_UPDATE;
-        res->hHandle = Handle;
-        res->byAttributeTotalCount = 1;
-        res->abyFlexibleField[Attribute] = Amount;
+		res->abyFlexibleField[Attribute] = Amount;
+		res->byAttributeTotalCount = 101;
+		res->hHandle = Handle;
+		res->wOpCode = GU_AVATAR_ATTRIBUTE_UPDATE;		
 
         packet.SetPacketLen(sizeof(sGU_AVATAR_ATTRIBUTE_UPDATE));
-        int rc = g_pApp->Send(this->GetAvatarandle(), &packet);
+		g_pApp->Send(this->MySession, &packet);
 }

@@ -145,6 +145,7 @@ public:
 	void						SendAvatarSkillInfo(CNtlPacket * pPacket, CGameServer * app);
 	void						SendAvatarHTBInfo(CNtlPacket * pPacket, CGameServer * app);
 	void						SendAvatarBuffInfo(CNtlPacket * pPacket, CGameServer * app);
+	void						SendAvatarQuestList(CNtlPacket * pPacket, CGameServer * app);
 	void						SendSlotInfo(CNtlPacket * pPacket, CGameServer * app);
 	void						SendAvatarInfoEnd(CNtlPacket * pPacket);
 	void						SendAuthCommunityServer(CNtlPacket * pPacket, CGameServer * app);
@@ -241,9 +242,9 @@ public:
 	void						SendDragonBallCheckReq(CNtlPacket * pPacket, CGameServer * app);
 	void						SendDragonBallRewardReq(CNtlPacket * pPacket, CGameServer * app);
 	// SKILL
-	void						SendCharSkillAction(CNtlPacket * pPacket, CGameServer * app, int _skillid, int RpSelectedType);
+	void						SendCharSkillAction(CNtlPacket * pPacket, CGameServer * app, sSKILL_TBLDAT* skill, int RpSelectedType);
 	void						SendCharSkillRes(CNtlPacket * pPacket, CGameServer * app);
-	void						SendCharSkillCasting(CNtlPacket * pPacket, CGameServer * app, int _skillid, int RpSelectedType);
+	void						SendCharSkillCasting(CNtlPacket * pPacket, CGameServer * app, sSKILL_TBLDAT* skill, int RpSelectedType);
 	void						SendCharSkillTransformCancel(CNtlPacket * pPacket, CGameServer * app);
 	void						SendSocialSkillRes(CNtlPacket *pPacket, CGameServer * app);
 	void						SendRpCharge(CNtlPacket *pPacket, CGameServer * app);

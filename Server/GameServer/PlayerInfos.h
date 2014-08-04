@@ -80,6 +80,7 @@ public:
 	// PLAYER STAT CALCULE
 	void		calculeMyStat(CGameServer * app);
 	void		setZero();
+	bool		isSitted = false;
 	void		UpdateAttribute(RwUInt32 Handle, RwUInt32 Attribute, RwUInt32 Amount);
 
 	void		StoreHandle(const RwUInt32 _avatarHandle){this->avatarHandle = _avatarHandle;};

@@ -45,6 +45,7 @@ int CClientSession::OnDispatch(CNtlPacket * pPacket)
 			CClientSession::SendAvatarSkillInfo(pPacket, app);
 			CClientSession::SendAvatarBuffInfo(pPacket, app);
 			CClientSession::SendAvatarHTBInfo(pPacket, app);
+			//CClientSession::SendAvatarQuestList(pPacket, app); Only uncomment when we get quests id
 			CClientSession::SendSlotInfo(pPacket, app);
 			CClientSession::SendAvatarInfoEnd(pPacket);
 		}
@@ -147,12 +148,11 @@ int CClientSession::OnDispatch(CNtlPacket * pPacket)
 		}
 			break;
 		case UG_CHAR_TOGG_SITDOWN:
-		{
-			bool m_bSitDown = false;
-			if(m_bSitDown)
-				CClientSession::SendCharSitDown(pPacket, app);
-			else
+		{			
+			if(this->plr->isSitted==true)
 				CClientSession::SendCharStandUp(pPacket, app);
+			else
+				CClientSession::SendCharSitDown(pPacket, app);
 		}
 			break;
 		case UG_CHAR_TOGG_FIGHTING:

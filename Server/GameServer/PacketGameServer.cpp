@@ -414,6 +414,39 @@ void CClientSession::SendAvatarBuffInfo(CNtlPacket * pPacket, CGameServer * app)
 	g_pApp->Send(this->GetHandle(), &packet);
 }
 //--------------------------------------------------------------------------------------//
+//		SendAvatarQuestList Luiz45
+//--------------------------------------------------------------------------------------//
+void CClientSession::SendAvatarQuestList(CNtlPacket * pPacket, CGameServer * app)
+{
+	CNtlPacket packet(sizeof(sGU_AVATAR_QUEST_PROGRESS_INFO));
+	sGU_AVATAR_QUEST_PROGRESS_INFO * res = (sGU_AVATAR_QUEST_PROGRESS_INFO *)packet.GetPacketData();	
+
+	CNtlPacket packet2(sizeof(sGU_AVATAR_QUEST_COMPLETE_INFO));
+	sGU_AVATAR_QUEST_COMPLETE_INFO * res2 = (sGU_AVATAR_QUEST_COMPLETE_INFO *)packet2.GetPacketData();
+	
+	CNtlPacket packet3(sizeof(sGU_AVATAR_QUEST_INVENTORY_INFO));
+	sGU_AVATAR_QUEST_INVENTORY_INFO * res3 = (sGU_AVATAR_QUEST_INVENTORY_INFO *)packet3.GetPacketData();	
+	int iQuestCounter = 0;
+	
+	app->db->prepare("SELECT * FROM charquestlist WHERE charId = ?");
+	app->db->setInt(1, this->plr->pcProfile->charId);
+	app->db->execute();
+	while (app->db->fetch())
+	{
+		int questID = app->db->getInt("questID");
+		res->progressInfo->tId = questID;
+		res->progressInfo->uData.sQInfoV0.wQState = false;
+		res->progressInfo->uData.sQInfoV0.sMainTSP.tcCurId = questID;
+		res->progressInfo->uData.sQInfoV0.sMainTSP.tcPreId = questID;		
+		res->progressInfo->uData.sQInfoV0.tgExcCGroup = 1;
+		iQuestCounter++;
+	}	
+	//res->byProgressCount = iQuestCounter;
+	res->wOpCode = GU_AVATAR_QUEST_PROGRESS_INFO;
+	packet.SetPacketLen(sizeof(sGU_AVATAR_QUEST_PROGRESS_INFO));
+	g_pApp->Send(this->GetHandle(), &packet);
+}
+//--------------------------------------------------------------------------------------//
 //		SendAvatarInfoEnd
 //--------------------------------------------------------------------------------------//
 void CClientSession::SendAvatarInfoEnd(CNtlPacket * pPacket)
@@ -1050,10 +1083,29 @@ void CClientSession::SendCharSitDown(CNtlPacket * pPacket, CGameServer * app)
 	CNtlPacket packet(sizeof(sGU_CHAR_SITDOWN));
 	sGU_CHAR_SITDOWN * sPacket = (sGU_CHAR_SITDOWN *)packet.GetPacketData();
 
+	CNtlPacket packet2(sizeof(sGU_UPDATE_CHAR_STATE));
+	sGU_UPDATE_CHAR_STATE* pSit = (sGU_UPDATE_CHAR_STATE*)packet2.GetPacketData();
+
+	pSit->handle = this->GetavatarHandle();
+	pSit->wOpCode = GU_UPDATE_CHAR_STATE;
+	pSit->sCharState.sCharStateBase.byStateID = CHARSTATE_SITTING;
+	pSit->sCharState.sCharStateBase.vCurLoc.x = this->plr->GetPosition().x;
+	pSit->sCharState.sCharStateBase.vCurLoc.y = this->plr->GetPosition().y;
+	pSit->sCharState.sCharStateBase.vCurLoc.z = this->plr->GetPosition().z;
+	pSit->sCharState.sCharStateBase.vCurDir.x = this->plr->GetDirection().x;
+	pSit->sCharState.sCharStateBase.vCurDir.y = this->plr->GetDirection().y;
+	pSit->sCharState.sCharStateBase.vCurDir.z = this->plr->GetDirection().z;
+
 	sPacket->wOpCode = GU_CHAR_SITDOWN;
 	sPacket->handle = this->GetavatarHandle();
+
 	packet.SetPacketLen( sizeof(sGU_CHAR_SITDOWN) );
+	packet2.SetPacketLen(sizeof(sGU_UPDATE_CHAR_STATE));
 	app->UserBroadcastothers(&packet, this);
+	g_pApp->Send(this->GetHandle(), &packet);
+	g_pApp->Send(this->GetHandle(), &packet2);
+	this->plr->isSitted = true;
+	app->UserBroadcastothers(&packet2, this);
 }
 //--------------------------------------------------------------------------------------//
 //		Char stand up
@@ -1063,10 +1115,27 @@ void CClientSession::SendCharStandUp(CNtlPacket * pPacket, CGameServer * app)
 	CNtlPacket packet(sizeof(sGU_CHAR_STANDUP));
 	sGU_CHAR_STANDUP * sPacket = (sGU_CHAR_STANDUP *)packet.GetPacketData();
 
+	CNtlPacket packet2(sizeof(sGU_UPDATE_CHAR_STATE));
+	sGU_UPDATE_CHAR_STATE* pSitUp = (sGU_UPDATE_CHAR_STATE*)packet2.GetPacketData();
+
+	pSitUp->handle = this->GetavatarHandle();
+	pSitUp->wOpCode = GU_UPDATE_CHAR_STATE;
+	pSitUp->sCharState.sCharStateBase.byStateID = CHARSTATE_STANDING;
+	pSitUp->sCharState.sCharStateBase.vCurLoc.x = this->plr->GetPosition().x;
+	pSitUp->sCharState.sCharStateBase.vCurLoc.y = this->plr->GetPosition().y;
+	pSitUp->sCharState.sCharStateBase.vCurLoc.z = this->plr->GetPosition().z;
+	pSitUp->sCharState.sCharStateBase.vCurDir.x = this->plr->GetDirection().x;
+	pSitUp->sCharState.sCharStateBase.vCurDir.y = this->plr->GetDirection().y;
+	pSitUp->sCharState.sCharStateBase.vCurDir.z = this->plr->GetDirection().z;
+
 	sPacket->wOpCode = GU_CHAR_STANDUP;
 	sPacket->handle = this->GetavatarHandle();
 	packet.SetPacketLen( sizeof(sGU_CHAR_STANDUP) );
+	g_pApp->Send(this->GetHandle(), &packet);
+	g_pApp->Send(this->GetHandle(), &packet2);	
 	app->UserBroadcastothers(&packet, this);
+	app->UserBroadcastothers(&packet2, this);
+	this->plr->isSitted = false;
 }
 //--------------------------------------------------------------------------------------//
 //		char start mail
@@ -2297,44 +2366,43 @@ void CClientSession::SendCharSkillRes(CNtlPacket * pPacket, CGameServer * app)
 
 	packet.SetPacketLen(sizeof(sGU_CHAR_SKILL_RES));
 	int rc = g_pApp->Send(this->GetHandle(), &packet);
-	app->UserBroadcast(&packet);
-
+	app->UserBroadcast(&packet);	
 	switch (skillDataOriginal->bySkill_Active_Type)
 	{
 	case SKILL_ACTIVE_TYPE_DD:
 		{
 			printf("SKILL_ACTIVE_TYPE_DD\n");
-			SendCharSkillAction(pPacket, app, skillID, pCharSkillReq->byRpBonusType);
+			SendCharSkillAction(pPacket, app, skillDataOriginal, pCharSkillReq->byRpBonusType);
 		}break;
 	case SKILL_ACTIVE_TYPE_BB:
 		{
 			printf("SKILL_ACTIVE_TYPE_BB\n");
-			SendCharSkillCasting(pPacket, app, skillID, pCharSkillReq->byRpBonusType);
+			SendCharSkillCasting(pPacket, app, skillDataOriginal, pCharSkillReq->byRpBonusType);
 		}break;
 	case SKILL_ACTIVE_TYPE_CB:
 		{
 			printf("SKILL_ACTIVE_TYPE_CB\n");
-			SendCharSkillAction(pPacket, app, skillID, pCharSkillReq->byRpBonusType);
+			SendCharSkillAction(pPacket, app, skillDataOriginal, pCharSkillReq->byRpBonusType);
 		}break;
 	case SKILL_ACTIVE_TYPE_DB:
 		{
 			printf("SKILL_ACTIVE_TYPE_DB\n");
-			SendCharSkillCasting(pPacket, app, skillID, pCharSkillReq->byRpBonusType);
+			SendCharSkillCasting(pPacket, app, skillDataOriginal, pCharSkillReq->byRpBonusType);
 		}break;
 	case SKILL_ACTIVE_TYPE_DC:
 		{
 			printf("SKILL_ACTIVE_TYPE_DC\n");
-			SendCharSkillCasting(pPacket, app, skillID, pCharSkillReq->byRpBonusType);
+			SendCharSkillCasting(pPacket, app, skillDataOriginal, pCharSkillReq->byRpBonusType);
 		}break;
 	case SKILL_ACTIVE_TYPE_DH:
 		{
 			printf("SKILL_ACTIVE_TYPE_DH\n");
-			SendCharSkillCasting(pPacket, app, skillID, pCharSkillReq->byRpBonusType);
+			SendCharSkillCasting(pPacket, app, skillDataOriginal, pCharSkillReq->byRpBonusType);
 		}break;
 	case SKILL_ACTIVE_TYPE_DOT:
 		{
 			printf("SKILL_ACTIVE_TYPE_DOT\n");
-			SendCharSkillAction(pPacket, app, skillID, pCharSkillReq->byRpBonusType);
+			SendCharSkillAction(pPacket, app, skillDataOriginal, pCharSkillReq->byRpBonusType);
 		}break;
 	}
 	/*if ((skillDataOriginal->dwKeepTimeInMilliSecs != 0) || (skillDataOriginal->dwTransform_Use_Info_Bit_Flag==1))
@@ -2345,38 +2413,36 @@ void CClientSession::SendCharSkillRes(CNtlPacket * pPacket, CGameServer * app)
 //--------------------------------------------------------------------------------------//
 //		Char Skill Send
 //--------------------------------------------------------------------------------------//
-void CClientSession::SendCharSkillAction(CNtlPacket * pPacket, CGameServer * app, int _skillID, int RpSelectedType)
+void CClientSession::SendCharSkillAction(CNtlPacket * pPacket, CGameServer * app, sSKILL_TBLDAT* SkillNow,int RpSelectedType)
 {
 	CNtlPacket packet(sizeof(sGU_CHAR_ACTION_SKILL));
 	sGU_CHAR_ACTION_SKILL * res = (sGU_CHAR_ACTION_SKILL *)packet.GetPacketData();	
 	
 	CSkillTable *pSkillTbl = app->g_pTableContainer->GetSkillTable();
 	
-	int skillID = _skillID;
-	sSKILL_TBLDAT *pSkillTblData = reinterpret_cast<sSKILL_TBLDAT*>(pSkillTbl->FindData(skillID));
 	res->wOpCode = GU_CHAR_ACTION_SKILL;
 	res->handle = this->GetavatarHandle();
 	res->wResultCode = GAME_SUCCESS;
 	res->hAppointedTarget = this->GetTargetSerialId();
-	res->skillId = skillID;
-	res->dwLpEpEventId = skillID;
+	res->skillId = SkillNow->tblidx;
+	res->dwLpEpEventId = SkillNow->tblidx;
 	res->bySkillResultCount = 1;
 	res->byRpBonusType = RpSelectedType;
 	res->aSkillResult[0].hTarget = this->GetTargetSerialId();
 	res->aSkillResult[0].byAttackResult = this->gsf->GetBattleResultEffect(RpSelectedType);
-	res->aSkillResult[0].effectResult1.fResultValue = pSkillTblData->fSkill_Effect_Value[0];
-	res->aSkillResult[0].effectResult2.fResultValue = pSkillTblData->fSkill_Effect_Value[1];
+	res->aSkillResult[0].effectResult1.fResultValue = SkillNow->fSkill_Effect_Value[0];
+	res->aSkillResult[0].effectResult2.fResultValue = SkillNow->fSkill_Effect_Value[1];
 	res->aSkillResult[0].byBlockedAction = 255;
 	res->aSkillResult[1].hTarget = this->GetTargetSerialId() +1;
 	res->aSkillResult[1].byAttackResult = this->gsf->GetBattleResultEffect(RpSelectedType);
-	res->aSkillResult[1].effectResult1.fResultValue = pSkillTblData->fSkill_Effect_Value[0];
-	res->aSkillResult[1].effectResult2.fResultValue = pSkillTblData->fSkill_Effect_Value[1];
+	res->aSkillResult[1].effectResult1.fResultValue = SkillNow->fSkill_Effect_Value[0];
+	res->aSkillResult[1].effectResult2.fResultValue = SkillNow->fSkill_Effect_Value[1];
 	res->aSkillResult[1].byBlockedAction = 255;
 
 	//Char update EP
 	CNtlPacket packet2(sizeof(sGU_UPDATE_CHAR_EP));
 	sGU_UPDATE_CHAR_EP * pUpdateEp = (sGU_UPDATE_CHAR_EP*)packet2.GetPacketData();
-	this->plr->pcProfile->wCurEP = (this->plr->pcProfile->wCurEP - pSkillTblData->wRequire_EP);//Sub by Required EP
+	this->plr->pcProfile->wCurEP = (this->plr->pcProfile->wCurEP - SkillNow->wRequire_EP);//Sub by Required EP
 	pUpdateEp->handle = this->GetavatarHandle();
 	pUpdateEp->wCurEP = this->plr->pcProfile->wCurEP;
 	pUpdateEp->wMaxEP = this->plr->pcProfile->avatarAttribute.wBaseMaxEP;
@@ -2384,10 +2450,10 @@ void CClientSession::SendCharSkillAction(CNtlPacket * pPacket, CGameServer * app
 
 	//Condition for LP...skill is Optional
 	CNtlPacket packet3(sizeof(sGU_UPDATE_CHAR_LP));
-	if (pSkillTblData->wRequire_LP)
+	if (SkillNow->wRequire_LP)
 	{
 		sGU_UPDATE_CHAR_LP * pUpdateLp = (sGU_UPDATE_CHAR_LP*)packet3.GetPacketData();
-		this->plr->pcProfile->wCurLP -= pSkillTblData->wRequire_LP;//Sub by Required EP
+		this->plr->pcProfile->wCurLP -= SkillNow->wRequire_LP;//Sub by Required EP
 		pUpdateLp->handle = this->GetavatarHandle();
 		pUpdateLp->wCurLP = this->plr->pcProfile->wCurLP;
 		pUpdateLp->wMaxLP = this->plr->pcProfile->avatarAttribute.wBaseMaxLP;
@@ -2430,21 +2496,17 @@ void CClientSession::SendCharSkillAction(CNtlPacket * pPacket, CGameServer * app
 		}
 	}
 }
-
-
 //-------------------------------------------------------------------//
 //----------Fixed Casting Buff/Transform Skills - Luiz45-------------//
 //-------------------------------------------------------------------//
-void CClientSession::SendCharSkillCasting(CNtlPacket * pPacket, CGameServer * app, int _skillID, int RpSelectedType)
+void CClientSession::SendCharSkillCasting(CNtlPacket * pPacket, CGameServer * app, sSKILL_TBLDAT* SkillNow, int RpSelectedType)
 {
 	//Skill Events Prepare
  	CNtlPacket packet(sizeof(sGU_CHAR_ACTION_SKILL));
  	CSkillTable *pSkillTbl = app->g_pTableContainer->GetSkillTable();
- 	int skillID = _skillID;
- 	sSKILL_TBLDAT *pSkillTblData = reinterpret_cast<sSKILL_TBLDAT*>(pSkillTbl->FindData(skillID));
  	sGU_CHAR_ACTION_SKILL * res = (sGU_CHAR_ACTION_SKILL *)packet.GetPacketData();
  	
- 	res->skillId = pSkillTblData->tblidx;
+ 	res->skillId = SkillNow->tblidx;
  	res->wResultCode = GAME_SUCCESS;
 	res->byRpBonusType = RpSelectedType;//Untested
  	res->wOpCode = GU_CHAR_ACTION_SKILL;
@@ -2455,19 +2517,18 @@ void CClientSession::SendCharSkillCasting(CNtlPacket * pPacket, CGameServer * ap
 	CNtlPacket packet2(sizeof(sGU_BUFF_REGISTERED));
 	sGU_BUFF_REGISTERED * pBuffData = (sGU_BUFF_REGISTERED*)packet2.GetPacketData();
 	pBuffData->wOpCode = GU_BUFF_REGISTERED;
-	pBuffData->tblidx = pSkillTblData->tblidx;
+	pBuffData->tblidx = SkillNow->tblidx;
 	pBuffData->hHandle = this->GetavatarHandle();
-	pBuffData->dwInitialDuration = pSkillTblData->dwKeepTimeInMilliSecs;
-	pBuffData->dwTimeRemaining = pSkillTblData->dwCoolTimeInMilliSecs;
-	pBuffData->afEffectValue[0] = pSkillTblData->fSkill_Effect_Value[0];
-	pBuffData->afEffectValue[1] = pSkillTblData->fSkill_Effect_Value[1];
-	//pBuffData->bNeedToDisplayMessage = pSkillTblData->bDefaultDisplayOff;//Only to display...String ID bla bla not found...if you want see uncomment this line
+	pBuffData->dwInitialDuration = SkillNow->dwKeepTimeInMilliSecs;
+	pBuffData->dwTimeRemaining = SkillNow->dwCoolTimeInMilliSecs;
+	pBuffData->afEffectValue[0] = SkillNow->fSkill_Effect_Value[0];
+	pBuffData->afEffectValue[1] = SkillNow->fSkill_Effect_Value[1];
 	pBuffData->bySourceType = DBO_OBJECT_SOURCE_SKILL;
-
+	
 	//Char update EP
 	CNtlPacket packet3(sizeof(sGU_UPDATE_CHAR_EP));
 	sGU_UPDATE_CHAR_EP * pUpdateEp = (sGU_UPDATE_CHAR_EP*)packet3.GetPacketData();
-	this->plr->pcProfile->wCurEP = (this->plr->pcProfile->wCurEP - pSkillTblData->wRequire_EP);//Sub by Required EP
+	this->plr->pcProfile->wCurEP = (this->plr->pcProfile->wCurEP - SkillNow->wRequire_EP);//Sub by Required EP
 	pUpdateEp->handle = this->GetavatarHandle();
 	pUpdateEp->wCurEP = this->plr->pcProfile->wCurEP;
 	pUpdateEp->wMaxEP = this->plr->pcProfile->avatarAttribute.wBaseMaxEP;
@@ -2475,10 +2536,10 @@ void CClientSession::SendCharSkillCasting(CNtlPacket * pPacket, CGameServer * ap
 
 	//Condition for LP...skill is Optional
 	CNtlPacket packet4(sizeof(sGU_UPDATE_CHAR_LP));
-	if (pSkillTblData->wRequire_LP)
+	if (SkillNow->wRequire_LP)
 	{		
 		sGU_UPDATE_CHAR_LP * pUpdateLp = (sGU_UPDATE_CHAR_LP*)packet4.GetPacketData();
-		this->plr->pcProfile->wCurLP = (this->plr->pcProfile->wCurLP -pSkillTblData->wRequire_LP);//Sub by Required LP
+		this->plr->pcProfile->wCurLP = (this->plr->pcProfile->wCurLP - SkillNow->wRequire_LP);//Sub by Required LP
 		pUpdateLp->handle = this->GetavatarHandle();
 		pUpdateLp->wCurLP = this->plr->pcProfile->wCurLP;
 		pUpdateLp->wMaxLP = this->plr->pcProfile->avatarAttribute.wBaseMaxLP;
@@ -2498,7 +2559,7 @@ void CClientSession::SendCharSkillCasting(CNtlPacket * pPacket, CGameServer * ap
   	app->UserBroadcastothers(&packet, this);	
 	app->UserBroadcastothers(&packet3, this);
 	app->UserBroadcastothers(&packet4, this);
-	this->plr->checkBuff(skillID);
+	this->plr->checkBuff(SkillNow->tblidx);
 }
 
 void CGameServer::UpdateClient(CNtlPacket * pPacket, CClientSession * pSession)
