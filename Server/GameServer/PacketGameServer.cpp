@@ -3879,31 +3879,89 @@ void	CClientSession::SendFreeBattleAccpetReq(CNtlPacket * pPacket, CGameServer *
 		app->UserBroadcastothers(&packet2, this);
 	}
 }
+/////////////////////////////////////////////////////////////////////////////
+//// item usage by Luiz45
+/////////////////////////////////////////////////////////////////////////////
 void	CClientSession::SendItemUseReq(CNtlPacket * pPacket, CGameServer * app)
 {
 	sUG_ITEM_USE_REQ * req = (sUG_ITEM_USE_REQ*)pPacket->GetPacketData();
- 	
+
+	//Defining Packets
  	CNtlPacket packet(sizeof(sGU_ITEM_USE_RES));
  	sGU_ITEM_USE_RES * res = (sGU_ITEM_USE_RES*)packet.GetPacketData();
+
+	CNtlPacket packet2(sizeof(sGU_CHAR_ACTION_ITEM));
+	sGU_CHAR_ACTION_ITEM * pItemAct = (sGU_CHAR_ACTION_ITEM*)packet2.GetPacketData();
+
+	CNtlPacket packet3(sizeof(sGU_UPDATE_CHAR_LP));
+	sGU_UPDATE_CHAR_LP * pUpdateLp = (sGU_UPDATE_CHAR_LP*)packet3.GetPacketData();
+
+	CNtlPacket packet4(sizeof(sGU_UPDATE_CHAR_EP));
+	sGU_UPDATE_CHAR_EP * pUpdateEp = (sGU_UPDATE_CHAR_EP*)packet4.GetPacketData();
+
  	app->db->prepare("SELECT * FROM items WHERE owner_id = ? AND place = ? AND pos = ?");
  	app->db->setInt(1, this->plr->pcProfile->charId);
  	app->db->setInt(2, req->byPlace);
  	app->db->setInt(3, req->byPos);
  	app->db->execute();
  	app->db->fetch();
- 
- 	sCHARSTATE_CASTING_ITEM * charState;
- 	sITEM_TBLDAT * itemTBL = reinterpret_cast<sITEM_TBLDAT*>(app->g_pTableContainer->GetItemTable()->FindData(app->db->getInt("tblidx")));
- 	
- 	res->byPlace = app->db->getInt("place");
- 	res->byPos = app->db->getInt("pos");
- 	res->tblidxItem = app->db->getInt("tblidx");
+	
+	//Defining table_dats
+	CItemTable * pItemTable = app->g_pTableContainer->GetItemTable();
+	CUseItemTable * pItemUseTable = app->g_pTableContainer->GetUseItemTable();	
+	sITEM_TBLDAT * itemTBL = reinterpret_cast<sITEM_TBLDAT*>(pItemTable->FindData(app->db->getInt("tblidx")));
+	sUSE_ITEM_TBLDAT * itemUseTbl = reinterpret_cast<sUSE_ITEM_TBLDAT*>(pItemUseTable->FindData(itemTBL->Use_Item_Tblidx));
+
+	pItemAct->handle = this->GetavatarHandle();
+	pItemAct->itemTblidx = itemTBL->tblidx;
+	pItemAct->aSkillResult[0].hTarget = this->GetavatarHandle();
+	pItemAct->aSkillResult[0].effectResult1.fResultValue = itemUseTbl->afSystem_Effect_Value[0];
+	pItemAct->aSkillResult[0].effectResult1.eResultType = DBO_SYSTEM_EFFECT_RESULT_TYPE_GENERAL;
+	pItemAct->aSkillResult[0].effectResult2.fResultValue = itemUseTbl->afSystem_Effect_Value[1];
+	pItemAct->aSkillResult[0].effectResult2.eResultType = DBO_SYSTEM_EFFECT_RESULT_TYPE_GENERAL;
+	pItemAct->wOpCode = GU_CHAR_ACTION_ITEM;
+	pItemAct->wResultCode = GAME_SUCCESS;
+	pItemAct->bySkillResultCount = 1;
+	
+	//Poor validation to see what we gonna update by Effect id
+	//Suggest this is gonna be in gs functions
+	if (itemUseTbl->aSystem_Effect[0] == 510)
+	{
+		pUpdateEp->handle = this->GetavatarHandle();
+		this->plr->pcProfile->wCurEP += itemUseTbl->afSystem_Effect_Value[0];
+		pUpdateEp->wCurEP = this->plr->pcProfile->wCurEP;
+		pUpdateEp->wMaxEP = this->plr->pcProfile->avatarAttribute.wBaseMaxEP;
+		pUpdateEp->wOpCode = GU_UPDATE_CHAR_EP;
+	}
+	if (itemUseTbl->aSystem_Effect[0] == 510)
+	{
+		pUpdateLp->handle = this->GetavatarHandle();
+		this->plr->pcProfile->wCurLP += itemUseTbl->afSystem_Effect_Value[0];
+		pUpdateLp->wCurLP = this->plr->pcProfile->wCurLP;
+		pUpdateLp->wMaxLP = this->plr->pcProfile->avatarAttribute.wBaseMaxLP;
+		pUpdateLp->wOpCode = GU_UPDATE_CHAR_LP;
+	}
+
+	//Prepared Item Response	
+	res->byPlace = req->byPlace;
+	res->byPos = req->byPos;
+ 	res->tblidxItem = itemTBL->tblidx;
  	res->wOpCode = GU_ITEM_USE_RES;
  	res->wResultCode = GAME_SUCCESS;
+	
  	packet.SetPacketLen(sizeof(sGU_ITEM_USE_RES));
+	packet2.SetPacketLen(sizeof(sGU_CHAR_ACTION_ITEM));
+	packet3.SetPacketLen(sizeof(sGU_UPDATE_CHAR_LP));
+	packet4.SetPacketLen(sizeof(sGU_UPDATE_CHAR_LP));
  	g_pApp->Send(this->GetHandle(), &packet);
- 	printf("Pass");
- 	//app->UserBroadcastothers(&packet, this);
+	g_pApp->Send(this->GetHandle(), &packet2);
+	g_pApp->Send(this->GetHandle(), &packet3);
+	g_pApp->Send(this->GetHandle(), &packet4);
+	app->UserBroadcastothers(&packet, this);
+	app->UserBroadcastothers(&packet2, this);
+	app->UserBroadcastothers(&packet3, this);
+	app->UserBroadcastothers(&packet4, this);
+ 	printf("Pass");	
  	
 }
  //---------------------------------------------------------------------//

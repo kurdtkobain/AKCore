@@ -1282,7 +1282,7 @@ bool CTableContainer::Reload(CNtlBitFlagManager& rTableFlag, CTableFileNameList*
 	}
 
 	// UseItem
-	if (false != rTableFlag.IsSet(TABLE_ITEM_OPTION))
+	if (false != rTableFlag.IsSet(TABLE_USE_ITEM))
 	{
 		DBO_RELOAD_TABLE( CUseItemTable, serializer, pFileNameList->GetFileNameW(TABLE_USE_ITEM), m_pUseItemTable );
 	}

@@ -33,6 +33,7 @@
 #include "PortalTable.h"
 #include "MerchantTable.h"
 #include "ItemTable.h"
+#include "UseItemTable.h" //Added for use items
 #include "FormulaTable.h"
 #include "ItemMixMachineTable.h"
 #include "ExpTable.h"
