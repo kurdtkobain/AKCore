@@ -23,6 +23,7 @@ public:
 		ChargingID = 1;
 		CurRPBallOk = 0;
 		isKaioken = false;
+		isSitted = false;
 		isSsj = false;
 		isMajin = false;
 		isGreatNamek = false;
@@ -80,7 +81,6 @@ public:
 	// PLAYER STAT CALCULE
 	void		calculeMyStat(CGameServer * app);
 	void		setZero();
-	bool		isSitted = false;
 	void		UpdateAttribute(RwUInt32 Handle, RwUInt32 Attribute, RwUInt32 Amount);
 
 	void		StoreHandle(const RwUInt32 _avatarHandle){this->avatarHandle = _avatarHandle;};
@@ -259,6 +259,7 @@ DWORD		ChargingID;
 bool		isKaioken;
 bool		isSsj;
 bool		isMajin;
+bool		isSitted;
 bool		isGreatNamek;
 CClientSession *myCCSession;
 private:
