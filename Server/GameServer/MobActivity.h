@@ -146,6 +146,7 @@ typedef struct _CreatureData
 	CNtlVector		curPos;
 	bool			isAggro;
 	void			isAggroByPlayer(PlayerInfos *plr, CGameServer *app);
+	void			Attack(PlayerInfos *plr, CGameServer *app);
 }CreatureData;
 typedef std::list<CreatureData*> MONSTERLIST;
 typedef MONSTERLIST::iterator MONSTERLISTIT;

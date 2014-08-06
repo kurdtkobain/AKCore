@@ -244,6 +244,7 @@ public:
 		this->sCharState->sCharStateBase.aspectState.sAspectStateDetail.sKaioken.byRepeatingCount = 0;
 	};
 	void		UpdateRP();
+	void		TakeDamage(int Damage);
 private:
 	MySQLConnWrapper			*db;
 public:

@@ -17,6 +17,15 @@ void		PlayerInfos::SendPlayerLifeAndEP()
 	g_pApp->Send(this->MySession, &packet);
 	app->UserBroadcastothers(&packet, this->myCCSession);
 }
+void		PlayerInfos::TakeDamage(int Damage)
+{
+	if (this->pcProfile->wCurLP > 0 && Damage > 0)
+	{
+		this->pcProfile->wCurLP -= Damage;
+	}
+	if (this->pcProfile->wCurLP <= 0)
+		this->myCCSession->gsf->printError("MY PLAYER HAVE TO DIE\n");
+}
 void		PlayerInfos::UpdateRP()
 {
 	CNtlPacket packet(sizeof(sGU_UPDATE_CHAR_RP));

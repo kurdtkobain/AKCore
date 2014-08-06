@@ -19,7 +19,7 @@ bool		CClientSession::CheckMyPlayerAggro(PlayerInfos *mePlr)
 		if (myMob->isSpawned == true && myMob->IsDead == false && myMob->isAggro == false)
 		{
 			float distance = app->mob->Distance(posMo, mePlr->GetPosition());
-			if (distance <= 10)
+			if (distance <= 20 && distance > 2)
 			{
 				myMob->target = mePlr->GetAvatarandle();
 				myMob->isAggro = true;
@@ -31,7 +31,7 @@ bool		CClientSession::CheckMyPlayerAggro(PlayerInfos *mePlr)
 		else if (myMob->isSpawned == true && myMob->isAggro == true && mePlr->GetAvatarandle() == myMob->target && myMob->IsDead == false)
 		{
 			float distance = app->mob->Distance(posMo, mePlr->GetPosition());
-			if (distance > 10)
+			if (distance > 20)
 			{
 				myMob->target = 0;
 				myMob->isAggro = false;

@@ -53,6 +53,29 @@ bool		MobActivity::Create()
 	}
 	return true;
 }
+void		MobActivity::CreatureData::Attack(PlayerInfos *plr, CGameServer *app)
+{
+	printf("ATTACK FUNC STARTED\n");
+	this->FightMode = true;
+	CNtlPacket packet(sizeof(sGU_CHAR_ACTION_ATTACK));
+	sGU_CHAR_ACTION_ATTACK * res = (sGU_CHAR_ACTION_ATTACK *)packet.GetPacketData();
+
+	res->wOpCode = GU_CHAR_ACTION_ATTACK;
+	res->hSubject = this->MonsterSpawnID;
+	res->hTarget = plr->GetAvatarandle();
+	res->dwLpEpEventId = 255;
+	res->bChainAttack = false;
+	res->byBlockedAction = 255;
+	res->wAttackResultValue = 100;
+	res->fReflectedDamage = 0;
+	res->vShift = plr->GetPosition();
+	res->byAttackSequence = 1;
+	res->bChainAttack = false;
+	res->byAttackResult = BATTLE_ATTACK_RESULT_HIT;
+	packet.SetPacketLen( sizeof(sGU_CHAR_ACTION_ATTACK) );
+	app->UserBroadcast(&packet);
+	plr->TakeDamage(res->wAttackResultValue);
+}
 void		MobActivity::CreatureData::isAggroByPlayer(PlayerInfos *plr, CGameServer *app)
 {
 
@@ -75,22 +98,25 @@ void		MobActivity::CreatureData::isAggroByPlayer(PlayerInfos *plr, CGameServer *
 			res->sCharState.sCharStateDetail.sCharStateDestMove.avDestLoc[0].y = plr->GetPosition().y - 1;
 			res->sCharState.sCharStateDetail.sCharStateDestMove.avDestLoc[0].z = plr->GetPosition().z - 1;
 			res->sCharState.sCharStateDetail.sCharStateDestMove.bHaveSecondDestLoc = false;
-
+			/*
+				THIS PART IS NOT GOOD
+			*/
+			this->curPos = plr->GetPosition();
+			sVECTOR3 myPos;
+			myPos.x = this->curPos.x;
+			myPos.y = this->curPos.y;
+			myPos.z = this->curPos.z;
 			packet.SetPacketLen( sizeof(sGU_UPDATE_CHAR_STATE) );
 			app->UserBroadcast(&packet);
-
+			float dist = app->mob->Distance(myPos, plr->GetPosition());
+			/*
+				END.
+				WE NEED TO CHECK OR MAKE A THREAD FOR CHECK THE CURRENT POSITION BASED ON MOVEMENT AND ALSO SEND THE ATTACK
+			*/
 			if(dist <= 2)
 			{
-				CNtlPacket packet(sizeof(sGU_UPDATE_CHAR_STATE));
-				sGU_UPDATE_CHAR_STATE * res = (sGU_UPDATE_CHAR_STATE *)packet.GetPacketData();
-
-				res->wOpCode = GU_UPDATE_CHAR_STATE;
-				res->handle = this->MonsterSpawnID;
-				res->sCharState.sCharStateBase.bFightMode = true;	
-				//app->pSession->SendMobActionAttack(this->MonsterSpawnID, this->target, &packet);
-				packet.SetPacketLen( sizeof(sGU_UPDATE_CHAR_STATE) );
-				app->UserBroadcast(&packet);
-
+				printf("SEND ATTACK FUNC()\n");
+				this->Attack(plr, app);
 			}
 		}
 		else if (dist > 20)
