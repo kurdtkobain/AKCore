@@ -259,6 +259,7 @@ void CClientSession::SendSlotInfo(CNtlPacket * pPacket, CGameServer * app)
 	app->db->fetch();
 	CSkillTable * pSkillTable = app->g_pTableContainer->GetSkillTable();
 	CItemTable * pItemTable = app->g_pTableContainer->GetItemTable();
+	CUseItemTable * pItemUseTable = app->g_pTableContainer->GetUseItemTable();
 
 	int i = 0;
 	int SkillOrItem = 0;
@@ -282,11 +283,32 @@ void CClientSession::SendSlotInfo(CNtlPacket * pPacket, CGameServer * app)
 		}
 		else if (pItemData)
 		{
-			res->asQuickSlotData[slotID].bySlot = i;
-			res->asQuickSlotData[slotID].tblidx = pItemData->tblidx;
-			res->asQuickSlotData[slotID].hItem	= pItemData->tblidx;//Need get correct hItem
-			res->asQuickSlotData[slotID].byType = QUICK_SLOT_TYPE_ITEM;
-			slotID++;
+			sUSE_ITEM_TBLDAT * pUseItemData = reinterpret_cast<sUSE_ITEM_TBLDAT*>(pItemUseTable->FindData(pItemData->Use_Item_Tblidx));
+			if (pUseItemData)
+			{					
+				MySQLConnWrapper *db2 = new MySQLConnWrapper;
+				db2->setConfig(app->GetConfigFileHost(), app->GetConfigFileUser(), app->GetConfigFilePassword(), app->GetConfigFileDatabase());
+				db2->connect();
+				db2->switchDb(app->GetConfigFileDatabase());
+				db2->prepare("SELECT id FROM items WHERE tblidx = ? AND owner_id = ?");
+				db2->setInt(1, SkillOrItem);
+				db2->setInt(2, this->plr->pcProfile->charId);				
+				db2->execute();
+				db2->fetch();
+				res->asQuickSlotData[slotID].bySlot = i;
+				res->asQuickSlotData[slotID].tblidx = pItemData->tblidx;
+				res->asQuickSlotData[slotID].hItem = db2->getInt("id");
+				res->asQuickSlotData[slotID].byType = QUICK_SLOT_TYPE_ITEM;
+				slotID++;
+				delete db2;
+			}
+			else
+			{
+				res->asQuickSlotData[slotID].bySlot = i;
+				res->asQuickSlotData[slotID].tblidx = pItemData->tblidx;
+				res->asQuickSlotData[slotID].byType = QUICK_SLOT_TYPE_SOCIALACTION;
+				slotID++;
+			}			
 		}
 		i++;
 	}	
