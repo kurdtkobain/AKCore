@@ -53,12 +53,32 @@ bool		MobActivity::Create()
 	}
 	return true;
 }
+void			MobActivity::CreatureData::ResetMob()
+{
+	CGameServer * app = (CGameServer*) NtlSfxGetApp();
+	this->FightMode = false;
+	this->isAggro = false;
+	this->target = 0;
+	this->CurLP = this->MaxLP;
+	this->CurEP = this->MaxEP;
+	CNtlPacket packet(sizeof(sGU_UPDATE_CHAR_LP_EP));
+	sGU_UPDATE_CHAR_LP_EP * res = (sGU_UPDATE_CHAR_LP_EP *)packet.GetPacketData();
+
+	res->handle = this->MonsterSpawnID;
+	res->wCurEP = this->CurEP;
+	res->wCurLP = this->CurLP;
+	res->wMaxEP = this->MaxEP;
+	res->wMaxLP = this->MaxLP;
+	res->wOpCode = GU_UPDATE_CHAR_LP_EP;
+
+	packet.SetPacketLen(sizeof(sGU_UPDATE_CHAR_LP_EP));
+	app->UserBroadcast(&packet);
+}
 void			MobActivity::CreatureData::MoveToSpawn()
 {
 	CGameServer * app = (CGameServer*) NtlSfxGetApp();
 	CNtlPacket packet(sizeof(sGU_UPDATE_CHAR_STATE));
 	sGU_UPDATE_CHAR_STATE * res = (sGU_UPDATE_CHAR_STATE *)packet.GetPacketData();
-
 	res->wOpCode = GU_UPDATE_CHAR_STATE;
 	res->handle = this->MonsterSpawnID;
 	res->sCharState.sCharStateBase.bFightMode = false;
@@ -86,7 +106,6 @@ void			MobActivity::CreatureData::MoveToPlayer(PlayerInfos *plr)
 	res->sCharState.sCharStateDetail.sCharStateDestMove.avDestLoc[0].y = plr->GetPosition().y - 1;
 	res->sCharState.sCharStateDetail.sCharStateDestMove.avDestLoc[0].z = plr->GetPosition().z - 1;
 	res->sCharState.sCharStateDetail.sCharStateDestMove.bHaveSecondDestLoc = false;
-
 	packet.SetPacketLen( sizeof(sGU_UPDATE_CHAR_STATE) );
 	app->UserBroadcast(&packet);
 }
@@ -111,21 +130,20 @@ DWORD WINAPI	Aggro(LPVOID arg)
 					float distance = app->mob->Distance(myCurPos, plr->GetPosition());
 					if (mob->IsDead == false)
 					{
-						if (distance < 20 && distance > 2 && mob->isAggro == false)
+						if (distance < 20 && distance > 3 && mob->isAggro == false)
 						{
+							mob->isAggro = true;
 							mob->target = plr->GetAvatarandle();
 							mob->MoveToPlayer(plr);
-							printf("I NEED TO AGGRO YOU OUF OUF\n");
 						}
+						else if (mob->isAggro == true && plr->GetAvatarandle() == mob->target && distance > 3 && distance < 20)
+							mob->MoveToPlayer(plr);
 						else if (distance <= 2 && mob->isAggro == true && plr->GetAvatarandle() == mob->target)
 							mob->Attack(plr, app);
 						else if (distance > 20 && mob->isAggro == true && plr->GetAvatarandle() == mob->target)
 						{
-							mob->target = 0;
-							mob->isAggro = false;
-							mob->FightMode = false;
+							mob->ResetMob();
 							mob->MoveToSpawn();
-							printf("I NEED TO GO BACK OUF OUF\n");
 						}
 					}
 				}
@@ -269,6 +287,8 @@ bool		MobActivity::RunSpawnCheck(CNtlPacket * pPacket, sVECTOR3 curPos, CClientS
 				res->wOpCode = GU_OBJECT_DESTROY;
 				res->handle = creaturelist->MonsterSpawnID;
 				creaturelist->isSpawned = false;
+				creaturelist->isAggro = false;
+				creaturelist->target = 0;
 				pSession->RemoveFromMyMonsterList(creaturelist->MonsterSpawnID);
 	
 				packet.SetPacketLen( sizeof(sGU_OBJECT_DESTROY) );

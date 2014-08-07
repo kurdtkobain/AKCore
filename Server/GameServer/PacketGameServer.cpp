@@ -766,7 +766,7 @@ void CClientSession::SendCharMoveSync(CNtlPacket * pPacket, CGameServer * app)
 
 	packet.SetPacketLen( sizeof(sGU_CHAR_MOVE_SYNC) );
 	app->UserBroadcastothers(&packet, this);
-
+	this->plr->SetPosition(res->vCurLoc, res->vCurDir);
 	if(timeGetTime() - this->plr->Getmob_SpawnTime() >= MONSTER_SPAWN_UPDATE_TICK)
 	{
 		app->mob->RunSpawnCheck(&packet, this->plr->GetPosition(), this);

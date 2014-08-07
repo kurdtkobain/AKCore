@@ -153,6 +153,7 @@ typedef struct _CreatureData
 	void			MoveToSpawn();
 	HANDLE			hThreadAggro;
 	DWORD			dwThreadIdAggro;
+	void			ResetMob();
 }CreatureData;
 typedef std::list<CreatureData*> MONSTERLIST;
 typedef MONSTERLIST::iterator MONSTERLISTIT;

@@ -19,10 +19,7 @@ void		PlayerInfos::SendPlayerLifeAndEP()
 }
 void		PlayerInfos::TakeDamage(int Damage)
 {
-	if (this->pcProfile->wCurLP > 0 && Damage > 0)
-	{
-		this->pcProfile->wCurLP -= Damage;
-	}
+	this->pcProfile->wCurLP -= Damage;
 	if (this->pcProfile->wCurLP <= 0)
 		this->myCCSession->gsf->printError("MY PLAYER HAVE TO DIE\n");
 }
