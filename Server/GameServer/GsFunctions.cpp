@@ -1,56 +1,6 @@
 #include "stdafx.h"
 #include "GameServer.h"
 
-bool		CClientSession::CheckMyPlayerAggro(PlayerInfos *mePlr)
-{
-	CGameServer * app = (CGameServer*) NtlSfxGetApp();
-	MyMonsterList* mymonsterlist = new MyMonsterList();
-	MYMONSTERLIST *mymonsterlistBIS = new MYMONSTERLIST;
-	mePlr->myCCSession->FillNewList(mymonsterlistBIS);
-	for( MYMONSTERLISTIT it = mymonsterlistBIS->begin(); it != mymonsterlistBIS->end(); it++ )
-	{
-		mymonsterlist = (*it);
-		sVECTOR3 posMo;
-		posMo.x = mymonsterlist->Position.x;
-		posMo.y = mymonsterlist->Position.y;
-		posMo.z = mymonsterlist->Position.z;
-		MobActivity::CreatureData* myMob = NULL;
-		myMob = app->mob->GetMobByHandle(mymonsterlist->MonsterID);
-		if (myMob->isSpawned == true && myMob->IsDead == false && myMob->isAggro == false)
-		{
-			float distance = app->mob->Distance(posMo, mePlr->GetPosition());
-			if (distance <= 20 && distance > 2)
-			{
-				myMob->target = mePlr->GetAvatarandle();
-				myMob->isAggro = true;
-				myMob->isAggroByPlayer(plr, app);
-				delete mymonsterlistBIS;
-				return true;
-			}
-		}
-		else if (myMob->isSpawned == true && myMob->isAggro == true && mePlr->GetAvatarandle() == myMob->target && myMob->IsDead == false)
-		{
-			float distance = app->mob->Distance(posMo, mePlr->GetPosition());
-			if (distance > 20)
-			{
-				myMob->target = 0;
-				myMob->isAggro = false;
-				delete mymonsterlistBIS;
-				return false;
-			}
-		}
-		else if (myMob->isAggro == true && mePlr->GetAvatarandle() != myMob->target && myMob->IsDead == false);
-		else if (myMob->IsDead == false);
-		else if (myMob->isSpawned == false);
-		else
-		{
-			printf("i don;t know\n");
-			delete mymonsterlistBIS;
-			return false;
-		}
-	}
-	return false;
-}
 bool	GsFunctionsClass::DeleteItemByUIdPlacePos(CNtlPacket * pPacket, CClientSession * pSession, RwUInt32 UniqueID, RwUInt32 Place, RwUInt32 Pos)
 {
 	CGameServer * app = (CGameServer*) NtlSfxGetApp();

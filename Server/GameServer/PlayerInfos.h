@@ -19,7 +19,6 @@ public:
 		this->CurRPBall = 0;
 		LastPartyHandle = -1;
 		dwThreadId = 0;
-		dwThreadIdAggro = 2;
 		ChargingID = 1;
 		CurRPBallOk = 0;
 		isKaioken = false;
@@ -34,10 +33,6 @@ public:
 			printf("Can't kill thread regen\n");
 		if (hThread)
 			CloseHandle(hThread);
-		if (TerminateThread(hThreadAggro, 1) == 0)
-			printf("Can't kill thread aggro\n");
-		if (hThreadAggro)
-			CloseHandle(hThreadAggro);
 	};
 	sPC_PROFILE		*pcProfile;
 	sCHARSTATE		*sCharState;
@@ -212,7 +207,7 @@ public:
 
 		if (moreOrLess == 0)
 		{
-			if (this->getRpBallOk() <= this->getNumberOfRPBall());
+			if (this->getRpBallOk() <= this->getNumberOfRPBall()) // i'm tired to change this error so please update this fucking file in your local depo :O
 			{
 				this->setRpBallOk(this->getRpBallOk() + 1);
 				ball->bDropByTime = true;
@@ -253,9 +248,7 @@ void		SaveMe();
 void		SavePlayerData();
 HANDLE		Charging_Thread;
 HANDLE      hThread;
-HANDLE      hThreadAggro;
 DWORD		dwThreadId;
-DWORD		dwThreadIdAggro;
 DWORD		ChargingID;
 bool		isKaioken;
 bool		isSsj;

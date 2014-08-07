@@ -53,6 +53,103 @@ bool		MobActivity::Create()
 	}
 	return true;
 }
+void			MobActivity::CreatureData::MoveToSpawn()
+{
+	CGameServer * app = (CGameServer*) NtlSfxGetApp();
+	CNtlPacket packet(sizeof(sGU_UPDATE_CHAR_STATE));
+	sGU_UPDATE_CHAR_STATE * res = (sGU_UPDATE_CHAR_STATE *)packet.GetPacketData();
+
+	res->wOpCode = GU_UPDATE_CHAR_STATE;
+	res->handle = this->MonsterSpawnID;
+	res->sCharState.sCharStateBase.bFightMode = false;
+	res->sCharState.sCharStateBase.byStateID = CHARSTATE_DESTMOVE;
+	res->sCharState.sCharStateDetail.sCharStateDestMove.byDestLocCount = 1;
+	res->sCharState.sCharStateDetail.sCharStateDestMove.avDestLoc[0].x = this->Spawn_Loc.x;
+	res->sCharState.sCharStateDetail.sCharStateDestMove.avDestLoc[0].y = this->Spawn_Loc.y;
+	res->sCharState.sCharStateDetail.sCharStateDestMove.avDestLoc[0].z = this->Spawn_Loc.z;
+	res->sCharState.sCharStateDetail.sCharStateDestMove.bHaveSecondDestLoc = false;
+	packet.SetPacketLen( sizeof(sGU_UPDATE_CHAR_STATE) );
+	app->UserBroadcast(&packet);
+}
+void			MobActivity::CreatureData::MoveToPlayer(PlayerInfos *plr)
+{
+	CGameServer * app = (CGameServer*) NtlSfxGetApp();
+	CNtlPacket packet(sizeof(sGU_UPDATE_CHAR_STATE));
+	sGU_UPDATE_CHAR_STATE * res = (sGU_UPDATE_CHAR_STATE *)packet.GetPacketData();
+	
+	res->wOpCode = GU_UPDATE_CHAR_STATE;
+	res->handle = this->MonsterSpawnID;
+	res->sCharState.sCharStateBase.bFightMode = true;
+	res->sCharState.sCharStateBase.byStateID = CHARSTATE_DESTMOVE;
+	res->sCharState.sCharStateDetail.sCharStateDestMove.byDestLocCount = 1;
+	res->sCharState.sCharStateDetail.sCharStateDestMove.avDestLoc[0].x = plr->GetPosition().x - 1;
+	res->sCharState.sCharStateDetail.sCharStateDestMove.avDestLoc[0].y = plr->GetPosition().y - 1;
+	res->sCharState.sCharStateDetail.sCharStateDestMove.avDestLoc[0].z = plr->GetPosition().z - 1;
+	res->sCharState.sCharStateDetail.sCharStateDestMove.bHaveSecondDestLoc = false;
+
+	packet.SetPacketLen( sizeof(sGU_UPDATE_CHAR_STATE) );
+	app->UserBroadcast(&packet);
+}
+DWORD WINAPI	Aggro(LPVOID arg)
+{
+	CGameServer * app = (CGameServer*) NtlSfxGetApp();
+	MobActivity::CreatureData* mob = (MobActivity::CreatureData*)arg;
+	PlayerInfos* plr = new PlayerInfos();
+	if (mob)
+	{
+		while (true)
+		{
+			for( CGameServer::USERIT it = app->m_userList.begin(); it != app->m_userList.end(); it++ )
+			{
+				app->GetUserSession(it->second->plr->GetAvatarandle(), plr);
+				if (plr)
+				{
+					sVECTOR3 myCurPos;
+					myCurPos.x = mob->curPos.x;
+					myCurPos.y = mob->curPos.y;
+					myCurPos.z = mob->curPos.z;
+					float distance = app->mob->Distance(myCurPos, plr->GetPosition());
+					if (mob->IsDead == false)
+					{
+						if (distance < 20 && distance > 2 && mob->isAggro == false)
+						{
+							mob->target = plr->GetAvatarandle();
+							mob->MoveToPlayer(plr);
+							printf("I NEED TO AGGRO YOU OUF OUF\n");
+						}
+						else if (distance <= 2 && mob->isAggro == true && plr->GetAvatarandle() == mob->target)
+							mob->Attack(plr, app);
+						else if (distance > 20 && mob->isAggro == true && plr->GetAvatarandle() == mob->target)
+						{
+							mob->target = 0;
+							mob->isAggro = false;
+							mob->FightMode = false;
+							mob->MoveToSpawn();
+							printf("I NEED TO GO BACK OUF OUF\n");
+						}
+					}
+				}
+			}
+			Sleep(1000);
+		}
+	}
+	return 0;
+}
+void		MobActivity::CreatureData::KillThreadAggro()
+{
+	if (TerminateThread(this->hThreadAggro, 1) == 0)
+		printf("Can't kill thread mob aggro\n");
+	if (this->hThreadAggro)
+		CloseHandle(this->hThreadAggro);
+}
+void		MobActivity::CreatureData::RunThreadAggro()
+{
+	CGameServer * app = (CGameServer*) NtlSfxGetApp();
+	this->dwThreadIdAggro = app->ThreadRequest();
+	this->hThreadAggro = CreateThread(NULL, 0, Aggro, (LPVOID)this, 0, &this->dwThreadIdAggro);
+	if (this->hThreadAggro == NULL)
+        printf("Can't create thread Regen\n");
+}
 void		MobActivity::CreatureData::Attack(PlayerInfos *plr, CGameServer *app)
 {
 	printf("ATTACK FUNC STARTED\n");
@@ -66,7 +163,12 @@ void		MobActivity::CreatureData::Attack(PlayerInfos *plr, CGameServer *app)
 	res->dwLpEpEventId = 255;
 	res->bChainAttack = false;
 	res->byBlockedAction = 255;
-	res->wAttackResultValue = 100;
+	float formula = 0;
+	if (this->Level <= 5)
+		formula = rand() % 25 + 5;
+	else
+	formula = (this->Str * this->Level) * .15 ;
+	res->wAttackResultValue = formula;
 	res->fReflectedDamage = 0;
 	res->vShift = plr->GetPosition();
 	res->byAttackSequence = 1;
@@ -75,69 +177,6 @@ void		MobActivity::CreatureData::Attack(PlayerInfos *plr, CGameServer *app)
 	packet.SetPacketLen( sizeof(sGU_CHAR_ACTION_ATTACK) );
 	app->UserBroadcast(&packet);
 	plr->TakeDamage(res->wAttackResultValue);
-}
-void		MobActivity::CreatureData::isAggroByPlayer(PlayerInfos *plr, CGameServer *app)
-{
-
-		sVECTOR3 myPos;
-		myPos.x = this->curPos.x;
-		myPos.y = this->curPos.y;
-		myPos.z = this->curPos.z;
-		float dist = app->mob->Distance(myPos, plr->GetPosition());
-		if (dist <= 20 && dist > 1)
-		{
-			CNtlPacket packet(sizeof(sGU_UPDATE_CHAR_STATE));
-			sGU_UPDATE_CHAR_STATE * res = (sGU_UPDATE_CHAR_STATE *)packet.GetPacketData();
-
-			res->wOpCode = GU_UPDATE_CHAR_STATE;
-			res->handle = this->MonsterSpawnID;
-			res->sCharState.sCharStateBase.bFightMode = true;
-			res->sCharState.sCharStateBase.byStateID = CHARSTATE_DESTMOVE;
-			res->sCharState.sCharStateDetail.sCharStateDestMove.byDestLocCount = 1;
-			res->sCharState.sCharStateDetail.sCharStateDestMove.avDestLoc[0].x = plr->GetPosition().x - 1;
-			res->sCharState.sCharStateDetail.sCharStateDestMove.avDestLoc[0].y = plr->GetPosition().y - 1;
-			res->sCharState.sCharStateDetail.sCharStateDestMove.avDestLoc[0].z = plr->GetPosition().z - 1;
-			res->sCharState.sCharStateDetail.sCharStateDestMove.bHaveSecondDestLoc = false;
-			/*
-				THIS PART IS NOT GOOD
-			*/
-			this->curPos = plr->GetPosition();
-			sVECTOR3 myPos;
-			myPos.x = this->curPos.x;
-			myPos.y = this->curPos.y;
-			myPos.z = this->curPos.z;
-			packet.SetPacketLen( sizeof(sGU_UPDATE_CHAR_STATE) );
-			app->UserBroadcast(&packet);
-			float dist = app->mob->Distance(myPos, plr->GetPosition());
-			/*
-				END.
-				WE NEED TO CHECK OR MAKE A THREAD FOR CHECK THE CURRENT POSITION BASED ON MOVEMENT AND ALSO SEND THE ATTACK
-			*/
-			if(dist <= 2)
-			{
-				printf("SEND ATTACK FUNC()\n");
-				this->Attack(plr, app);
-			}
-		}
-		else if (dist > 20)
-		{
-			this->target = 0;
-			this->isAggro = false;
-			CNtlPacket packet(sizeof(sGU_UPDATE_CHAR_STATE));
-			sGU_UPDATE_CHAR_STATE * res = (sGU_UPDATE_CHAR_STATE *)packet.GetPacketData();
-
-			res->wOpCode = GU_UPDATE_CHAR_STATE;
-			res->handle = this->MonsterSpawnID;
-			res->sCharState.sCharStateBase.bFightMode = false;
-			res->sCharState.sCharStateBase.byStateID = CHARSTATE_DESTMOVE;
-			res->sCharState.sCharStateDetail.sCharStateDestMove.byDestLocCount = 1;
-			res->sCharState.sCharStateDetail.sCharStateDestMove.avDestLoc[0].x = this->Spawn_Loc.x;
-			res->sCharState.sCharStateDetail.sCharStateDestMove.avDestLoc[0].y = this->Spawn_Loc.y;
-			res->sCharState.sCharStateDetail.sCharStateDestMove.avDestLoc[0].z = this->Spawn_Loc.z;
-			res->sCharState.sCharStateDetail.sCharStateDestMove.bHaveSecondDestLoc = false;
-			packet.SetPacketLen( sizeof(sGU_UPDATE_CHAR_STATE) );
-			app->UserBroadcast(&packet);
-		}
 }
 /// CREATE MONSTER LIST END ///
 float		MobActivity::Distance(const sVECTOR3 mycurPos, const CNtlVector othercurPos)
@@ -195,6 +234,7 @@ bool		MobActivity::RunSpawnCheck(CNtlPacket * pPacket, sVECTOR3 curPos, CClientS
 					CNtlPacket packet(sizeof(sGU_OBJECT_CREATE));
 					sGU_OBJECT_CREATE * res = (sGU_OBJECT_CREATE *)packet.GetPacketData();
 					creaturelist->isSpawned = true;
+					
 					res->wOpCode = GU_OBJECT_CREATE;
 					res->sObjectInfo.objType = OBJTYPE_MOB;
 					res->handle = creaturelist->MonsterSpawnID;
@@ -218,10 +258,12 @@ bool		MobActivity::RunSpawnCheck(CNtlPacket * pPacket, sVECTOR3 curPos, CClientS
 
 					packet.SetPacketLen( sizeof(sGU_OBJECT_CREATE) );
 					g_pApp->Send( pSession->GetHandle(), &packet );
+					creaturelist->RunThreadAggro();
 				}
 			}
 		}else if(pSession->IsMonsterInsideList(creaturelist->MonsterSpawnID) == true){
 			//	printf("remove monster \n");
+				creaturelist->KillThreadAggro();
 				CNtlPacket packet(sizeof(sGU_OBJECT_DESTROY));
 				sGU_OBJECT_DESTROY * res = (sGU_OBJECT_DESTROY *)packet.GetPacketData();
 				res->wOpCode = GU_OBJECT_DESTROY;
@@ -455,6 +497,7 @@ void		MobActivity::SpawnMonsterAtLogin(CNtlPacket * pPacket, CClientSession * pS
 				res->sObjectInfo.mobBrief.fLastRunningSpeed =  creaturelist->Run_Speed;
 				res->sObjectInfo.mobBrief.fLastWalkingSpeed = creaturelist->Walk_Speed;
 				creaturelist->isAggro = false;
+				creaturelist->isSpawned = true;
 				pSession->InsertIntoMyMonsterList(creaturelist->MonsterSpawnID, creaturelist->Spawn_Loc, creaturelist->MonsterID);
 
 				packet.SetPacketLen( sizeof(sGU_OBJECT_CREATE) );

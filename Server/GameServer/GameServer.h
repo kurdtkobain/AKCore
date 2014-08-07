@@ -280,8 +280,6 @@ public:
 	// DUEL
 	void						SendFreeBattleReq(CNtlPacket * pPacket, CGameServer * app);
 	void						SendFreeBattleAccpetReq(CNtlPacket * pPacket, CGameServer * app);
-	// MISC 2
-	bool						CheckMyPlayerAggro(PlayerInfos *mePlr);
 	//Game Server functions
 	sGU_OBJECT_CREATE			characterspawnInfo;
 	//
