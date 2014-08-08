@@ -63,12 +63,14 @@ void		PlayerInfos::checkBuff(int skill)
 {
 	if (skill == 120103 || skill == 120101 || skill == 120102)
 	{
+		this->pcProfile->avatarAttribute.fLastRunSpeed += 2;
 		this->isKaioken = true;
 		this->sCharState->sCharStateBase.aspectState.sAspectStateDetail.sKaioken.byRepeatingCount += 1;
 	}
 }
 DWORD WINAPI	Update(LPVOID arg)
 {
+	CGameServer * app = (CGameServer*) NtlSfxGetApp();
 	PlayerInfos* plr = (PlayerInfos*)arg;
 	if (plr)
 	{
@@ -98,6 +100,11 @@ DWORD WINAPI	Update(LPVOID arg)
 			}
 			plr->SendPlayerLifeAndEP();				
 			Sleep(1000);// And no it's every second, it's only the amount regen is too high (this->pcProfile->avatarAttribute.wBaseMaxEP * 0.03) 3% every seconds it's for make some test this is not the last "release"
+			if(timeGetTime() - plr->Getmob_SpawnTime() >= MONSTER_SPAWN_UPDATE_TICK)
+			{
+				app->mob->RunSpawnCheck(NULL, plr->GetPosition(), plr->myCCSession);
+				plr->Setmob_SpawnTime(timeGetTime());
+			}
 		}
 	}
 	return 0;

@@ -56,6 +56,7 @@ bool		MobActivity::Create()
 void			MobActivity::CreatureData::ResetMob()
 {
 	CGameServer * app = (CGameServer*) NtlSfxGetApp();
+	this->curPos = this->Spawn_Loc;
 	this->FightMode = false;
 	this->isAggro = false;
 	this->target = 0;
@@ -103,11 +104,14 @@ void			MobActivity::CreatureData::MoveToPlayer(PlayerInfos *plr)
 	res->sCharState.sCharStateBase.byStateID = CHARSTATE_DESTMOVE;
 	res->sCharState.sCharStateDetail.sCharStateDestMove.byDestLocCount = 1;
 	res->sCharState.sCharStateDetail.sCharStateDestMove.avDestLoc[0].x = plr->GetPosition().x - 1;
-	res->sCharState.sCharStateDetail.sCharStateDestMove.avDestLoc[0].y = plr->GetPosition().y - 1;
+	res->sCharState.sCharStateDetail.sCharStateDestMove.avDestLoc[0].y = plr->GetPosition().y;
 	res->sCharState.sCharStateDetail.sCharStateDestMove.avDestLoc[0].z = plr->GetPosition().z - 1;
 	res->sCharState.sCharStateDetail.sCharStateDestMove.bHaveSecondDestLoc = false;
 	packet.SetPacketLen( sizeof(sGU_UPDATE_CHAR_STATE) );
 	app->UserBroadcast(&packet);
+	this->curPos.x = plr->GetPosition().x - 1;
+	this->curPos.y = plr->GetPosition().y;
+	this->curPos.z = plr->GetPosition().z - 1;
 }
 DWORD WINAPI	Aggro(LPVOID arg)
 {
@@ -116,7 +120,7 @@ DWORD WINAPI	Aggro(LPVOID arg)
 	PlayerInfos* plr = new PlayerInfos();
 	if (mob)
 	{
-		while (true)
+		while (mob && plr)
 		{
 			for( CGameServer::USERIT it = app->m_userList.begin(); it != app->m_userList.end(); it++ )
 			{
@@ -127,24 +131,33 @@ DWORD WINAPI	Aggro(LPVOID arg)
 					myCurPos.x = mob->curPos.x;
 					myCurPos.y = mob->curPos.y;
 					myCurPos.z = mob->curPos.z;
+					sVECTOR3 SpawnPos;
+					SpawnPos.x = mob->Spawn_Loc.x;
+					SpawnPos.y = mob->Spawn_Loc.y;
+					SpawnPos.z = mob->Spawn_Loc.z;
 					float distance = app->mob->Distance(myCurPos, plr->GetPosition());
+					float distanceToSpawn = app->mob->Distance(myCurPos, SpawnPos);
 					if (mob->IsDead == false)
 					{
-						if (distance < 20 && distance > 3 && mob->isAggro == false)
+						if (distance < 10 && distance > 2 && mob->isAggro == false)
 						{
 							mob->isAggro = true;
 							mob->target = plr->GetAvatarandle();
 							mob->MoveToPlayer(plr);
 						}
-						else if (mob->isAggro == true && plr->GetAvatarandle() == mob->target && distance > 3 && distance < 20)
+						else if (mob->isAggro == true && plr->GetAvatarandle() == mob->target && distance > 2 && distance < 10)
 							mob->MoveToPlayer(plr);
 						else if (distance <= 2 && mob->isAggro == true && plr->GetAvatarandle() == mob->target)
+						{
 							mob->Attack(plr, app);
-						else if (distance > 20 && mob->isAggro == true && plr->GetAvatarandle() == mob->target)
+						}
+						else if (distanceToSpawn > 20 && mob->isAggro == true && plr->GetAvatarandle() == mob->target)
 						{
 							mob->ResetMob();
 							mob->MoveToSpawn();
 						}
+						if (mob->isAggro == true)
+							printf("distanceToSpawn: %d\n", distanceToSpawn);
 					}
 				}
 			}
