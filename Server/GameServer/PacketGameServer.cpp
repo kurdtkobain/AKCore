@@ -3906,11 +3906,8 @@ void	CClientSession::SendItemUseReq(CNtlPacket * pPacket, CGameServer * app)
 	CNtlPacket packet2(sizeof(sGU_CHAR_ACTION_ITEM));
 	sGU_CHAR_ACTION_ITEM * pItemAct = (sGU_CHAR_ACTION_ITEM*)packet2.GetPacketData();
 
-	CNtlPacket packet3(sizeof(sGU_UPDATE_CHAR_LP));
-	sGU_UPDATE_CHAR_LP * pUpdateLp = (sGU_UPDATE_CHAR_LP*)packet3.GetPacketData();
-
-	CNtlPacket packet4(sizeof(sGU_UPDATE_CHAR_EP));
-	sGU_UPDATE_CHAR_EP * pUpdateEp = (sGU_UPDATE_CHAR_EP*)packet4.GetPacketData();
+	CNtlPacket packet4(sizeof(sGU_BUFF_REGISTERED));
+	sGU_BUFF_REGISTERED * pItemBuff = (sGU_BUFF_REGISTERED*)packet4.GetPacketData();
 
  	app->db->prepare("SELECT * FROM items WHERE owner_id = ? AND place = ? AND pos = ?");
  	app->db->setInt(1, this->plr->pcProfile->charId);
@@ -3922,8 +3919,10 @@ void	CClientSession::SendItemUseReq(CNtlPacket * pPacket, CGameServer * app)
 	//Defining table_dats
 	CItemTable * pItemTable = app->g_pTableContainer->GetItemTable();
 	CUseItemTable * pItemUseTable = app->g_pTableContainer->GetUseItemTable();	
+	CSystemEffectTable * pEffectTable = app->g_pTableContainer->GetSystemEffectTable();
 	sITEM_TBLDAT * itemTBL = reinterpret_cast<sITEM_TBLDAT*>(pItemTable->FindData(app->db->getInt("tblidx")));
 	sUSE_ITEM_TBLDAT * itemUseTbl = reinterpret_cast<sUSE_ITEM_TBLDAT*>(pItemUseTable->FindData(itemTBL->Use_Item_Tblidx));
+	sSYSTEM_EFFECT_TBLDAT * pEffectTbl = reinterpret_cast<sSYSTEM_EFFECT_TBLDAT*>(pEffectTable->FindData(itemUseTbl->aSystem_Effect[0]));
 
 	pItemAct->handle = this->GetavatarHandle();
 	pItemAct->itemTblidx = itemTBL->tblidx;
@@ -3936,24 +3935,13 @@ void	CClientSession::SendItemUseReq(CNtlPacket * pPacket, CGameServer * app)
 	pItemAct->wResultCode = GAME_SUCCESS;
 	pItemAct->bySkillResultCount = 1;
 	
-	//Poor validation to see what we gonna update by Effect id
-	//Suggest this is gonna be in gs functions
-	if (itemUseTbl->aSystem_Effect[0] == 510)
-	{
-		pUpdateEp->handle = this->GetavatarHandle();
-		this->plr->pcProfile->wCurEP += itemUseTbl->afSystem_Effect_Value[0];
-		pUpdateEp->wCurEP = this->plr->pcProfile->wCurEP;
-		pUpdateEp->wMaxEP = this->plr->pcProfile->avatarAttribute.wBaseMaxEP;
-		pUpdateEp->wOpCode = GU_UPDATE_CHAR_EP;
-	}
-	if (itemUseTbl->aSystem_Effect[0] == 510)
-	{
-		pUpdateLp->handle = this->GetavatarHandle();
-		this->plr->pcProfile->wCurLP += itemUseTbl->afSystem_Effect_Value[0];
-		pUpdateLp->wCurLP = this->plr->pcProfile->wCurLP;
-		pUpdateLp->wMaxLP = this->plr->pcProfile->avatarAttribute.wBaseMaxLP;
-		pUpdateLp->wOpCode = GU_UPDATE_CHAR_LP;
-	}
+	//Item buff is only to display on the Top
+	pItemBuff->tblidx = itemTBL->tblidx;
+	pItemBuff->hHandle = this->GetavatarHandle();
+	pItemBuff->bySourceType = DBO_OBJECT_SOURCE_ITEM;
+	pItemBuff->dwInitialDuration = itemUseTbl->dwCoolTimeInMilliSecs;
+	pItemBuff->dwTimeRemaining = itemUseTbl->dwKeepTimeInMilliSecs;
+	pItemBuff->wOpCode = GU_BUFF_REGISTERED;
 
 	//Prepared Item Response	
 	res->byPlace = req->byPlace;
@@ -3961,21 +3949,24 @@ void	CClientSession::SendItemUseReq(CNtlPacket * pPacket, CGameServer * app)
  	res->tblidxItem = itemTBL->tblidx;
  	res->wOpCode = GU_ITEM_USE_RES;
  	res->wResultCode = GAME_SUCCESS;
-	
+
  	packet.SetPacketLen(sizeof(sGU_ITEM_USE_RES));
 	packet2.SetPacketLen(sizeof(sGU_CHAR_ACTION_ITEM));
-	packet3.SetPacketLen(sizeof(sGU_UPDATE_CHAR_LP));
-	packet4.SetPacketLen(sizeof(sGU_UPDATE_CHAR_LP));
+	
+	
  	g_pApp->Send(this->GetHandle(), &packet);
 	g_pApp->Send(this->GetHandle(), &packet2);
-	g_pApp->Send(this->GetHandle(), &packet3);
-	g_pApp->Send(this->GetHandle(), &packet4);
 	app->UserBroadcastothers(&packet, this);
 	app->UserBroadcastothers(&packet2, this);
-	app->UserBroadcastothers(&packet3, this);
-	app->UserBroadcastothers(&packet4, this);
- 	printf("Pass");	
- 	
+	if ((pEffectTbl->effectCode == ACTIVE_HEAL_OVER_TIME) || (pEffectTbl->effectCode == ACTIVE_EP_OVER_TIME))
+	{
+		packet4.SetPacketLen(sizeof(sGU_BUFF_REGISTERED));
+		g_pApp->Send(this->GetHandle(), &packet4);
+		app->UserBroadcastothers(&packet4, this);
+	}	
+
+	//Validation by Effect Code for better read
+	this->gsf->SendItemEffect(this, itemUseTbl->aSystem_Effect[0], itemUseTbl->tblidx);
 }
  //---------------------------------------------------------------------//
  //------------------Skill Transform Cancel - Luiz45--------------------//

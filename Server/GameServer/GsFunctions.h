@@ -63,6 +63,8 @@ public:
  	void						DebugSkillType(BYTE skillActType);
   	int							GetTotalSlotSkill(int charID);
  	int							GetBattleResultEffect(int RpEffect);
+	//MISC
+	void						SendItemEffect(CClientSession * pSession,TBLIDX effectTbl,TBLIDX ItemTbl);
 };
 
 #endif

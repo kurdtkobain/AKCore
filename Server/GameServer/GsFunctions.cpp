@@ -162,3 +162,78 @@ void	GsFunctionsClass::DebugSkillType(BYTE skillActType)
 		break;
 	}
 }
+void		GsFunctionsClass::SendItemEffect(CClientSession * pSession, TBLIDX effectIdx, TBLIDX itemUseIdx)
+{
+	CGameServer * app = (CGameServer*)NtlSfxGetApp();
+
+	CNtlPacket packet3(sizeof(sGU_EFFECT_AFFECTED));
+	sGU_EFFECT_AFFECTED * pEffectApply = (sGU_EFFECT_AFFECTED*)packet3.GetPacketData();
+	sUSE_ITEM_TBLDAT * itemUseTbl = reinterpret_cast<sUSE_ITEM_TBLDAT*>(app->g_pTableContainer->GetUseItemTable()->FindData(itemUseIdx));
+	sSYSTEM_EFFECT_TBLDAT * pEffectTbl = reinterpret_cast<sSYSTEM_EFFECT_TBLDAT*>(app->g_pTableContainer->GetSystemEffectTable()->FindData(effectIdx));
+	//Prepare Effect Response
+	pEffectApply->effectTblidx = pEffectTbl->tblidx;
+	pEffectApply->fActualArgument1 = itemUseTbl->afSystem_Effect_Value[0];
+	pEffectApply->fActualArgument2 = itemUseTbl->afSystem_Effect_Value[1];
+	pEffectApply->handle = pSession->GetavatarHandle();
+	pEffectApply->wOpCode = GU_EFFECT_AFFECTED;
+	pEffectApply->wResultCode = GAME_SUCCESS;
+
+	packet3.SetPacketLen(sizeof(sGU_EFFECT_AFFECTED));
+	//Validation by Effect Code for better read
+	switch (pEffectTbl->effectCode)
+	{
+		case ACTIVE_DIRECT_HEAL:{
+			pSession->plr->pcProfile->wCurLP += itemUseTbl->afSystem_Effect_Value[0];
+		}
+			break;
+		case ACTIVE_EP_UP:{
+			pSession->plr->pcProfile->wCurEP += itemUseTbl->afSystem_Effect_Value[0];
+		}
+			break;
+		case ACTIVE_TELEPORT_BIND:{
+			//Need Write
+		}
+			break;
+		case ACTIVE_EP_OVER_TIME:{
+			DWORD totalTime = itemUseTbl->dwKeepTimeInMilliSecs;
+			while (totalTime != 1000)
+			{
+				pSession->plr->pcProfile->wCurEP += itemUseTbl->afSystem_Effect_Value[0];
+				pEffectApply->effectTblidx = pEffectTbl->tblidx;
+				pEffectApply->fActualArgument1 = itemUseTbl->afSystem_Effect_Value[0];
+				pEffectApply->fActualArgument2 = itemUseTbl->afSystem_Effect_Value[1];
+				pEffectApply->handle = pSession->GetavatarHandle();
+				pEffectApply->wOpCode = GU_EFFECT_AFFECTED;
+				pEffectApply->wResultCode = GAME_SUCCESS;
+				g_pApp->Send(pSession->GetHandle(), &packet3);
+				app->UserBroadcastothers(&packet3, pSession);
+				totalTime -= 1000;
+				Sleep(1000);
+			}
+		}
+			break;
+		case ACTIVE_RESCUE:{
+			//Need Write
+		}
+			break;
+		case ACTIVE_HEAL_OVER_TIME:{
+			DWORD totalTime = itemUseTbl->dwKeepTimeInMilliSecs;
+			while (totalTime != 1000)
+			{
+				pSession->plr->pcProfile->wCurLP += itemUseTbl->afSystem_Effect_Value[0];
+				pEffectApply->effectTblidx = pEffectTbl->tblidx;
+				pEffectApply->fActualArgument1 = itemUseTbl->afSystem_Effect_Value[0];
+				pEffectApply->fActualArgument2 = itemUseTbl->afSystem_Effect_Value[1];
+				pEffectApply->handle = pSession->GetavatarHandle();
+				pEffectApply->wOpCode = GU_EFFECT_AFFECTED;
+				pEffectApply->wResultCode = GAME_SUCCESS;
+				g_pApp->Send(pSession->GetHandle(), &packet3);
+				app->UserBroadcastothers(&packet3, pSession);
+				totalTime -= 1000;
+				Sleep(1000);
+			}
+
+		}
+			break;
+	}
+}
