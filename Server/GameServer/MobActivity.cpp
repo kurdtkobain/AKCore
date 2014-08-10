@@ -118,6 +118,7 @@ DWORD WINAPI	Aggro(LPVOID arg)
 	CGameServer * app = (CGameServer*) NtlSfxGetApp();
 	MobActivity::CreatureData* mob = (MobActivity::CreatureData*)arg;
 	PlayerInfos* plr = new PlayerInfos();
+	bool haveAttack = false;
 	if (mob)
 	{
 		while (mob && plr)
@@ -125,7 +126,7 @@ DWORD WINAPI	Aggro(LPVOID arg)
 			for( CGameServer::USERIT it = app->m_userList.begin(); it != app->m_userList.end(); it++ )
 			{
 				app->GetUserSession(it->second->plr->GetAvatarandle(), plr);
-				if (plr)
+				if (plr )
 				{
 					sVECTOR3 myCurPos;
 					myCurPos.x = mob->curPos.x;
@@ -137,27 +138,37 @@ DWORD WINAPI	Aggro(LPVOID arg)
 					SpawnPos.z = mob->Spawn_Loc.z;
 					float distance = app->mob->Distance(myCurPos, plr->GetPosition());
 					float distanceToSpawn = app->mob->Distance(myCurPos, SpawnPos);
-					if (mob->IsDead == false)
+					if (mob->IsDead == false && plr->getDeadMod() == false)
 					{
 						if (distance < 10 && distance > 2 && mob->isAggro == false)
 						{
 							mob->isAggro = true;
 							mob->target = plr->GetAvatarandle();
 							mob->MoveToPlayer(plr);
+							haveAttack = false;
 						}
 						else if (mob->isAggro == true && plr->GetAvatarandle() == mob->target && distance > 2 && distance < 10)
 							mob->MoveToPlayer(plr);
 						else if (distance <= 2 && mob->isAggro == true && plr->GetAvatarandle() == mob->target)
 						{
+							haveAttack = true;
 							mob->Attack(plr, app);
 						}
 						else if (distanceToSpawn > 20 && mob->isAggro == true && plr->GetAvatarandle() == mob->target)
 						{
+							haveAttack = false;
 							mob->ResetMob();
 							mob->MoveToSpawn();
 						}
-						if (mob->isAggro == true)
-							printf("distanceToSpawn: %d\n", distanceToSpawn);
+					}
+					if (mob->IsDead == false && plr->getDeadMod() == true)
+					{
+						if (mob->isAggro == true && plr->GetAvatarandle() == mob->target)
+						{
+							haveAttack = false;
+							mob->ResetMob();
+							mob->MoveToSpawn();
+						}
 					}
 				}
 			}
@@ -183,7 +194,6 @@ void		MobActivity::CreatureData::RunThreadAggro()
 }
 void		MobActivity::CreatureData::Attack(PlayerInfos *plr, CGameServer *app)
 {
-	printf("ATTACK FUNC STARTED\n");
 	this->FightMode = true;
 	CNtlPacket packet(sizeof(sGU_CHAR_ACTION_ATTACK));
 	sGU_CHAR_ACTION_ATTACK * res = (sGU_CHAR_ACTION_ATTACK *)packet.GetPacketData();
@@ -198,15 +208,16 @@ void		MobActivity::CreatureData::Attack(PlayerInfos *plr, CGameServer *app)
 	if (this->Level <= 5)
 		formula = rand() % 25 + 5;
 	else
-	formula = (this->Str * this->Level) * .15 ;
+		formula = (this->Str * this->Level) * .2 + rand() % 200;
 	res->wAttackResultValue = formula;
 	res->fReflectedDamage = 0;
 	res->vShift = plr->GetPosition();
 	res->byAttackSequence = 1;
-	res->bChainAttack = false;
+	res->bChainAttack = true;
 	res->byAttackResult = BATTLE_ATTACK_RESULT_HIT;
 	packet.SetPacketLen( sizeof(sGU_CHAR_ACTION_ATTACK) );
 	app->UserBroadcast(&packet);
+	plr->setFightMod(true);
 	plr->TakeDamage(res->wAttackResultValue);
 }
 /// CREATE MONSTER LIST END ///

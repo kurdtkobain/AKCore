@@ -26,6 +26,9 @@ public:
 		isSsj = false;
 		isMajin = false;
 		isGreatNamek = false;
+		isfighting= false;
+		lastFightTime = 0;
+		isdead = false;
 	};
 	~PlayerInfos()
 	{
@@ -235,15 +238,21 @@ public:
 		this->isSsj = false;
 		this->isMajin = false;
 		this->isGreatNamek = false;
-
+		this->pcProfile->avatarAttribute.fLastRunSpeed = 6;
 		this->sCharState->sCharStateBase.aspectState.sAspectStateDetail.sKaioken.byRepeatingCount = 0;
 	};
 	void		UpdateRP();
 	void		TakeDamage(int Damage);
+	void		setFightMod(bool fight){this->isfighting = fight;};
+	bool		getFightMod(){return this->isfighting;};
+	void		setDeadMod(){this->isdead = true;};
+	bool		getDeadMod(){return this->isdead;};
+	void		UpdateDeathStatus();
+	void		UpdateRevivalStatus();
+	PlayerInfos	*refreshPointer(){return this;};
 private:
 	MySQLConnWrapper			*db;
 public:
-
 void		SaveMe();
 void		SavePlayerData();
 HANDLE		Charging_Thread;
@@ -255,6 +264,7 @@ bool		isSsj;
 bool		isMajin;
 bool		isSitted;
 bool		isGreatNamek;
+DWORD		lastFightTime;
 CClientSession *myCCSession;
 private:
 	sVECTOR3			vCurLoc;
@@ -270,6 +280,8 @@ private:
 	CGameServer *		app;
 	int					CurRPBall;
 	int					CurRPBallOk;
+	bool				isfighting;
+	bool				isdead;
 public: // THIS NEED BE BE PRIVATE IN THE FUTUR
 	BYTE			byLevel_Up_LP;
 	BYTE			byLevel_Up_EP;

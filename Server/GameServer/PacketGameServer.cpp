@@ -389,6 +389,7 @@ void CClientSession::SendAvatarHTBInfo(CNtlPacket * pPacket, CGameServer* app)
 //--------------------------------------------------------------------------------------//
 void CClientSession::SendCharRevivalReq(CNtlPacket * pPacket, CGameServer * app)
 {
+	this->plr->UpdateRevivalStatus();
 	sUG_CHAR_REVIVAL_REQ * req = (sUG_CHAR_REVIVAL_REQ*)pPacket->GetPacketData();
 	CNtlPacket packet(sizeof(sGU_CHAR_REVIVAL_RES));
 	sGU_CHAR_REVIVAL_RES * res = (sGU_CHAR_REVIVAL_RES *)packet.GetPacketData();
@@ -2212,19 +2213,11 @@ void CClientSession::SendCharActionAttack(RwUInt32 uiSerialId, RwUInt32 m_uiTarg
 	// update LP
 	if(bDamageApply == true)
 	{
-		this->gsf->printOk("OK");
-		printf("LP: %d, damage: %d\n", CurHP, res->wAttackResultValue * 2);
 		CurHP -= (res->wAttackResultValue * 2);
-		printf("LP: %d, damage: %d\n", CurHP, res->wAttackResultValue * 2);
 	}
-	else if (bDamageApply == false)
-		this->gsf->printError("DAMAGES NOT SENDED");
-	else
-		this->gsf->printError("WHAT THE FUCK");
 	if (CurHP <= 0)
 	{
 		CClientSession::SendMobLoot(&packet, app, m_uiTargetSerialId);
-		this->gsf->printOk("DIE MOTHER FUCKER");
 		CurHP = 0;
 		SendCharUpdateFaintingState(pPacket, app, uiSerialId, m_uiTargetSerialId);
 		byChainAttack = 1;
@@ -2245,7 +2238,6 @@ void CClientSession::SendCharUpdateLp(CNtlPacket * pPacket, CGameServer * app, R
 		MobActivity::CreatureData *lol = app->mob->GetMobByHandle(m_uiTargetSerialId);
 		if (lol != NULL)
 		{
-			printf("wLP: %d, lol->CurLP: %d\n", wLp, lol->CurLP);
 			lol->FightMode = true;
 			lol->CurLP = (WORD)wLp;
 			res->wCurLP = lol->CurLP;
@@ -2254,7 +2246,11 @@ void CClientSession::SendCharUpdateLp(CNtlPacket * pPacket, CGameServer * app, R
 			packet.SetPacketLen( sizeof(sGU_UPDATE_CHAR_LP) );
 			app->UserBroadcastothers(&packet, this);
 			g_pApp->Send( this->GetHandle() , &packet );
-			printf("wLP: %d, lol->CurLP: %d\n", wLp, lol->CurLP);
+			if (lol->isAggro == false)
+			{
+				lol->isAggro = true;
+				lol->target = this->plr->GetAvatarandle();
+			}
 		}
 	}
 	/*else if (IsMonsterInsideList(m_uiTargetSerialId) == false)

@@ -17,11 +17,48 @@ void		PlayerInfos::SendPlayerLifeAndEP()
 	g_pApp->Send(this->MySession, &packet);
 	app->UserBroadcastothers(&packet, this->myCCSession);
 }
+void		PlayerInfos::UpdateRevivalStatus()
+{
+	this->pcProfile->wCurLP = this->pcProfile->avatarAttribute.wBaseMaxLP;
+	CNtlPacket packet(sizeof(sGU_UPDATE_CHAR_STATE));
+	sGU_UPDATE_CHAR_STATE * res = (sGU_UPDATE_CHAR_STATE *)packet.GetPacketData();
+
+	res->wOpCode = GU_UPDATE_CHAR_STATE;
+	res->handle = this->avatarHandle;
+	res->sCharState.sCharStateBase.byStateID = CHARSTATE_STANDING;
+	res->sCharState.sCharStateBase.vCurLoc = this->GetPosition();
+	res->sCharState.sCharStateBase.vCurDir = this->GetDirection();
+
+	packet.SetPacketLen( sizeof(sGU_UPDATE_CHAR_STATE) );
+	app->UserBroadcastothers(&packet, this->myCCSession);
+	g_pApp->Send( this->MySession , &packet );
+	this->isdead = false;
+}
+void		PlayerInfos::UpdateDeathStatus()
+{
+	this->setFightMod(false);
+	this->isdead = true;
+	CNtlPacket packet(sizeof(sGU_UPDATE_CHAR_STATE));
+	sGU_UPDATE_CHAR_STATE * res = (sGU_UPDATE_CHAR_STATE *)packet.GetPacketData();
+
+	res->wOpCode = GU_UPDATE_CHAR_STATE;
+	res->handle = this->avatarHandle;
+	res->sCharState.sCharStateBase.byStateID = CHARSTATE_FAINTING;
+	res->sCharState.sCharStateBase.vCurLoc = this->GetPosition();
+	res->sCharState.sCharStateBase.vCurDir = this->GetDirection();
+
+	packet.SetPacketLen( sizeof(sGU_UPDATE_CHAR_STATE) );
+	app->UserBroadcastothers(&packet, this->myCCSession);
+	g_pApp->Send( this->MySession , &packet );
+}
 void		PlayerInfos::TakeDamage(int Damage)
 {
-	this->pcProfile->wCurLP -= Damage;
-	if (this->pcProfile->wCurLP <= 0)
-		this->myCCSession->gsf->printError("MY PLAYER HAVE TO DIE\n");
+	this->lastFightTime = timeGetTime();
+	this->setFightMod(true);
+	if (this->pcProfile->wCurLP - Damage <= 0)
+		this->pcProfile->wCurLP = 0;
+	else
+		this->pcProfile->wCurLP -= Damage;
 }
 void		PlayerInfos::UpdateRP()
 {
@@ -43,17 +80,19 @@ void		PlayerInfos::UpdateRP()
 void		PlayerInfos::UpdateLP()
 {
 	if (this->pcProfile->avatarAttribute.wBaseLpRegen <= 0)
-		this->pcProfile->avatarAttribute.wBaseLpRegen = (this->pcProfile->avatarAttribute.wBaseMaxLP * 0.03);
-
-	this->pcProfile->wCurLP += this->pcProfile->avatarAttribute.wBaseLpRegen; // += regen
-	if (this->pcProfile->wCurLP > this->pcProfile->avatarAttribute.wBaseMaxLP)
-		this->pcProfile->wCurLP = this->pcProfile->avatarAttribute.wBaseMaxLP;
+		this->pcProfile->avatarAttribute.wBaseLpRegen = (this->pcProfile->avatarAttribute.wBaseMaxLP * 0.01);
+	else
+	{
+		this->pcProfile->wCurLP += this->pcProfile->avatarAttribute.wBaseLpRegen; // += regen
+		if (this->pcProfile->wCurLP > this->pcProfile->avatarAttribute.wBaseMaxLP)
+			this->pcProfile->wCurLP = this->pcProfile->avatarAttribute.wBaseMaxLP;
+	}
 }
 
 void	    PlayerInfos::UpdateEP()
 {
 	if (this->pcProfile->avatarAttribute.wBaseEpRegen <= 0)
-		this->pcProfile->avatarAttribute.wBaseEpRegen = (this->pcProfile->avatarAttribute.wBaseMaxEP * 0.03);
+		this->pcProfile->avatarAttribute.wBaseEpRegen = (this->pcProfile->avatarAttribute.wBaseMaxEP * 0.01);
 
 	this->pcProfile->wCurEP += this->pcProfile->avatarAttribute.wBaseEpRegen; // += regen
 	if (this->pcProfile->wCurEP > this->pcProfile->avatarAttribute.wBaseMaxEP)
@@ -76,35 +115,50 @@ DWORD WINAPI	Update(LPVOID arg)
 	{
 		while (true)
 		{
-			if (plr->pcProfile->wCurLP < plr->pcProfile->avatarAttribute.wBaseMaxLP || plr->pcProfile->wCurLP > plr->pcProfile->avatarAttribute.wBaseMaxLP)
-				plr->UpdateLP();
-			if (plr->pcProfile->wCurEP < plr->pcProfile->avatarAttribute.wBaseMaxEP || plr->pcProfile->wCurEP > plr->pcProfile->avatarAttribute.wBaseMaxEP)
-				plr->UpdateEP();
-			if ((plr->pcProfile->wCurRP > 0) || plr->getRpBallOk() > 0)
+			if (plr->getDeadMod() == false)
 			{
-				if (plr->pcProfile->wCurRP <= 0)
-					if (plr->getRpBallOk() > 0)
-					{
-						plr->UpdateRpBallOk(1);
-						plr->pcProfile->wCurRP = (plr->pcProfile->avatarAttribute.wBaseMaxRP / plr->getNumberOfRPBall()) - 1;
-					}
-					else;
-				else
-					plr->pcProfile->wCurRP -= 1;
-				plr->UpdateRP();
+				if (plr->getFightMod() == true)
+				{
+					printf("I'm fighting.\n");
+					/*if (timeGetTime() >= plr->lastFightTime + 5000)
+						plr->isfighting = false;*/
+				}
+				else if (plr->getFightMod() == false)
+				{
+					if (plr->pcProfile->wCurLP <= 0)
+						plr->UpdateDeathStatus();
+					else if (plr->pcProfile->wCurLP < plr->pcProfile->avatarAttribute.wBaseMaxLP || plr->pcProfile->wCurLP > plr->pcProfile->avatarAttribute.wBaseMaxLP)
+						plr->UpdateLP();
+					if (plr->pcProfile->wCurEP < plr->pcProfile->avatarAttribute.wBaseMaxEP || plr->pcProfile->wCurEP > plr->pcProfile->avatarAttribute.wBaseMaxEP)
+						plr->UpdateEP();
+				}
+				if ((plr->pcProfile->wCurRP > 0) || plr->getRpBallOk() > 0)
+				{
+					if (plr->pcProfile->wCurRP <= 0)
+						if (plr->getRpBallOk() > 0)
+						{
+							plr->UpdateRpBallOk(1);
+							plr->pcProfile->wCurRP = (plr->pcProfile->avatarAttribute.wBaseMaxRP / plr->getNumberOfRPBall()) - 1;
+						}
+						else;
+					else
+						plr->pcProfile->wCurRP -= 1;
+					plr->UpdateRP();
+				}
+				if (plr->isKaioken == true) /* TEST */
+				{
+					plr->pcProfile->wCurLP -= (500 * plr->sCharState->sCharStateBase.aspectState.sAspectStateDetail.sKaioken.byRepeatingCount);
+					plr->pcProfile->wCurEP -= (500 * plr->sCharState->sCharStateBase.aspectState.sAspectStateDetail.sKaioken.byRepeatingCount);
+				}
+				plr->SendPlayerLifeAndEP();
+				if(timeGetTime() - plr->Getmob_SpawnTime() >= MONSTER_SPAWN_UPDATE_TICK)
+				{
+					app->mob->RunSpawnCheck(NULL, plr->GetPosition(), plr->myCCSession);
+					plr->Setmob_SpawnTime(timeGetTime());
+				}
 			}
-			if (plr->isKaioken == true) /* TEST */
-			{
-				plr->pcProfile->wCurLP -= (500 * plr->sCharState->sCharStateBase.aspectState.sAspectStateDetail.sKaioken.byRepeatingCount);
-				plr->pcProfile->wCurEP -= (500 * plr->sCharState->sCharStateBase.aspectState.sAspectStateDetail.sKaioken.byRepeatingCount);
-			}
-			plr->SendPlayerLifeAndEP();				
+			plr = plr->refreshPointer();
 			Sleep(1000);// And no it's every second, it's only the amount regen is too high (this->pcProfile->avatarAttribute.wBaseMaxEP * 0.03) 3% every seconds it's for make some test this is not the last "release"
-			if(timeGetTime() - plr->Getmob_SpawnTime() >= MONSTER_SPAWN_UPDATE_TICK)
-			{
-				app->mob->RunSpawnCheck(NULL, plr->GetPosition(), plr->myCCSession);
-				plr->Setmob_SpawnTime(timeGetTime());
-			}
 		}
 	}
 	return 0;
