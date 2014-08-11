@@ -114,14 +114,14 @@ void CNtlNetworkProcessor::Run()
 
 		if( THREAD_CLOSE == (ULONG_PTR) netEvent )
 		{
-			NTL_PRINT( PRINT_SYSTEM,"Thread Close" );
+			//NTL_PRINT( PRINT_SYSTEM,"Thread Close" );
 			break;
 		}	
 
 		if( FALSE == bResult )
 		{
-			int rc = GetLastError();
-			NTL_PRINT( PRINT_SYSTEM, "Dispatcher\tGQCS Failed : Err:%d(%s)", rc, NtlGetErrorMessage(rc) );
+			//int rc = GetLastError();
+			//NTL_PRINT( PRINT_SYSTEM, "Dispatcher\tGQCS Failed : Err:%d(%s)", rc, NtlGetErrorMessage(rc) );
 			continue;
 		}
 
@@ -156,7 +156,7 @@ void CNtlNetworkProcessor::Run()
 		case NETEVENT_CLOSE:
 			{
 				static int nCount = 0;
-				NTL_PRINT( 2, "Session[%X] NETEVENT_CLOSE Close Count[%u]", pSession, ++nCount );
+				//NTL_PRINT( 2, "Session[%X] NETEVENT_CLOSE Close Count[%u]", pSession, ++nCount );
 				pSession->OnClose();
 				RELEASE_SESSION( pSession );
 			}

@@ -86,7 +86,7 @@ public:
 			if( FALSE == bResult )
 			{
 				rc = GetLastError();
-				NTL_PRINT(PRINT_SYSTEM, "Session[%X] GQCS Error : Err:%d(%s)", pSession, rc, NtlGetErrorMessage(rc));
+				//NTL_PRINT(PRINT_SYSTEM, "Session[%X] GQCS Error : Err:%d(%s)", pSession, rc, NtlGetErrorMessage(rc));
 				pSession->Close( true );
 			}
 			else
@@ -94,7 +94,7 @@ public:
 				rc = pSession->CompleteIO( pIOContext, dwBytesTransferred );
 				if( NTL_SUCCESS != rc )
 				{
-					NTL_PRINT( PRINT_SYSTEM, "Session[%X] CompleteIO Error : Err:%d(%s)", pSession, rc, NtlGetErrorMessage(rc) );
+					//NTL_PRINT( PRINT_SYSTEM, "Session[%X] CompleteIO Error : Err:%d(%s)", pSession, rc, NtlGetErrorMessage(rc) );
 					pSession->Close();
 				}
 			}

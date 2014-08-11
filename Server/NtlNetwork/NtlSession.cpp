@@ -63,7 +63,7 @@ void CNtlSession::Destroy()
 {
 	if( IsConnected() )
 	{
-		NTL_LOG( LOG_TRAFFIC, "%u,%s,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%d,%d",
+		/*NTL_LOG( LOG_TRAFFIC, "%u,%s,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%u,%d,%d",
 									GetSessionType(), GetRemoteIP(), GetRemotePort(),
 									GetTickCount() - GetConnectTime(),
 									GetBytesTotalSize(),
@@ -77,7 +77,7 @@ void CNtlSession::Destroy()
 									GetRecvQueueMaxUseSize(),
 									GetSendQueueMaxUseSize(),
 									GetRecvBuffer()->GetQueueLoopCount(),
-									GetSendBuffer()->GetQueueLoopCount() );
+									GetSendBuffer()->GetQueueLoopCount() );*/
 	}
 }
 
