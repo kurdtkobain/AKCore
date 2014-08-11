@@ -24,13 +24,13 @@ using namespace std;
 //-----------------------------------------------------------------------------------
 CClientSession::~CClientSession()
 {
-	NTL_PRINT(PRINT_APP, "CClientSession Destructor Called");
+	//NTL_PRINT(PRINT_APP, "CClientSession Destructor Called");
 }
 
 
 int CClientSession::OnAccept()
 {
-	NTL_PRINT( PRINT_APP, "%s", __FUNCTION__ );
+	//NTL_PRINT( PRINT_APP, "%s", __FUNCTION__ );
 
 	return NTL_SUCCESS;
 }
@@ -38,7 +38,7 @@ int CClientSession::OnAccept()
 
 void CClientSession::OnClose()
 {
-	NTL_PRINT( PRINT_APP, "%s", __FUNCTION__ );
+	//NTL_PRINT( PRINT_APP, "%s", __FUNCTION__ );
 	CCharServer * app = (CCharServer*)NtlSfxGetApp();
 }
 
@@ -47,7 +47,7 @@ int CClientSession::OnDispatch(CNtlPacket * pPacket)
 {
 	CCharServer * app = (CCharServer*) NtlSfxGetApp();
 	sNTLPACKETHEADER * pHeader = (sNTLPACKETHEADER *)pPacket->GetPacketData();
-	printf("~~~ opcode %i received ~~~ \n", pHeader->wOpCode);
+	//printf("~~~ opcode %i received ~~~ \n", pHeader->wOpCode);
 
 	switch( pHeader->wOpCode )
 	{

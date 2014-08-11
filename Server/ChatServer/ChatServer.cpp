@@ -11,13 +11,13 @@ using namespace std;
 //-----------------------------------------------------------------------------------
 CClientSession::~CClientSession()
 {
-	NTL_PRINT(PRINT_APP, "CClientSession Destructor Called");
+	//NTL_PRINT(PRINT_APP, "CClientSession Destructor Called");
 }
 
 
 int CClientSession::OnAccept()
 {
-	NTL_PRINT( PRINT_APP, "%s", __FUNCTION__ );
+	//NTL_PRINT( PRINT_APP, "%s", __FUNCTION__ );
 	avatarHandle = AcquireSerialId();
 	return NTL_SUCCESS;
 }
@@ -25,7 +25,7 @@ int CClientSession::OnAccept()
 
 void CClientSession::OnClose()
 {
-	NTL_PRINT( PRINT_APP, "%s", __FUNCTION__ );
+	//NTL_PRINT( PRINT_APP, "%s", __FUNCTION__ );
 	CChatServer * app = (CChatServer*) NtlSfxGetApp();
 	app->RemoveUser(this->GetCharName().c_str());
 }
@@ -36,7 +36,7 @@ int CClientSession::OnDispatch(CNtlPacket * pPacket)
 
 	sNTLPACKETHEADER * pHeader = (sNTLPACKETHEADER *)pPacket->GetPacketData();
 	if(pHeader->wOpCode > 1) {
-		printf("~~~ opcode %i received ~~~ \n", pHeader->wOpCode);
+		//printf("~~~ opcode %i received ~~~ \n", pHeader->wOpCode);
 	}
 	switch( pHeader->wOpCode )
 	{

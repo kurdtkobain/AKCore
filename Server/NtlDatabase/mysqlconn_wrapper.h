@@ -18,7 +18,7 @@
 #include <cppconn/prepared_statement.h>
 
 
-#define	IP_SERVER_ALL "127.0.0.1"
+#define	IP_SERVER_ALL "127.0.01"
 using namespace std;
 
 class MySQLConnWrapper
@@ -39,6 +39,7 @@ class MySQLConnWrapper
         void switchDb(const string& db_name);
         void prepare(const string& query);
         void setInt(const int& num, const int& data);
+		void setFloat(const int& num, const float& data);
         void setString(const int& num, const string& data);
         void execute(const string& query = "");
         bool fetch();
