@@ -183,11 +183,11 @@ void		GsFunctionsClass::SendItemEffect(CClientSession * pSession, TBLIDX effectI
 	switch (pEffectTbl->effectCode)
 	{
 		case ACTIVE_DIRECT_HEAL:{
-			pSession->plr->pcProfile->wCurLP += itemUseTbl->afSystem_Effect_Value[0];
+			pSession->plr->pcProfile->wCurLP += (WORD)itemUseTbl->afSystem_Effect_Value[0];
 		}
 			break;
 		case ACTIVE_EP_UP:{
-			pSession->plr->pcProfile->wCurEP += itemUseTbl->afSystem_Effect_Value[0];
+			pSession->plr->pcProfile->wCurEP += (WORD)itemUseTbl->afSystem_Effect_Value[0];
 		}
 			break;
 		case ACTIVE_TELEPORT_BIND:{
@@ -198,7 +198,7 @@ void		GsFunctionsClass::SendItemEffect(CClientSession * pSession, TBLIDX effectI
 			DWORD totalTime = itemUseTbl->dwKeepTimeInMilliSecs;
 			while (totalTime != 1000)
 			{
-				pSession->plr->pcProfile->wCurEP += itemUseTbl->afSystem_Effect_Value[0];
+				pSession->plr->pcProfile->wCurEP += (WORD)itemUseTbl->afSystem_Effect_Value[0];
 				pEffectApply->effectTblidx = pEffectTbl->tblidx;
 				pEffectApply->fActualArgument1 = itemUseTbl->afSystem_Effect_Value[0];
 				pEffectApply->fActualArgument2 = itemUseTbl->afSystem_Effect_Value[1];
@@ -220,7 +220,7 @@ void		GsFunctionsClass::SendItemEffect(CClientSession * pSession, TBLIDX effectI
 			DWORD totalTime = itemUseTbl->dwKeepTimeInMilliSecs;
 			while (totalTime != 1000)
 			{
-				pSession->plr->pcProfile->wCurLP += itemUseTbl->afSystem_Effect_Value[0];
+				pSession->plr->pcProfile->wCurLP += (WORD)itemUseTbl->afSystem_Effect_Value[0];
 				pEffectApply->effectTblidx = pEffectTbl->tblidx;
 				pEffectApply->fActualArgument1 = itemUseTbl->afSystem_Effect_Value[0];
 				pEffectApply->fActualArgument2 = itemUseTbl->afSystem_Effect_Value[1];

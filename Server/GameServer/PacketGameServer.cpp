@@ -340,7 +340,6 @@ void CClientSession::SendAvatarSkillInfo(CNtlPacket * pPacket, CGameServer * app
 		sSKILL_TBLDAT* pSkillData = reinterpret_cast<sSKILL_TBLDAT*>(pSkillTable->FindData(app->db->getInt("skill_id")));
 		res->aSkillInfo[i].bIsRpBonusAuto = app->db->getBoolean("RpBonusAuto");
 		res->aSkillInfo[i].byRpBonusType = app->db->getInt("RpBonusType");		
-		this->gsf->DebugSkillType(pSkillData->bySkill_Active_Type);
  		res->aSkillInfo[i].bySlotId = app->db->getInt("SlotID");
 		res->aSkillInfo[i].dwTimeRemaining = app->db->getInt("TimeRemaining");
 		res->aSkillInfo[i].nExp = app->db->getInt("Exp");
@@ -2154,7 +2153,7 @@ void CClientSession::SendCharActionAttack(RwUInt32 uiSerialId, RwUInt32 m_uiTarg
 	if (this->plr->pcProfile->byLevel <= 5)
 		formula = rand() % 25 + 5;
 	else
-	formula = (this->plr->pcProfile->avatarAttribute.byLastStr * this->plr->pcProfile->byLevel) * .15 ;
+	formula = (this->plr->pcProfile->avatarAttribute.byLastStr * this->plr->pcProfile->byLevel) * .08 ;
 	res->wAttackResultValue = formula;
 	res->fReflectedDamage = 0;
 	res->vShift.x = this->plr->GetPosition().x;
@@ -2590,13 +2589,6 @@ void CGameServer::UpdateClient(CNtlPacket * pPacket, CClientSession * pSession)
 			//app->pSession->SendCharActionAttack(pBattleData->uiSerialId, pBattleData->m_uiTargetSerialId, pPacket);
 			pBattleData->dwCurrTime = timeGetTime();
 		}
-	}
-
-// MAKE MOBS MOVE
-	if(timeGetTime() - app->mob->last_mobMove >= MONSTER_MOVE_UPDATE_TICK)
-	{
-		//app->mob->MonsterRandomWalk(NULL);
-		//app->mob->last_mobMove = timeGetTime();
 	}
 }
 

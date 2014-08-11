@@ -12,21 +12,20 @@ using namespace std;
 //-----------------------------------------------------------------------------------
 CClientSession::~CClientSession()
 {
-	NTL_PRINT(PRINT_APP, "CClientSession Destructor Called");
+	//NTL_PRINT(PRINT_APP, "CClientSession Destructor Called");
 }
 
 
 int CClientSession::OnAccept()
 {
-	NTL_PRINT( PRINT_APP, "%s", __FUNCTION__ );
+	//NTL_PRINT( PRINT_APP, "%s", __FUNCTION__ );
 	return NTL_SUCCESS;
-
 }
 
 
 void CClientSession::OnClose()
 {
-	NTL_PRINT( PRINT_APP, "%s", __FUNCTION__ );
+	//NTL_PRINT( PRINT_APP, "%s", __FUNCTION__ );
 	CGameServer * app = (CGameServer*)NtlSfxGetApp();
 }
 
@@ -1611,9 +1610,11 @@ bool CGameServer::CreateTableContainer(int byLoadMethod)
     bool bResult = FALSE;
     bResult = g_pTableContainer->Create(flagManager, (char*)str.c_str(), &fileNameList, eLoadMethod, GetACP(), NULL);
 	g_pTableContainer->SaveToFile(flagManager, &fileNameList, false); 
-	gs->printOk("==== LOADING GAMETABLES COMPLETE ====");                                                                                              
+	gs->printOk("==== LOADING GAMETABLES COMPLETE ====");
+	gs->printOk("==== LOADING MOBS / NPC ... ====");
 	mob->Create();
 	delete gs;
+	gs->printOk("==== LOADING MOBS / NPC COMPLETE ====");
 	return bResult;
 }
 void	CleanDatabase()

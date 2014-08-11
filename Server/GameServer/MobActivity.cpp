@@ -48,6 +48,11 @@ bool		MobActivity::Create()
 			cr->target = 0;
 			cr->curPos = cr->Spawn_Loc;
 			cr->isAggro = false;
+			cr->last_mobMove = timeGetTime();
+			cr->Basic_aggro_point = pMOBTblData->byScan_Range;
+			cr->Attack_range = pMOBTblData->fAttack_Range;
+			cr->MaxchainAttackCount = pMOBTblData->byAttack_Animation_Quantity;
+			cr->chainAttackCount = 0;
 			m_monsterList.push_back(cr);
 		}
 	}
@@ -113,6 +118,36 @@ void			MobActivity::CreatureData::MoveToPlayer(PlayerInfos *plr)
 	this->curPos.y = plr->GetPosition().y;
 	this->curPos.z = plr->GetPosition().z - 1;
 }
+void	MobActivity::CreatureData::MoveToRand()
+{
+	CGameServer * app = (CGameServer*) NtlSfxGetApp();
+	CNtlPacket packet(sizeof(sGU_UPDATE_CHAR_STATE));
+	sGU_UPDATE_CHAR_STATE * res = (sGU_UPDATE_CHAR_STATE *)packet.GetPacketData();
+       
+	res->wOpCode = GU_UPDATE_CHAR_STATE;
+	res->handle = this->MonsterSpawnID;
+	res->sCharState.sCharStateBase.bFightMode = true;
+	res->sCharState.sCharStateBase.byStateID = CHARSTATE_DESTMOVE;
+	res->sCharState.sCharStateDetail.sCharStateDestMove.byDestLocCount = 1;
+	if (rand() % 10 >= 5)
+	{
+		res->sCharState.sCharStateDetail.sCharStateDestMove.avDestLoc[0].x = this->curPos.x + rand() % 3;
+		res->sCharState.sCharStateDetail.sCharStateDestMove.avDestLoc[0].y = this->curPos.y;
+		res->sCharState.sCharStateDetail.sCharStateDestMove.avDestLoc[0].z = this->curPos.z + rand() % 3;
+	}
+	else
+	{
+		res->sCharState.sCharStateDetail.sCharStateDestMove.avDestLoc[0].x = this->curPos.x - rand() % 3;
+		res->sCharState.sCharStateDetail.sCharStateDestMove.avDestLoc[0].y = this->curPos.y;
+		res->sCharState.sCharStateDetail.sCharStateDestMove.avDestLoc[0].z = this->curPos.z - rand() % 3;
+	}
+	res->sCharState.sCharStateDetail.sCharStateDestMove.avDestLoc[1].x = this->Spawn_Loc.x;
+	res->sCharState.sCharStateDetail.sCharStateDestMove.avDestLoc[1].y = this->Spawn_Loc.y;
+	res->sCharState.sCharStateDetail.sCharStateDestMove.avDestLoc[1].z = this->Spawn_Loc.z;
+	res->sCharState.sCharStateDetail.sCharStateDestMove.bHaveSecondDestLoc = true;
+	packet.SetPacketLen( sizeof(sGU_UPDATE_CHAR_STATE) );
+	app->UserBroadcast(&packet);
+}
 DWORD WINAPI	Aggro(LPVOID arg)
 {
 	CGameServer * app = (CGameServer*) NtlSfxGetApp();
@@ -140,26 +175,35 @@ DWORD WINAPI	Aggro(LPVOID arg)
 					float distanceToSpawn = app->mob->Distance(myCurPos, SpawnPos);
 					if (mob->IsDead == false && plr->getDeadMod() == false)
 					{
-						if (distance < 10 && distance > 2 && mob->isAggro == false)
+						if (distance < mob->Basic_aggro_point && distance > mob->Attack_range && mob->isAggro == false)
 						{
 							mob->isAggro = true;
 							mob->target = plr->GetAvatarandle();
 							mob->MoveToPlayer(plr);
 							haveAttack = false;
 						}
-						else if (mob->isAggro == true && plr->GetAvatarandle() == mob->target && distance > 2 && distance < 10)
+						else if (mob->isAggro == true && plr->GetAvatarandle() == mob->target && distance > mob->Attack_range && distance < mob->Basic_aggro_point)
 							mob->MoveToPlayer(plr);
-						else if (distance <= 2 && mob->isAggro == true && plr->GetAvatarandle() == mob->target)
+						else if (distance <= mob->Attack_range && mob->isAggro == true && plr->GetAvatarandle() == mob->target)
 						{
+							if (mob->chainAttackCount >= mob->MaxchainAttackCount)
+								mob->chainAttackCount = 0;
 							haveAttack = true;
 							mob->Attack(plr, app);
 						}
-						else if (distanceToSpawn > 20 && mob->isAggro == true && plr->GetAvatarandle() == mob->target)
+						else if (distanceToSpawn > mob->Basic_aggro_point + 10 && mob->isAggro == true && plr->GetAvatarandle() == mob->target)
 						{
 							haveAttack = false;
 							mob->ResetMob();
 							mob->MoveToSpawn();
 						}
+						else if (mob->isAggro == false)
+							if (rand() % 15 > 12)
+								if(timeGetTime() - mob->last_mobMove >= MONSTER_MOVE_UPDATE_TICK)
+								{
+									mob->last_mobMove = timeGetTime();
+									mob->MoveToRand();
+								}
 					}
 					if (mob->IsDead == false && plr->getDeadMod() == true)
 					{
@@ -172,7 +216,7 @@ DWORD WINAPI	Aggro(LPVOID arg)
 					}
 				}
 			}
-			Sleep(1000);
+			Sleep(1500);
 		}
 	}
 	return 0;
@@ -180,7 +224,8 @@ DWORD WINAPI	Aggro(LPVOID arg)
 void		MobActivity::CreatureData::KillThreadAggro()
 {
 	if (TerminateThread(this->hThreadAggro, 1) == 0)
-		printf("Can't kill thread mob aggro\n");
+		if (this->hThreadAggro == NULL)
+			printf("Can't kill thread mob aggro because already killed\n");
 	if (this->hThreadAggro)
 		CloseHandle(this->hThreadAggro);
 }
@@ -202,17 +247,17 @@ void		MobActivity::CreatureData::Attack(PlayerInfos *plr, CGameServer *app)
 	res->hSubject = this->MonsterSpawnID;
 	res->hTarget = plr->GetAvatarandle();
 	res->dwLpEpEventId = 255;
-	res->bChainAttack = false;
 	res->byBlockedAction = 255;
 	float formula = 0;
 	if (this->Level <= 5)
 		formula = rand() % 25 + 5;
 	else
-		formula = (this->Str * this->Level) * .2 + rand() % 200;
+		formula = (this->Str * this->Level) * .08;
 	res->wAttackResultValue = formula;
 	res->fReflectedDamage = 0;
 	res->vShift = plr->GetPosition();
-	res->byAttackSequence = 1;
+	this->chainAttackCount += 1;
+	res->byAttackSequence = this->chainAttackCount;
 	res->bChainAttack = true;
 	res->byAttackResult = BATTLE_ATTACK_RESULT_HIT;
 	packet.SetPacketLen( sizeof(sGU_CHAR_ACTION_ATTACK) );

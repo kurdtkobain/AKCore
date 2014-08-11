@@ -154,12 +154,16 @@ typedef struct _CreatureData
 	HANDLE			hThreadAggro;
 	DWORD			dwThreadIdAggro;
 	void			ResetMob();
+	void			MoveToRand();
+	DWORD			last_mobMove;
+	DWORD			last_mobAttack;
+	BYTE			chainAttackCount;
+	BYTE			MaxchainAttackCount;
 }CreatureData;
 typedef std::list<CreatureData*> MONSTERLIST;
 typedef MONSTERLIST::iterator MONSTERLISTIT;
 MONSTERLIST					m_monsterList;
 CGameServer*				app;
-DWORD						last_mobMove;
 CreatureData*				GetMobByHandle(RwUInt32 m_uiTargetSerialId);
 };
 

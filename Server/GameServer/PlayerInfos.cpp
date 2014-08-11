@@ -80,7 +80,7 @@ void		PlayerInfos::UpdateRP()
 void		PlayerInfos::UpdateLP()
 {
 	if (this->pcProfile->avatarAttribute.wBaseLpRegen <= 0)
-		this->pcProfile->avatarAttribute.wBaseLpRegen = (this->pcProfile->avatarAttribute.wBaseMaxLP * 0.01);
+		this->pcProfile->avatarAttribute.wBaseLpRegen = (WORD)(this->pcProfile->avatarAttribute.wBaseMaxLP * 0.01);
 	else
 	{
 		this->pcProfile->wCurLP += this->pcProfile->avatarAttribute.wBaseLpRegen; // += regen
@@ -92,7 +92,7 @@ void		PlayerInfos::UpdateLP()
 void	    PlayerInfos::UpdateEP()
 {
 	if (this->pcProfile->avatarAttribute.wBaseEpRegen <= 0)
-		this->pcProfile->avatarAttribute.wBaseEpRegen = (this->pcProfile->avatarAttribute.wBaseMaxEP * 0.01);
+		this->pcProfile->avatarAttribute.wBaseEpRegen = (WORD)(this->pcProfile->avatarAttribute.wBaseMaxEP * 0.01);
 
 	this->pcProfile->wCurEP += this->pcProfile->avatarAttribute.wBaseEpRegen; // += regen
 	if (this->pcProfile->wCurEP > this->pcProfile->avatarAttribute.wBaseMaxEP)
@@ -185,11 +185,11 @@ void		PlayerInfos::SavePlayerData()
 	char* save_query6 = "UPDATE characters SET GuardRate=?, SkillDamageBlockModeSuccessRate=?, CurseBlockModeSuccessRate=?, KnockdownBlockModeSuccessRate=?, HtbBlockModeSuccessRate=?, SitDownLpRegenBonusRate=?, SitDownEpRegenBonusRate=?, PhysicalCriticalDamageBonusRate=?, EnergyCriticalDamageBonusRate=?, ItemUpgradeBonusRate=?, ItemUpgradeBreakBonusRate=?, CurLP=?, CurEP=?, CurRP=? WHERE CharID = ?";
 
 	this->db->prepare(save_query);
-	this->db->setInt(1, this->vCurLoc.x);
-	this->db->setInt(2, this->vCurLoc.y);
-	this->db->setInt(3, this->vCurLoc.z);
-	this->db->setInt(4, this->vCurDir.x);
-	this->db->setInt(5, this->vCurDir.z);
+	this->db->setFloat(1, this->vCurLoc.x);
+	this->db->setFloat(2, this->vCurLoc.y);
+	this->db->setFloat(3, this->vCurLoc.z);
+	this->db->setFloat(4, this->vCurDir.x);
+	this->db->setFloat(5, this->vCurDir.z);
 	this->db->setInt(6, this->pcProfile->byLevel);
 	this->db->setInt(7, this->pcProfile->dwCurExp);
 	this->db->setInt(8, this->pcProfile->dwMaxExpInThisLevel);
@@ -269,62 +269,62 @@ void		PlayerInfos::SavePlayerData()
 	this->db->prepare(save_query4);
 	this->db->setInt(1, this->pcProfile->avatarAttribute.wBaseEnergyCriticalRate);
 	this->db->setInt(2, this->pcProfile->avatarAttribute.wLastEnergyCriticalRate);
-	this->db->setInt(3, this->pcProfile->avatarAttribute.fLastRunSpeed);
+	this->db->setFloat(3, this->pcProfile->avatarAttribute.fLastRunSpeed);
 	this->db->setInt(4, this->pcProfile->avatarAttribute.wBaseAttackSpeedRate);
-	this->db->setInt(5, this->pcProfile->avatarAttribute.fBaseAttackRange);
-	this->db->setInt(6, this->pcProfile->avatarAttribute.fLastAttackRange);
-	this->db->setInt(7, this->pcProfile->avatarAttribute.fCastingTimeChangePercent);
-	this->db->setInt(8, this->pcProfile->avatarAttribute.fCoolTimeChangePercent);
-	this->db->setInt(9, this->pcProfile->avatarAttribute.fKeepTimeChangePercent);
-	this->db->setInt(10, this->pcProfile->avatarAttribute.fDotValueChangePercent);
-	this->db->setInt(11, this->pcProfile->avatarAttribute.fDotTimeChangeAbsolute);
-	this->db->setInt(12, this->pcProfile->avatarAttribute.fRequiredEpChangePercent);
-	this->db->setInt(13, this->pcProfile->avatarAttribute.fHonestOffence);
-	this->db->setInt(14, this->pcProfile->avatarAttribute.fHonestDefence);
-	this->db->setInt(15, this->pcProfile->avatarAttribute.fStrangeOffence);
-	this->db->setInt(16, this->pcProfile->avatarAttribute.fStrangeDefence);
-	this->db->setInt(17, this->pcProfile->avatarAttribute.fWildOffence);
-	this->db->setInt(18, this->pcProfile->avatarAttribute.fWildDefence);
+	this->db->setFloat(5, this->pcProfile->avatarAttribute.fBaseAttackRange);
+	this->db->setFloat(6, this->pcProfile->avatarAttribute.fLastAttackRange);
+	this->db->setFloat(7, this->pcProfile->avatarAttribute.fCastingTimeChangePercent);
+	this->db->setFloat(8, this->pcProfile->avatarAttribute.fCoolTimeChangePercent);
+	this->db->setFloat(9, this->pcProfile->avatarAttribute.fKeepTimeChangePercent);
+	this->db->setFloat(10, this->pcProfile->avatarAttribute.fDotValueChangePercent);
+	this->db->setFloat(11, this->pcProfile->avatarAttribute.fDotTimeChangeAbsolute);
+	this->db->setFloat(12, this->pcProfile->avatarAttribute.fRequiredEpChangePercent);
+	this->db->setFloat(13, this->pcProfile->avatarAttribute.fHonestOffence);
+	this->db->setFloat(14, this->pcProfile->avatarAttribute.fHonestDefence);
+	this->db->setFloat(15, this->pcProfile->avatarAttribute.fStrangeOffence);
+	this->db->setFloat(16, this->pcProfile->avatarAttribute.fStrangeDefence);
+	this->db->setFloat(17, this->pcProfile->avatarAttribute.fWildOffence);
+	this->db->setFloat(18, this->pcProfile->avatarAttribute.fWildDefence);
 	this->db->setInt(19, this->pcProfile->charId);
 	this->db->execute();
 
 	//4 DONE
 	this->db->prepare(save_query5);
-	this->db->setInt(1, this->pcProfile->avatarAttribute.fEleganceOffence);
-	this->db->setInt(2, this->pcProfile->avatarAttribute.fEleganceDefence);
-	this->db->setInt(3, this->pcProfile->avatarAttribute.fFunnyDefence);
-	this->db->setInt(4, this->pcProfile->avatarAttribute.fFunnyOffence);
-	this->db->setInt(5, this->pcProfile->avatarAttribute.fFunnyDefence);
+	this->db->setFloat(1, this->pcProfile->avatarAttribute.fEleganceOffence);
+	this->db->setFloat(2, this->pcProfile->avatarAttribute.fEleganceDefence);
+	this->db->setFloat(3, this->pcProfile->avatarAttribute.fFunnyDefence);
+	this->db->setFloat(4, this->pcProfile->avatarAttribute.fFunnyOffence);
+	this->db->setFloat(5, this->pcProfile->avatarAttribute.fFunnyDefence);
 	this->db->setInt(6, this->pcProfile->avatarAttribute.wParalyzeToleranceRate);
 	this->db->setInt(7, this->pcProfile->avatarAttribute.wTerrorToleranceRate);
 	this->db->setInt(8, this->pcProfile->avatarAttribute.wConfuseToleranceRate);
 	this->db->setInt(9, this->pcProfile->avatarAttribute.wStoneToleranceRate);
 	this->db->setInt(10, this->pcProfile->avatarAttribute.wCandyToleranceRate);
-	this->db->setInt(11, this->pcProfile->avatarAttribute.fParalyzeKeepTimeDown);
-	this->db->setInt(12, this->pcProfile->avatarAttribute.fTerrorKeepTimeDown);
-	this->db->setInt(13, this->pcProfile->avatarAttribute.fConfuseKeepTimeDown);
-	this->db->setInt(14, this->pcProfile->avatarAttribute.fStoneKeepTimeDown);
-	this->db->setInt(15, this->pcProfile->avatarAttribute.fCandyKeepTimeDown);
-	this->db->setInt(16, this->pcProfile->avatarAttribute.fBleedingKeepTimeDown);
-	this->db->setInt(17, this->pcProfile->avatarAttribute.fPoisonKeepTimeDown);
-	this->db->setInt(18, this->pcProfile->avatarAttribute.fStomachacheKeepTimeDown);
-	this->db->setInt(19, this->pcProfile->avatarAttribute.fCriticalBlockSuccessRate);
+	this->db->setFloat(11, this->pcProfile->avatarAttribute.fParalyzeKeepTimeDown);
+	this->db->setFloat(12, this->pcProfile->avatarAttribute.fTerrorKeepTimeDown);
+	this->db->setFloat(13, this->pcProfile->avatarAttribute.fConfuseKeepTimeDown);
+	this->db->setFloat(14, this->pcProfile->avatarAttribute.fStoneKeepTimeDown);
+	this->db->setFloat(15, this->pcProfile->avatarAttribute.fCandyKeepTimeDown);
+	this->db->setFloat(16, this->pcProfile->avatarAttribute.fBleedingKeepTimeDown);
+	this->db->setFloat(17, this->pcProfile->avatarAttribute.fPoisonKeepTimeDown);
+	this->db->setFloat(18, this->pcProfile->avatarAttribute.fStomachacheKeepTimeDown);
+	this->db->setFloat(19, this->pcProfile->avatarAttribute.fCriticalBlockSuccessRate);
 	this->db->setInt(20, this->pcProfile->charId);
 	this->db->execute();
 
 	//5 DONE
 	this->db->prepare(save_query6);
 	this->db->setInt(1, this->pcProfile->avatarAttribute.wGuardRate);
-	this->db->setInt(2, this->pcProfile->avatarAttribute.fSkillDamageBlockModeSuccessRate);
-	this->db->setInt(3, this->pcProfile->avatarAttribute.fCurseBlockModeSuccessRate);
-	this->db->setInt(4, this->pcProfile->avatarAttribute.fKnockdownBlockModeSuccessRate);
-	this->db->setInt(5, this->pcProfile->avatarAttribute.fHtbBlockModeSuccessRate);
-	this->db->setInt(6, this->pcProfile->avatarAttribute.fSitDownLpRegenBonusRate);
-	this->db->setInt(7, this->pcProfile->avatarAttribute.fSitDownEpRegenBonusRate);
-	this->db->setInt(8, this->pcProfile->avatarAttribute.fPhysicalCriticalDamageBonusRate);
-	this->db->setInt(9, this->pcProfile->avatarAttribute.fEnergyCriticalDamageBonusRate);
-	this->db->setInt(10, this->pcProfile->avatarAttribute.fItemUpgradeBonusRate);
-	this->db->setInt(11, this->pcProfile->avatarAttribute.fItemUpgradeBreakBonusRate);
+	this->db->setFloat(2, this->pcProfile->avatarAttribute.fSkillDamageBlockModeSuccessRate);
+	this->db->setFloat(3, this->pcProfile->avatarAttribute.fCurseBlockModeSuccessRate);
+	this->db->setFloat(4, this->pcProfile->avatarAttribute.fKnockdownBlockModeSuccessRate);
+	this->db->setFloat(5, this->pcProfile->avatarAttribute.fHtbBlockModeSuccessRate);
+	this->db->setFloat(6, this->pcProfile->avatarAttribute.fSitDownLpRegenBonusRate);
+	this->db->setFloat(7, this->pcProfile->avatarAttribute.fSitDownEpRegenBonusRate);
+	this->db->setFloat(8, this->pcProfile->avatarAttribute.fPhysicalCriticalDamageBonusRate);
+	this->db->setFloat(9, this->pcProfile->avatarAttribute.fEnergyCriticalDamageBonusRate);
+	this->db->setFloat(10, this->pcProfile->avatarAttribute.fItemUpgradeBonusRate);
+	this->db->setFloat(11, this->pcProfile->avatarAttribute.fItemUpgradeBreakBonusRate);
 	this->db->setInt(12, this->pcProfile->wCurLP);
 	this->db->setInt(13, this->pcProfile->wCurEP);
 	this->db->setInt(14, this->pcProfile->wCurRP);
@@ -420,7 +420,7 @@ void		PlayerInfos::calculeMyStat(CGameServer * app)
 		if (pItemData->fAttack_Range_Bonus < 65535 && pItemData->fAttack_Range_Bonus > 0)
 		{
 			this->pcProfile->avatarAttribute.fLastAttackRange += pItemData->fAttack_Range_Bonus;
-			UpdateAttribute(this->GetAvatarandle(), ATTRIBUTE_TO_UPDATE_ATTACK_RANGE_LAST, (this->pcProfile->avatarAttribute.fLastAttackRange + pItemData->fAttack_Range_Bonus));
+			UpdateAttribute(this->GetAvatarandle(), ATTRIBUTE_TO_UPDATE_ATTACK_RANGE_LAST, (RwUInt32)(this->pcProfile->avatarAttribute.fLastAttackRange + pItemData->fAttack_Range_Bonus));
 		}
 		pItemData->dwPhysical_OffenceUpgrade;
 		pItemData->dwPhysical_DefenceUpgrade;
