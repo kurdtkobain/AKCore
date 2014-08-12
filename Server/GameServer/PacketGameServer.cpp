@@ -3684,12 +3684,13 @@ void CClientSession::SendPlayerLevelUpCheck(CGameServer * app, int exp)
 	packet.SetPacketLen(sizeof(sGU_UPDATE_CHAR_EXP));
 	g_pApp->Send(this->GetHandle(), &packet);
 }
+
 void CClientSession::SendPlayerQuestReq(CNtlPacket * pPacket, CGameServer * app)
 {
+	printf("--- UG_TS_CONFIRM_STEP_REQ --- \n");
 	sUG_TS_CONFIRM_STEP_REQ* req = (sUG_TS_CONFIRM_STEP_REQ *)pPacket->GetPacketData();
 	CNtlPacket packet(sizeof(sGU_TS_CONFIRM_STEP_RES));
 	sGU_TS_CONFIRM_STEP_RES * res = (sGU_TS_CONFIRM_STEP_RES *)packet.GetPacketData();
-
 	req->byEventType;
 
 	res->byTsType = req->byTsType;
@@ -3700,13 +3701,14 @@ void CClientSession::SendPlayerQuestReq(CNtlPacket * pPacket, CGameServer * app)
 	res->wOpCode = GU_TS_CONFIRM_STEP_RES;
 	res->wResultCode = RESULT_SUCCESS;
 
-	if (res->tcNextId == 255)
+	if (res->tcNextId == 254)
 	{
 		this->gsf->printError("We need to add the reward");
 		// should be the reward because when we rewarsd a quest res->tcNextId is all the time 255
 		// WE NEED THE CORRECT TBLIDX FOR THE REWARD
-
-		/*sQUEST_REWARD_TBLDAT *rew = (sQUEST_REWARD_TBLDAT*)app->g_pTableContainer->GetQuestRewardTable()->FindData(res->tId);
+		CQuestRewardTable* pQstRewTable = app->g_pTableContainer->GetQuestRewardTable();
+		//Poor way to get Reward TBLIDX
+		sQUEST_REWARD_TBLDAT *rew = reinterpret_cast<sQUEST_REWARD_TBLDAT*>(pQstRewTable->FindData(((res->tId * 100) + 1)));
 		printf("%d %d %d %d\n%d %d %d %d\n%d\n",rew->arsDefRwd[0], rew->arsDefRwd[1], rew->arsDefRwd[2], rew->arsDefRwd[3], rew->arsSelRwd[0], rew->arsSelRwd[1], rew->arsSelRwd[2], rew->arsSelRwd[3], rew->tblidx);
 		for(int i = 0; i <= QUEST_REWARD_DEF_MAX_CNT; i++ )
 		{
@@ -3714,70 +3716,164 @@ void CClientSession::SendPlayerQuestReq(CNtlPacket * pPacket, CGameServer * app)
 			{
 				case eREWARD_TYPE_NORMAL_ITEM:
 				{
-					rew->arsDefRwd[i].dwRewardIdx;
-					rew->arsDefRwd[i].dwRewardVal;
-					gsf->printOk("Reward Normal Item");
+					sITEM_TBLDAT * pItemData = reinterpret_cast<sITEM_TBLDAT*>(app->g_pTableContainer->GetItemTable()->FindData(rew->arsDefRwd[i].dwRewardIdx));
+
+					CNtlPacket packet0(sizeof(sGU_ITEM_PICK_RES));
+					sGU_ITEM_PICK_RES * res0 = (sGU_ITEM_PICK_RES*)packet0.GetPacketData();
+					res0->itemTblidx = pItemData->tblidx;
+					res0->wOpCode = GU_ITEM_PICK_RES;
+					res0->wResultCode = GAME_SUCCESS;
+					int ItemPos = 0;
+
+					app->db->prepare("SELECT * FROM items WHERE owner_ID = ? AND place=1 ORDER BY pos ASC");
+					app->db->setInt(1, this->plr->pcProfile->charId);
+					app->db->execute();
+					int k = 0;
+					//Need a right loop 
+					while (app->db->fetch())
+					{
+						if (app->db->getInt("pos") < NTL_MAX_ITEM_SLOT)
+							ItemPos = app->db->getInt("pos") + 1;
+						else
+							ItemPos = app->db->getInt("pos");
+						k++;
+					}
+					app->db->prepare("CALL BuyItemFromShop (?,?,?,?,?, @unique_iID)");//this basicaly a insert into...
+					app->db->setInt(1, pItemData->tblidx);
+					app->db->setInt(2, this->plr->pcProfile->charId);
+					app->db->setInt(3, ItemPos);
+					app->db->setInt(4, pItemData->byRank);
+					app->db->setInt(5, pItemData->byDurability);
+					app->db->execute();
+					app->db->execute("SELECT @unique_iID");
+					app->db->fetch();
+
+					CNtlPacket packet01(sizeof(sGU_ITEM_CREATE));
+					sGU_ITEM_CREATE * res01 = (sGU_ITEM_CREATE *)packet01.GetPacketData();
+
+					res01->bIsNew = true;
+					res01->wOpCode = GU_ITEM_CREATE;
+					res01->handle = app->db->getInt("@unique_iID");
+					res01->sItemData.charId = this->GetavatarHandle();
+					res01->sItemData.itemNo = pItemData->tblidx;
+					res01->sItemData.byStackcount = rew->arsDefRwd[i].dwRewardVal;
+					res01->sItemData.itemId = app->db->getInt("@unique_iID");
+					res01->sItemData.byPlace = 1;
+					res01->sItemData.byPosition = ItemPos;
+					res01->sItemData.byCurrentDurability = pItemData->byDurability;
+					res01->sItemData.byRank = pItemData->byRank;
+
+					packet01.SetPacketLen(sizeof(sGU_ITEM_CREATE));
+					packet0.SetPacketLen(sizeof(sGU_ITEM_PICK_RES));
+					g_pApp->Send(this->GetHandle(), &packet01);
+					g_pApp->Send(this->GetHandle(), &packet0);
 				}
+					break;
 				case eREWARD_TYPE_QUEST_ITEM:
 				{
 					rew->arsDefRwd[i].dwRewardIdx;
 					rew->arsDefRwd[i].dwRewardVal;
 					gsf->printOk("Reward Quest Item");
 				}
+					break;
 				case eREWARD_TYPE_EXP:
 				{
 					rew->arsDefRwd[i].dwRewardIdx;
 					rew->arsDefRwd[i].dwRewardVal;
+					CNtlPacket packet2(sizeof(sGU_UPDATE_CHAR_EXP));
+					sGU_UPDATE_CHAR_EXP * response = (sGU_UPDATE_CHAR_EXP*)packet2.GetPacketData();
+
+					response->dwAcquisitionExp = rew->arsDefRwd[i].dwRewardVal;
+					response->dwCurExp = this->plr->pcProfile->dwCurExp;
+					response->dwIncreasedExp = rew->arsDefRwd[i].dwRewardVal + rand() % this->plr->pcProfile->byLevel * 2;
+					response->dwBonusExp = (rew->arsDefRwd[i].dwRewardVal - response->dwIncreasedExp);
+					response->handle = this->plr->GetAvatarandle();
+					response->wOpCode = GU_UPDATE_CHAR_EXP;
+					this->plr->pcProfile->dwCurExp += response->dwIncreasedExp;
+					packet2.SetPacketLen(sizeof(sGU_UPDATE_CHAR_EXP));
+					g_pApp->Send(this->GetHandle(), &packet2);
+
 					gsf->printOk("Reward Experience");
 				}
+					break;
 				case eREWARD_TYPE_SKILL:
 				{
 					rew->arsDefRwd[i].dwRewardIdx;
 					rew->arsDefRwd[i].dwRewardVal;
 					gsf->printOk("Reward Skill");
 				}
+					break;
 				case eREWARD_TYPE_ZENY:
-				{
-					rew->arsDefRwd[i].dwRewardIdx;
-					rew->arsDefRwd[i].dwRewardVal;
+				{					
+					CNtlPacket packet4(sizeof(sGU_ZENNY_PICK_RES));
+					sGU_ZENNY_PICK_RES* res4 = (sGU_ZENNY_PICK_RES*)packet4.GetPacketData();
+					
+					res4->bSharedInParty = false; //this->plr->isInParty();
+					res4->dwBonusZenny = 0;					
+					this->plr->pcProfile->dwZenny += (rew->arsDefRwd[i].dwRewardVal + res4->dwBonusZenny);
+					res4->dwZenny = this->plr->pcProfile->dwZenny;
+					res4->dwAcquisitionZenny = rew->arsDefRwd[i].dwRewardVal + res4->dwBonusZenny;
+					res4->wResultCode = ZENNY_CHANGE_TYPE_REWARD;
+					app->qry->SetPlusMoney(this->plr->pcProfile->charId, res4->dwAcquisitionZenny);
+					res4->wOpCode = GU_ZENNY_PICK_RES;
+
+					CNtlPacket packetUpd(sizeof(sGU_UPDATE_CHAR_ZENNY));
+					sGU_UPDATE_CHAR_ZENNY * res5 = (sGU_UPDATE_CHAR_ZENNY *)packetUpd.GetPacketData();
+					res5->dwZenny = this->plr->pcProfile->dwZenny;//by analazying this is the ammount...				
+					res5->bIsNew = true;
+					res5->handle = this->GetavatarHandle();
+					res5->byChangeType = ZENNY_CHANGE_TYPE_REWARD;//never mind
+					res5->wOpCode = GU_UPDATE_CHAR_ZENNY;
+					packet4.SetPacketLen(sizeof(sGU_ZENNY_PICK_RES));
+					packetUpd.SetPacketLen(sizeof(sGU_UPDATE_CHAR_ZENNY));
+					g_pApp->Send(this->GetHandle(), &packet4);
+					g_pApp->Send(this->GetHandle(), &packetUpd);					
+
 					gsf->printOk("Reward Zenny");
 				}
+					break;
 				case eREWARD_TYPE_CHANGE_CLASS:
 				{
 					rew->arsDefRwd[i].dwRewardIdx;
 					rew->arsDefRwd[i].dwRewardVal;
 					gsf->printOk("Reward Type Change Class");
 				}
+					break;
 				case eREWARD_TYPE_PROBABILITY:
 				{
 					rew->arsDefRwd[i].dwRewardIdx;
 					rew->arsDefRwd[i].dwRewardVal;
 					gsf->printOk("Reward Probability");
 				}
+					break;
 				case eREWARD_TYPE_REPUTATION:
 				{
 					rew->arsDefRwd[i].dwRewardIdx;
 					rew->arsDefRwd[i].dwRewardVal;
 					gsf->printOk("Reward Reputation");
 				}
+					break;
 				case eREWARD_TYPE_CHANGE_ADULT:
 				{
 					rew->arsDefRwd[i].dwRewardIdx;
 					rew->arsDefRwd[i].dwRewardVal;
 					gsf->printOk("Reward Change Adult");
 				}
+					break;
 				case eREWARD_TYPE_GET_CONVERT_CLASS_RIGHT:
 				{
 					rew->arsDefRwd[i].dwRewardIdx;
 					rew->arsDefRwd[i].dwRewardVal;
 					gsf->printOk("Reward Convert Class");
 				}
+					break;
 				default:
 				{
-					gsf->printError("Unknown Reward Type");
+					gsf->printError("Invalid Reward Type");
 				}
-			}
-		}*/
+					break;
+			}			
+		}
 	}
 	//printf("res->byTsType = %d, res->dwParam = %d, res->tcCurId = %d, res->tcNextId = %d, res->tId = %d\n",res->byTsType, res->dwParam, res->tcCurId, res->tcNextId, res->tId); 
 	packet.SetPacketLen( sizeof(sGU_TS_CONFIRM_STEP_RES) );
