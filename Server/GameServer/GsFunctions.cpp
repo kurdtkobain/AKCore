@@ -243,7 +243,7 @@ void		GsFunctionsClass::SendItemEffect(CClientSession * pSession, TBLIDX effectI
 void GsFunctionsClass::NewQuest(RwUInt32 CharID, NTL_TS_TC_ID tIdQuest, BYTE tsType, DWORD dwParam)
 {
 	CGameServer * app = (CGameServer*)NtlSfxGetApp();
-	std::string sql = "INSERT INTO charquestlist (charId,questID,isCompleted,currentStep,type,dwEventData) VALUES(?,?,?,?,?,?,?)";
+	std::string sql = "INSERT INTO charquestlist (charId,questID,isCompleted,currentStep,type,dwEventData) VALUES(?,?,?,?,?,?)";
 	app->db->prepare(sql);
 	app->db->setInt(1, CharID);
 	app->db->setInt(2, tIdQuest);	
