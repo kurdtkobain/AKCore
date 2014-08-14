@@ -237,3 +237,57 @@ void		GsFunctionsClass::SendItemEffect(CClientSession * pSession, TBLIDX effectI
 			break;
 	}
 }
+//----------------------------------------------------------------------------------//
+// NewQuest used only if the db return 0(to see if the char already have this quest
+//----------------------------------------------------------------------------------//
+void GsFunctionsClass::NewQuest(RwUInt32 CharID, NTL_TS_TC_ID tIdQuest, BYTE tsType, DWORD dwParam)
+{
+	CGameServer * app = (CGameServer*)NtlSfxGetApp();
+	std::string sql = "INSERT INTO charquestlist (charId,questID,isCompleted,currentStep,type,dwEventData) VALUES(?,?,?,?,?,?,?)";
+	app->db->prepare(sql);
+	app->db->setInt(1, CharID);
+	app->db->setInt(2, tIdQuest);	
+	app->db->setInt(3, 0);
+	app->db->setInt(4, 0);
+	app->db->setInt(5, tsType);
+	app->db->setInt(6, dwParam);
+	app->db->execute();
+}
+//----------------------------------------------------------------------------------//
+// QuestStarted Check if the current quest Already started else call NewQuest
+//----------------------------------------------------------------------------------//
+void GsFunctionsClass::QuestStarted(RwUInt32 CharID, NTL_TS_TC_ID tIdQuest, NTL_TS_TC_ID tCurrentStep, NTL_TS_TC_ID tNextAct, BYTE tsType, DWORD dwParam)
+{
+	CGameServer * app = (CGameServer*)NtlSfxGetApp();
+	app->db->prepare("SELECT * FROM charquestlist WHERE charId = ? AND questID = ?");
+	app->db->setInt(1,CharID);
+	app->db->setInt(2, tIdQuest);
+	app->db->execute();
+	if (app->db->rowsCount() != 0)
+	{
+		//Is Completed
+		if (tNextAct>=100 )
+		{
+			app->db->prepare("UPDATE charquestlist SET currentStep = ?,nextStep = ?,isCompleted = ? WHERE charId = ? AND questID = ?");
+			app->db->setInt(1, tNextAct);
+			app->db->setInt(2, tNextAct);
+			app->db->setInt(3, 1);
+			app->db->setInt(4, CharID);
+			app->db->setInt(5, tIdQuest);
+			app->db->execute();
+		}
+		else
+		{
+			app->db->prepare("UPDATE charquestlist SET currentStep = ?,nextStep = ? WHERE charId = ? AND questID = ?");
+			app->db->setInt(1, tCurrentStep);			
+			app->db->setInt(2, tNextAct);
+			app->db->setInt(3, CharID);
+			app->db->setInt(4, tIdQuest);
+			app->db->execute();
+		}
+	}		
+	else
+	{
+		NewQuest(CharID, tIdQuest,tsType,dwParam);
+	}	
+}

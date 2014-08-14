@@ -453,20 +453,55 @@ void CClientSession::SendAvatarQuestList(CNtlPacket * pPacket, CGameServer * app
 	app->db->prepare("SELECT * FROM charquestlist WHERE charId = ?");
 	app->db->setInt(1, this->plr->pcProfile->charId);
 	app->db->execute();
+	int iQuestList = 0;
+	
 	while (app->db->fetch())
 	{
 		int questID = app->db->getInt("questID");
-		res->progressInfo->tId = questID;
-		res->progressInfo->uData.sQInfoV0.wQState = false;
-		res->progressInfo->uData.sQInfoV0.sMainTSP.tcCurId = questID;
-		res->progressInfo->uData.sQInfoV0.sMainTSP.tcPreId = questID;		
-		res->progressInfo->uData.sQInfoV0.tgExcCGroup = 1;
+		int currentStep = app->db->getInt("currentStep");
+		int nextStep = app->db->getInt("nextStep");
+		if (nextStep==255)
+		{
+			res2->completeInfo.abyQCInfo[iQuestCounter] = questID;
+		}
+		else
+		{
+			res->progressInfo->tId = questID;
+			res->progressInfo->byVer = 0;						
+			res->progressInfo->uData.sQInfoV0.wQState = 0;//ALWAYS 0
+			res->progressInfo->uData.sQInfoV0.sMainTSP.tcCurId = currentStep;
+			res->progressInfo->uData.sQInfoV0.sMainTSP.tcPreId = nextStep;
+			res->progressInfo->uData.sQInfoV0.sSSM.auiSSM[iQuestList] = iQuestCounter;
+			//Time Quest?
+			res->progressInfo->uData.sQInfoV0.sETSlot.asExceptTimer[0].tcId = 0xff;
+			res->progressInfo->uData.sQInfoV0.sETSlot.asExceptTimer[0].taId = 0xff;	
+			res->progressInfo->uData.sQInfoV0.sETSlot.asExceptTimer[1].tcId = 0xff;
+			res->progressInfo->uData.sQInfoV0.sETSlot.asExceptTimer[1].taId = 0xff;
+			res->progressInfo->uData.sQInfoV0.sETSlot.asExceptTimer[2].tcId = 0xff;
+			res->progressInfo->uData.sQInfoV0.sETSlot.asExceptTimer[2].taId = 0xff;
+			res->progressInfo->uData.sQInfoV0.sETSlot.asExceptTimer[3].tcId = 0xff;
+			res->progressInfo->uData.sQInfoV0.sETSlot.asExceptTimer[3].taId = 0xff;
+			res->progressInfo->uData.sQInfoV0.sSToCEvtData.tcId = 0xff;
+			res->progressInfo->uData.sQInfoV0.sSToCEvtData.taId = 0xff;
+			///
+			res->progressInfo->uData.sQInfoV0.tcQuestInfo = currentStep;			
+			res->progressInfo->uData.sQInfoV0.taQuestInfo = nextStep;
+			res->progressInfo->uData.sQInfoV0.tgExcCGroup = 0;
+			res->wOpCode = GU_AVATAR_QUEST_PROGRESS_INFO;			
+			/*packet.AdjustPacketLen(sizeof(sNTLPACKETHEADER)+(2 * sizeof(BYTE)) + (iQuestCounter * sizeof(sPROGRESS_QUEST_INFO)));
+			g_pApp->Send(this->GetHandle(), &packet);*/
+			iQuestList++;
+		}				
 		iQuestCounter++;
 	}	
-	//res->byProgressCount = iQuestCounter;
-	res->wOpCode = GU_AVATAR_QUEST_PROGRESS_INFO;
+	res2->wOpCode = GU_AVATAR_QUEST_COMPLETE_INFO;	
+
+	res->byProgressCount = iQuestList;
+	packet2.SetPacketLen(sizeof(sGU_AVATAR_QUEST_COMPLETE_INFO));
 	packet.SetPacketLen(sizeof(sGU_AVATAR_QUEST_PROGRESS_INFO));
+
 	g_pApp->Send(this->GetHandle(), &packet);
+	g_pApp->Send(this->GetHandle(), &packet2);	
 }
 //--------------------------------------------------------------------------------------//
 //		SendAvatarInfoEnd
@@ -3699,8 +3734,9 @@ void CClientSession::SendPlayerQuestReq(CNtlPacket * pPacket, CGameServer * app)
 	res->tcNextId = req->tcNextId;
 	res->tId = req->tId;
 	res->wOpCode = GU_TS_CONFIRM_STEP_RES;
-	res->wResultCode = RESULT_SUCCESS;
-
+	res->wResultCode = RESULT_SUCCESS;	
+	//Save every step
+	this->gsf->QuestStarted(this->plr->pcProfile->charId, req->tId, req->tcCurId,req->tcNextId, req->byTsType, req->dwEventData);
 	if (res->tcNextId == 254)
 	{
 		this->gsf->printError("We need to add the reward");
@@ -3723,8 +3759,7 @@ void CClientSession::SendPlayerQuestReq(CNtlPacket * pPacket, CGameServer * app)
 					res0->itemTblidx = pItemData->tblidx;
 					res0->wOpCode = GU_ITEM_PICK_RES;
 					res0->wResultCode = GAME_SUCCESS;
-					int ItemPos = 0;
-
+					int ItemPos = 0;					
 					app->db->prepare("SELECT * FROM items WHERE owner_ID = ? AND place=1 ORDER BY pos ASC");
 					app->db->setInt(1, this->plr->pcProfile->charId);
 					app->db->execute();

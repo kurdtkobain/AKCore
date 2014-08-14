@@ -200,7 +200,24 @@ CREATE TABLE `characters` (
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 
 -- ----------------------------
--- Table structure for guilds
+-- Table structure for `charquestlist`
+-- ----------------------------
+DROP TABLE IF EXISTS `charquestlist`;
+CREATE TABLE `charquestlist` (
+  `pkQtTable` int(11) NOT NULL AUTO_INCREMENT,
+  `charId` int(10) NOT NULL,
+  `questID` int(100) NOT NULL,
+  `isCompleted` smallint(1) NOT NULL,
+  `currentStep` int(255) NOT NULL,
+  `type` smallint(1) NOT NULL,
+  `dwEventData` int(255) NOT NULL,
+  `nextStep` int(255) NOT NULL,
+  `timeRemaing` int(15) NOT NULL,
+  PRIMARY KEY (`pkQtTable`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
+
+-- ----------------------------
+-- Table structure for `guilds`
 -- ----------------------------
 DROP TABLE IF EXISTS `guilds`;
 CREATE TABLE `guilds` (

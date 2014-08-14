@@ -56,13 +56,16 @@ public:
 	//System Functions
 	void						printError(const char* err);
 	void						printOk(const char* err);
-	void						printDebug(const char* dbg);
+	void						printDebug(const char* dbg);	
   	//Items
  
  	//Skills Like Debug
  	void						DebugSkillType(BYTE skillActType);
   	int							GetTotalSlotSkill(int charID);
  	int							GetBattleResultEffect(int RpEffect);
+	//Quest
+	void						QuestStarted(RwUInt32 CharID, NTL_TS_TC_ID tIdQuest, NTL_TS_TC_ID tCurrentId,NTL_TS_TC_ID tNextAct, BYTE tsType, DWORD dwParam);
+	void						NewQuest(RwUInt32 CharID, NTL_TS_TC_ID tCurQuest, BYTE tsType, DWORD dwParam);
 	//MISC
 	void						SendItemEffect(CClientSession * pSession,TBLIDX effectTbl,TBLIDX ItemTbl);
 };

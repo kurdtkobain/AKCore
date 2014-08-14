@@ -44,7 +44,7 @@ int CClientSession::OnDispatch(CNtlPacket * pPacket)
 			CClientSession::SendAvatarSkillInfo(pPacket, app);
 			CClientSession::SendAvatarBuffInfo(pPacket, app);
 			CClientSession::SendAvatarHTBInfo(pPacket, app);
-			//CClientSession::SendAvatarQuestList(pPacket, app); Only uncomment when we get quests id
+			CClientSession::SendAvatarQuestList(pPacket, app);// Only uncomment when we get quests id
 			CClientSession::SendSlotInfo(pPacket, app);
 			CClientSession::SendAvatarInfoEnd(pPacket);
 		}

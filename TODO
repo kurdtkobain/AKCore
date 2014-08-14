@@ -21,6 +21,10 @@ FIX / EDIT
 		-Adding to this new stats the items stats (physical offence = 30 + STR so physical offence become 54)
 		-Adding to the calculated stats the buff stats (+ 10% STR so physical offence = 30 + BUFF physical offence become 40)
 	-----
+	QUESTS:
+	-FIX QUEST BALOONS
+	-FIX QUEST PART: TIME LAP AND TIME QUEST USAGE
+	-FIX ALREADY COMPLETED QUEST's
 
 DONE:
 -CHECK LEVEL (BUY / EQUIPE / LEARN SPELL)
@@ -43,3 +47,5 @@ DONE:
 -DONE HTB STEP FOWARD
 -DONE HTB UPDATE STATE AND SANDBAG
 -DONE AVATAR LOAD INFO
+-DONE QUEST REWARD
+-DONE QUEST SAVE/LOAD

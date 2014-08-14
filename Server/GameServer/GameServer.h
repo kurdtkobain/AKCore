@@ -34,7 +34,6 @@
 #include "MerchantTable.h"
 #include "ItemTable.h"
 #include "UseItemTable.h" //Added for use items
-#include "StatusTransformTable.h" //Added for Buff when transformed
 #include "SystemEffectTable.h" //Added for use some Effects validations and buffs
 #include "FormulaTable.h"
 #include "ItemMixMachineTable.h"
