@@ -240,7 +240,7 @@ void		GsFunctionsClass::SendItemEffect(CClientSession * pSession, TBLIDX effectI
 //----------------------------------------------------------------------------------//
 // NewQuest used only if the db return 0(to see if the char already have this quest
 //----------------------------------------------------------------------------------//
-void GsFunctionsClass::NewQuest(RwUInt32 CharID, NTL_TS_TC_ID tIdQuest, BYTE tsType, DWORD dwParam)
+void GsFunctionsClass::NewQuest(RwUInt32 CharID, NTL_TS_T_ID tIdQuest, BYTE tsType, DWORD dwParam)
 {
 	CGameServer * app = (CGameServer*)NtlSfxGetApp();
 	std::string sql = "INSERT INTO charquestlist (charId,questID,isCompleted,currentStep,type,dwEventData) VALUES(?,?,?,?,?,?)";
@@ -256,7 +256,7 @@ void GsFunctionsClass::NewQuest(RwUInt32 CharID, NTL_TS_TC_ID tIdQuest, BYTE tsT
 //----------------------------------------------------------------------------------//
 // QuestStarted Check if the current quest Already started else call NewQuest
 //----------------------------------------------------------------------------------//
-void GsFunctionsClass::QuestStarted(RwUInt32 CharID, NTL_TS_TC_ID tIdQuest, NTL_TS_TC_ID tCurrentStep, NTL_TS_TC_ID tNextAct, BYTE tsType, DWORD dwParam)
+void GsFunctionsClass::QuestStarted(RwUInt32 CharID, NTL_TS_T_ID tIdQuest, NTL_TS_TC_ID tCurrentStep, NTL_TS_TC_ID tNextAct, BYTE tsType, DWORD dwParam)
 {
 	CGameServer * app = (CGameServer*)NtlSfxGetApp();
 	app->db->prepare("SELECT * FROM charquestlist WHERE charId = ? AND questID = ?");
@@ -269,7 +269,7 @@ void GsFunctionsClass::QuestStarted(RwUInt32 CharID, NTL_TS_TC_ID tIdQuest, NTL_
 		if (tNextAct>=100 )
 		{
 			app->db->prepare("UPDATE charquestlist SET currentStep = ?,nextStep = ?,isCompleted = ? WHERE charId = ? AND questID = ?");
-			app->db->setInt(1, tNextAct);
+			app->db->setInt(1, tCurrentStep);
 			app->db->setInt(2, tNextAct);
 			app->db->setInt(3, 1);
 			app->db->setInt(4, CharID);
@@ -290,4 +290,75 @@ void GsFunctionsClass::QuestStarted(RwUInt32 CharID, NTL_TS_TC_ID tIdQuest, NTL_
 	{
 		NewQuest(CharID, tIdQuest,tsType,dwParam);
 	}	
+}
+//----------------------------------------------------------------------------------//
+// Time Quest-GetTmqTblidx By PlayerLevel TODO GET BY MIN AND MAX MEMBER LEVEL?
+//----------------------------------------------------------------------------------//
+TBLIDX GsFunctionsClass::GetTmq(PlayerInfos *plr)
+{
+	CGameServer * app = (CGameServer*)NtlSfxGetApp();
+	CTimeQuestTable* pTmqTable = app->g_pTableContainer->GetTimeQuestTable();
+	int iCounter = 1;//0 Is Invalid Tblidx
+	while (true)
+	{
+		iCounter++;
+		sTIMEQUEST_TBLDAT* pTmqTblData = reinterpret_cast<sTIMEQUEST_TBLDAT*>(pTmqTable->FindData(iCounter));
+		if (pTmqTblData)
+		{
+				break;
+		}		
+	}	
+	return iCounter;
+}
+//----------------------------------------------------------------------------------//
+// Time Quest-GetNearDifficult By PlayerLevel(Extracted from client code) 
+// don't know if need but in all cases here is
+//----------------------------------------------------------------------------------//
+RwUInt8	GsFunctionsClass::GetTmqLevel(PlayerInfos *plr)
+{
+	CGameServer * app = (CGameServer*)NtlSfxGetApp();
+	TBLIDX idTmq = GsFunctionsClass::GetTmq(plr);
+	sTIMEQUEST_TBLDAT* pTIMEQUEST_TBLDAT = reinterpret_cast<sTIMEQUEST_TBLDAT*>(app->g_pTableContainer->GetTimeQuestTable()->FindData(idTmq));
+	if (!pTIMEQUEST_TBLDAT)
+	{
+		printf("Not exist tmq table of index : %i ",idTmq);
+		return INVALID_TIMEQUEST_DIFFICULTY;
+	}
+
+	sTIMEQUEST_DATASET* pDATASET_EASY = &pTIMEQUEST_TBLDAT->sTimeQuestDataset[TIMEQUEST_DIFFICULTY_EASY];
+	sTIMEQUEST_DATASET* pDATASET_NORMAL = &pTIMEQUEST_TBLDAT->sTimeQuestDataset[TIMEQUEST_DIFFICULTY_NORMAL];
+	sTIMEQUEST_DATASET* pDATASET_HARD = &pTIMEQUEST_TBLDAT->sTimeQuestDataset[TIMEQUEST_DIFFICULTY_HARD];
+	struct sLeastLevel
+	{
+		RwUInt8 byLeasyLevel;
+		RwUInt8 byDifficult;
+	};
+	std::map<RwUInt8, RwUInt8> mapDifficult;
+
+	mapDifficult[pDATASET_EASY->byMinMemberLevel] = TIMEQUEST_DIFFICULTY_EASY;
+	mapDifficult[pDATASET_EASY->byMaxMemberLevel] = TIMEQUEST_DIFFICULTY_EASY;
+	mapDifficult[pDATASET_NORMAL->byMinMemberLevel] = TIMEQUEST_DIFFICULTY_NORMAL;
+	mapDifficult[pDATASET_NORMAL->byMaxMemberLevel] = TIMEQUEST_DIFFICULTY_NORMAL;
+	mapDifficult[pDATASET_HARD->byMinMemberLevel] = TIMEQUEST_DIFFICULTY_HARD;
+	mapDifficult[pDATASET_HARD->byMaxMemberLevel] = TIMEQUEST_DIFFICULTY_HARD;
+
+	RwUInt8 byLevelGap;
+	sLeastLevel leastDifficult;
+	RwUInt8 byAvatarLevel = plr->pcProfile->byLevel;
+	std::map<RwUInt8, RwUInt8>::iterator it = mapDifficult.begin();
+
+	leastDifficult.byLeasyLevel = 255;
+	leastDifficult.byDifficult = INVALID_TIMEQUEST_DIFFICULTY;
+
+	for (; it != mapDifficult.end(); ++it)
+	{
+		byLevelGap = (RwUInt8)(abs(it->first - byAvatarLevel));
+		if (byLevelGap < leastDifficult.byLeasyLevel)
+		{
+			leastDifficult.byLeasyLevel = byLevelGap;
+			leastDifficult.byDifficult = it->second;
+		}
+	}
+
+	return leastDifficult.byDifficult;
 }

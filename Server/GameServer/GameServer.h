@@ -28,13 +28,17 @@
 #include "HTBSetTable.h"
 #include "TableFileNameList.h"
 #include "WorldMapTable.h"
-#include "WorldPathTable.h"
+#include "WorldPlayTable.h"
+#include "DungeonTable.h"
+#include "WorldZoneTable.h"
+#include "DirectionLinkTable.h"
 #include "ObjectTable.h"
 #include "PortalTable.h"
 #include "MerchantTable.h"
 #include "ItemTable.h"
 #include "UseItemTable.h" //Added for use items
 #include "SystemEffectTable.h" //Added for use some Effects validations and buffs
+#include "TimeQuestTable.h"
 #include "FormulaTable.h"
 #include "ItemMixMachineTable.h"
 #include "ExpTable.h"
@@ -278,6 +282,12 @@ public:
 	void						SendPlayerLevelUpCheck(CGameServer * app, int exp);
 	// QUEST
 	void						SendPlayerQuestReq(CNtlPacket * pPacket, CGameServer * app);
+	void						SendObjectVisitQuest(CNtlPacket * pPacket, CGameServer * app);
+	void						SendTSUpdateState(CNtlPacket * pPacket, CGameServer * app);
+	//TIMEQUEST
+	void						SendTimeQuestList(CNtlPacket * pPacket, CGameServer * app);
+	void						LeaveTimeQuestRoom(CNtlPacket * pPacket, CGameServer * app);
+	void						JoinTimeQuestRoom(CNtlPacket * pPacket, CGameServer * app);
 	// DUEL
 	void						SendFreeBattleReq(CNtlPacket * pPacket, CGameServer * app);
 	void						SendFreeBattleAccpetReq(CNtlPacket * pPacket, CGameServer * app);

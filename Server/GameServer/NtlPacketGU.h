@@ -824,7 +824,7 @@ END_PROTOCOL()
 //------------------------------------------------------------------
 BEGIN_PROTOCOL(GU_AVATAR_QUEST_PROGRESS_INFO)
 	BYTE					byProgressCount; // 현재 진행하고 있는 퀘스트 개수
-	sQUEST_PROGRESS_INFO	progressInfo[1]; // 진행 퀘스트 데이타
+	sQUEST_PROGRESS_INFO	progressInfo[20]; // 진행 퀘스트 데이타
 END_PROTOCOL()
 //------------------------------------------------------------------
 BEGIN_PROTOCOL(GU_AVATAR_QUEST_INVENTORY_INFO)

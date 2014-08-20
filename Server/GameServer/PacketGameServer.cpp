@@ -154,7 +154,7 @@ void CClientSession::SendAvatarCharInfo(CNtlPacket * pPacket, CGameServer * app)
 	res->sPcProfile.dwMaxExpInThisLevel = app->db->getInt("MaxExpInThisLevel");
 	res->sPcProfile.dwZenny = app->db->getInt("Money");
 	res->sPcProfile.dwTutorialHint = -1;
-	//res->sPcProfile.byBindType = DBO_BIND_TYPE_INITIAL_LOCATION;	
+	res->sPcProfile.byBindType = DBO_BIND_TYPE_INITIAL_LOCATION;	
 
 	res->sPcProfile.dwReputation = app->db->getInt("Reputation");
 	res->sPcProfile.dwMudosaPoint = app->db->getInt("MudosaPoint");
@@ -462,46 +462,49 @@ void CClientSession::SendAvatarQuestList(CNtlPacket * pPacket, CGameServer * app
 		int nextStep = app->db->getInt("nextStep");
 		if (nextStep==255)
 		{
-			res2->completeInfo.abyQCInfo[iQuestCounter] = questID;
+			res2->completeInfo.abyQCInfo[questID / eCOMPLETE_QUEST_QUEST_PER_BYTE] = eCOMPLETE_QUEST_STATE_CLEAR;
+			iQuestCounter++;
 		}
 		else
 		{
-			res->progressInfo->tId = questID;
-			res->progressInfo->byVer = 0;						
-			res->progressInfo->uData.sQInfoV0.wQState = 0;//ALWAYS 0
-			res->progressInfo->uData.sQInfoV0.sMainTSP.tcCurId = currentStep;
-			res->progressInfo->uData.sQInfoV0.sMainTSP.tcPreId = nextStep;
-			res->progressInfo->uData.sQInfoV0.sSSM.auiSSM[iQuestList] = iQuestCounter;
+			res->progressInfo[iQuestList].tId = questID;
+			res->progressInfo[iQuestList].byVer = 0;
+			res->progressInfo[iQuestList].uData.sQInfoV0.wQState = 0;//ALWAYS 0
+			res->progressInfo[iQuestList].uData.sQInfoV0.sMainTSP.tcCurId = currentStep;//Quest Pointer current
+			res->progressInfo[iQuestList].uData.sQInfoV0.sMainTSP.tcPreId = nextStep;//Quest Pointer Next
+			res->progressInfo[iQuestList].uData.sQInfoV0.sSSM.auiSSM[iQuestList] = questID;
 			//Time Quest?
-			res->progressInfo->uData.sQInfoV0.sETSlot.asExceptTimer[0].tcId = 0xff;
-			res->progressInfo->uData.sQInfoV0.sETSlot.asExceptTimer[0].taId = 0xff;	
-			res->progressInfo->uData.sQInfoV0.sETSlot.asExceptTimer[1].tcId = 0xff;
-			res->progressInfo->uData.sQInfoV0.sETSlot.asExceptTimer[1].taId = 0xff;
-			res->progressInfo->uData.sQInfoV0.sETSlot.asExceptTimer[2].tcId = 0xff;
-			res->progressInfo->uData.sQInfoV0.sETSlot.asExceptTimer[2].taId = 0xff;
-			res->progressInfo->uData.sQInfoV0.sETSlot.asExceptTimer[3].tcId = 0xff;
-			res->progressInfo->uData.sQInfoV0.sETSlot.asExceptTimer[3].taId = 0xff;
-			res->progressInfo->uData.sQInfoV0.sSToCEvtData.tcId = 0xff;
-			res->progressInfo->uData.sQInfoV0.sSToCEvtData.taId = 0xff;
+			res->progressInfo[iQuestList].uData.sQInfoV0.sETSlot.asExceptTimer[0].tcId = 0xff;
+			res->progressInfo[iQuestList].uData.sQInfoV0.sETSlot.asExceptTimer[0].taId = 0xff;
+			res->progressInfo[iQuestList].uData.sQInfoV0.sETSlot.asExceptTimer[1].tcId = 0xff;
+			res->progressInfo[iQuestList].uData.sQInfoV0.sETSlot.asExceptTimer[1].taId = 0xff;
+			res->progressInfo[iQuestList].uData.sQInfoV0.sETSlot.asExceptTimer[2].tcId = 0xff;
+			res->progressInfo[iQuestList].uData.sQInfoV0.sETSlot.asExceptTimer[2].taId = 0xff;
+			res->progressInfo[iQuestList].uData.sQInfoV0.sETSlot.asExceptTimer[3].tcId = 0xff;
+			res->progressInfo[iQuestList].uData.sQInfoV0.sETSlot.asExceptTimer[3].taId = 0xff;
+			res->progressInfo[iQuestList].uData.sQInfoV0.sSToCEvtData.tcId = 0xff;
+			res->progressInfo[iQuestList].uData.sQInfoV0.sSToCEvtData.taId = 0xff;
+			/*if (app->db->getInt("dwEventData") == 391)
+			{
+				res->progressInfo[iQuestList].uData.sQInfoV0.sSToCEvtData.tcId = currentStep;
+				res->progressInfo[iQuestList].uData.sQInfoV0.sSToCEvtData.taId = app->db->getInt("dwEventData");				
+			}*/
 			///
-			res->progressInfo->uData.sQInfoV0.tcQuestInfo = currentStep;			
-			res->progressInfo->uData.sQInfoV0.taQuestInfo = nextStep;
-			res->progressInfo->uData.sQInfoV0.tgExcCGroup = 0;
-			res->wOpCode = GU_AVATAR_QUEST_PROGRESS_INFO;			
-			/*packet.AdjustPacketLen(sizeof(sNTLPACKETHEADER)+(2 * sizeof(BYTE)) + (iQuestCounter * sizeof(sPROGRESS_QUEST_INFO)));
-			g_pApp->Send(this->GetHandle(), &packet);*/
-			iQuestList++;
-		}				
-		iQuestCounter++;
+			res->progressInfo[iQuestList].uData.sQInfoV0.tcQuestInfo = currentStep;
+			res->progressInfo[iQuestList].uData.sQInfoV0.taQuestInfo = nextStep;
+			res->progressInfo[iQuestList].uData.sQInfoV0.tgExcCGroup = 0;
+			iQuestList++;	
+		}						
 	}	
 	res2->wOpCode = GU_AVATAR_QUEST_COMPLETE_INFO;	
 
 	res->byProgressCount = iQuestList;
-	packet2.SetPacketLen(sizeof(sGU_AVATAR_QUEST_COMPLETE_INFO));
+	res->wOpCode = GU_AVATAR_QUEST_PROGRESS_INFO;
 	packet.SetPacketLen(sizeof(sGU_AVATAR_QUEST_PROGRESS_INFO));
-
-	g_pApp->Send(this->GetHandle(), &packet);
+	packet2.SetPacketLen(sizeof(sGU_AVATAR_QUEST_COMPLETE_INFO));
 	g_pApp->Send(this->GetHandle(), &packet2);	
+	g_pApp->Send(this->GetHandle(), &packet);
+	
 }
 //--------------------------------------------------------------------------------------//
 //		SendAvatarInfoEnd
@@ -1925,7 +1928,7 @@ void CClientSession::SendExcuteTriggerObject(CNtlPacket * pPacket, CGameServer *
 	sGU_TS_EXCUTE_TRIGGER_OBJECT_RES * res = (sGU_TS_EXCUTE_TRIGGER_OBJECT_RES *)packet.GetPacketData();
 
 	res->wOpCode = GU_TS_EXCUTE_TRIGGER_OBJECT_RES;
-	res->wResultCode = GAME_SUCCESS;
+	res->wResultCode = RESULT_SUCCESS;
 	res->hTriggerObject = req->hTarget;
 	packet.SetPacketLen( sizeof(sGU_TS_EXCUTE_TRIGGER_OBJECT_RES) );
 	app->UserBroadcastothers(&packet, this);
@@ -3726,7 +3729,6 @@ void CClientSession::SendPlayerQuestReq(CNtlPacket * pPacket, CGameServer * app)
 	sUG_TS_CONFIRM_STEP_REQ* req = (sUG_TS_CONFIRM_STEP_REQ *)pPacket->GetPacketData();
 	CNtlPacket packet(sizeof(sGU_TS_CONFIRM_STEP_RES));
 	sGU_TS_CONFIRM_STEP_RES * res = (sGU_TS_CONFIRM_STEP_RES *)packet.GetPacketData();
-	req->byEventType;
 
 	res->byTsType = req->byTsType;
 	res->dwParam = req->dwParam;
@@ -3734,185 +3736,225 @@ void CClientSession::SendPlayerQuestReq(CNtlPacket * pPacket, CGameServer * app)
 	res->tcNextId = req->tcNextId;
 	res->tId = req->tId;
 	res->wOpCode = GU_TS_CONFIRM_STEP_RES;
-	res->wResultCode = RESULT_SUCCESS;	
+	res->wResultCode = RESULT_SUCCESS;
+	packet.SetPacketLen(sizeof(sGU_TS_CONFIRM_STEP_RES));
+	g_pApp->Send(this->GetHandle(), &packet);
 	//Save every step
 	this->gsf->QuestStarted(this->plr->pcProfile->charId, req->tId, req->tcCurId,req->tcNextId, req->byTsType, req->dwEventData);
-	if (res->tcNextId == 254)
+	CObjectTable* pObjTable = app->g_pTableContainer->GetObjectTable(1);
+	sOBJECT_TBLDAT* pObjDat = reinterpret_cast<sOBJECT_TBLDAT*>(pObjTable->FindData(req->dwEventData));
+	switch (req->byTsType)
 	{
-		this->gsf->printError("We need to add the reward");
-		// should be the reward because when we rewarsd a quest res->tcNextId is all the time 255
-		// WE NEED THE CORRECT TBLIDX FOR THE REWARD
-		CQuestRewardTable* pQstRewTable = app->g_pTableContainer->GetQuestRewardTable();
-		//Poor way to get Reward TBLIDX
-		sQUEST_REWARD_TBLDAT *rew = reinterpret_cast<sQUEST_REWARD_TBLDAT*>(pQstRewTable->FindData(((res->tId * 100) + 1)));
-		printf("%d %d %d %d\n%d %d %d %d\n%d\n",rew->arsDefRwd[0], rew->arsDefRwd[1], rew->arsDefRwd[2], rew->arsDefRwd[3], rew->arsSelRwd[0], rew->arsSelRwd[1], rew->arsSelRwd[2], rew->arsSelRwd[3], rew->tblidx);
-		for(int i = 0; i <= QUEST_REWARD_DEF_MAX_CNT; i++ )
+		//Explanation...Case 0 For QuestTrigger and Case 1 For PC Trigger
+		case 0:
 		{
-			switch (rew->arsDefRwd[i].byRewardType)
+			printf("Quest Case\n");
+			if ((res->tcNextId == 254) && (!pObjDat))
 			{
-				case eREWARD_TYPE_NORMAL_ITEM:
-				{
-					sITEM_TBLDAT * pItemData = reinterpret_cast<sITEM_TBLDAT*>(app->g_pTableContainer->GetItemTable()->FindData(rew->arsDefRwd[i].dwRewardIdx));
+				this->gsf->printError("We need to add the reward");
 
-					CNtlPacket packet0(sizeof(sGU_ITEM_PICK_RES));
-					sGU_ITEM_PICK_RES * res0 = (sGU_ITEM_PICK_RES*)packet0.GetPacketData();
-					res0->itemTblidx = pItemData->tblidx;
-					res0->wOpCode = GU_ITEM_PICK_RES;
-					res0->wResultCode = GAME_SUCCESS;
-					int ItemPos = 0;					
-					app->db->prepare("SELECT * FROM items WHERE owner_ID = ? AND place=1 ORDER BY pos ASC");
-					app->db->setInt(1, this->plr->pcProfile->charId);
-					app->db->execute();
-					int k = 0;
-					//Need a right loop 
-					while (app->db->fetch())
+				// should be the reward because when we rewarsd a quest res->tcNextId is all the time 255
+				// WE NEED THE CORRECT TBLIDX FOR THE REWARD
+				CQuestRewardTable* pQstRewTable = app->g_pTableContainer->GetQuestRewardTable();
+				
+				//Poor way to get Reward TBLIDX
+				sQUEST_REWARD_TBLDAT *rew = reinterpret_cast<sQUEST_REWARD_TBLDAT*>(pQstRewTable->FindData(((res->tId * 100) + 1)));
+				
+				printf("%d %d %d %d\n%d %d %d %d\n%d\n", rew->arsDefRwd[0], rew->arsDefRwd[1], rew->arsDefRwd[2], rew->arsDefRwd[3], rew->arsSelRwd[0], rew->arsSelRwd[1], rew->arsSelRwd[2], rew->arsSelRwd[3], rew->tblidx);
+				for (int i = 0; i <= QUEST_REWARD_DEF_MAX_CNT; i++)
+				{
+					switch (rew->arsDefRwd[i].byRewardType)
 					{
-						if (app->db->getInt("pos") < NTL_MAX_ITEM_SLOT)
-							ItemPos = app->db->getInt("pos") + 1;
-						else
-							ItemPos = app->db->getInt("pos");
-						k++;
+						case eREWARD_TYPE_NORMAL_ITEM:
+						{
+							sITEM_TBLDAT * pItemData = reinterpret_cast<sITEM_TBLDAT*>(app->g_pTableContainer->GetItemTable()->FindData(rew->arsDefRwd[i].dwRewardIdx));
+
+							CNtlPacket packet0(sizeof(sGU_ITEM_PICK_RES));
+							sGU_ITEM_PICK_RES * res0 = (sGU_ITEM_PICK_RES*)packet0.GetPacketData();
+							res0->itemTblidx = pItemData->tblidx;
+							res0->wOpCode = GU_ITEM_PICK_RES;
+							res0->wResultCode = GAME_SUCCESS;
+							int ItemPos = 0;
+							app->db->prepare("SELECT * FROM items WHERE owner_ID = ? AND place=1 ORDER BY pos ASC");
+							app->db->setInt(1, this->plr->pcProfile->charId);
+							app->db->execute();
+							int k = 0;
+							//Need a right loop 
+							while (app->db->fetch())
+							{
+								if (app->db->getInt("pos") < NTL_MAX_ITEM_SLOT)
+									ItemPos = app->db->getInt("pos") + 1;
+								else
+									ItemPos = app->db->getInt("pos");
+								k++;
+							}
+							app->db->prepare("CALL BuyItemFromShop (?,?,?,?,?, @unique_iID)");//this basicaly a insert into...
+							app->db->setInt(1, pItemData->tblidx);
+							app->db->setInt(2, this->plr->pcProfile->charId);
+							app->db->setInt(3, ItemPos);
+							app->db->setInt(4, pItemData->byRank);
+							app->db->setInt(5, pItemData->byDurability);
+							app->db->execute();
+							app->db->execute("SELECT @unique_iID");
+							app->db->fetch();
+
+							CNtlPacket packet01(sizeof(sGU_ITEM_CREATE));
+							sGU_ITEM_CREATE * res01 = (sGU_ITEM_CREATE *)packet01.GetPacketData();
+
+							res01->bIsNew = true;
+							res01->wOpCode = GU_ITEM_CREATE;
+							res01->handle = app->db->getInt("@unique_iID");
+							res01->sItemData.charId = this->GetavatarHandle();
+							res01->sItemData.itemNo = pItemData->tblidx;
+							res01->sItemData.byStackcount = rew->arsDefRwd[i].dwRewardVal;
+							res01->sItemData.itemId = app->db->getInt("@unique_iID");
+							res01->sItemData.byPlace = 1;
+							res01->sItemData.byPosition = ItemPos;
+							res01->sItemData.byCurrentDurability = pItemData->byDurability;
+							res01->sItemData.byRank = pItemData->byRank;
+
+							packet01.SetPacketLen(sizeof(sGU_ITEM_CREATE));
+							packet0.SetPacketLen(sizeof(sGU_ITEM_PICK_RES));
+							g_pApp->Send(this->GetHandle(), &packet01);
+							g_pApp->Send(this->GetHandle(), &packet0);
+						}
+							break;
+						case eREWARD_TYPE_QUEST_ITEM:
+						{
+							rew->arsDefRwd[i].dwRewardIdx;
+							rew->arsDefRwd[i].dwRewardVal;
+							gsf->printOk("Reward Quest Item");
+						}
+							break;
+						case eREWARD_TYPE_EXP:
+						{
+							rew->arsDefRwd[i].dwRewardIdx;
+							rew->arsDefRwd[i].dwRewardVal;
+							CNtlPacket packet2(sizeof(sGU_UPDATE_CHAR_EXP));
+							sGU_UPDATE_CHAR_EXP * response = (sGU_UPDATE_CHAR_EXP*)packet2.GetPacketData();
+
+							response->dwAcquisitionExp = rew->arsDefRwd[i].dwRewardVal;
+							response->dwCurExp = this->plr->pcProfile->dwCurExp;
+							response->dwIncreasedExp = rew->arsDefRwd[i].dwRewardVal + rand() % this->plr->pcProfile->byLevel * 2;
+							response->dwBonusExp = (rew->arsDefRwd[i].dwRewardVal - response->dwIncreasedExp);
+							response->handle = this->plr->GetAvatarandle();
+							response->wOpCode = GU_UPDATE_CHAR_EXP;
+							this->plr->pcProfile->dwCurExp += response->dwIncreasedExp;
+							packet2.SetPacketLen(sizeof(sGU_UPDATE_CHAR_EXP));
+							g_pApp->Send(this->GetHandle(), &packet2);
+
+							gsf->printOk("Reward Experience");
+						}
+							break;
+						case eREWARD_TYPE_SKILL:
+						{
+							rew->arsDefRwd[i].dwRewardIdx;
+							rew->arsDefRwd[i].dwRewardVal;
+							gsf->printOk("Reward Skill");
+						}
+							break;
+						case eREWARD_TYPE_ZENY:
+						{
+							CNtlPacket packet4(sizeof(sGU_ZENNY_PICK_RES));
+							sGU_ZENNY_PICK_RES* res4 = (sGU_ZENNY_PICK_RES*)packet4.GetPacketData();
+
+							res4->bSharedInParty = false; //this->plr->isInParty();
+							res4->dwBonusZenny = 0;
+							this->plr->pcProfile->dwZenny += (rew->arsDefRwd[i].dwRewardVal + res4->dwBonusZenny);
+							res4->dwZenny = this->plr->pcProfile->dwZenny;
+							res4->dwAcquisitionZenny = rew->arsDefRwd[i].dwRewardVal + res4->dwBonusZenny;
+							res4->wResultCode = ZENNY_CHANGE_TYPE_REWARD;
+							app->qry->SetPlusMoney(this->plr->pcProfile->charId, res4->dwAcquisitionZenny);
+							res4->wOpCode = GU_ZENNY_PICK_RES;
+
+							CNtlPacket packetUpd(sizeof(sGU_UPDATE_CHAR_ZENNY));
+							sGU_UPDATE_CHAR_ZENNY * res5 = (sGU_UPDATE_CHAR_ZENNY *)packetUpd.GetPacketData();
+							res5->dwZenny = this->plr->pcProfile->dwZenny;//by analazying this is the ammount...				
+							res5->bIsNew = true;
+							res5->handle = this->GetavatarHandle();
+							res5->byChangeType = ZENNY_CHANGE_TYPE_REWARD;//never mind
+							res5->wOpCode = GU_UPDATE_CHAR_ZENNY;
+							packet4.SetPacketLen(sizeof(sGU_ZENNY_PICK_RES));
+							packetUpd.SetPacketLen(sizeof(sGU_UPDATE_CHAR_ZENNY));
+							g_pApp->Send(this->GetHandle(), &packet4);
+							g_pApp->Send(this->GetHandle(), &packetUpd);
+
+							gsf->printOk("Reward Zenny");
+						}
+							break;
+						case eREWARD_TYPE_CHANGE_CLASS:
+						{
+							rew->arsDefRwd[i].dwRewardIdx;
+							rew->arsDefRwd[i].dwRewardVal;
+							gsf->printOk("Reward Type Change Class");
+						}
+							break;
+						case eREWARD_TYPE_PROBABILITY:
+						{
+							rew->arsDefRwd[i].dwRewardIdx;
+							rew->arsDefRwd[i].dwRewardVal;
+							gsf->printOk("Reward Probability");
+						}
+							break;
+						case eREWARD_TYPE_REPUTATION:
+						{
+							rew->arsDefRwd[i].dwRewardIdx;
+							rew->arsDefRwd[i].dwRewardVal;
+							gsf->printOk("Reward Reputation");
+						}
+							break;							
+						case eREWARD_TYPE_CHANGE_ADULT:
+						{
+							rew->arsDefRwd[i].dwRewardIdx;
+							rew->arsDefRwd[i].dwRewardVal;
+							gsf->printOk("Reward Change Adult");
+						}
+							break;
+						case eREWARD_TYPE_GET_CONVERT_CLASS_RIGHT:
+						{
+							rew->arsDefRwd[i].dwRewardIdx;
+							rew->arsDefRwd[i].dwRewardVal;
+							gsf->printOk("Reward Convert Class");
+						}
+							break;					
 					}
-					app->db->prepare("CALL BuyItemFromShop (?,?,?,?,?, @unique_iID)");//this basicaly a insert into...
-					app->db->setInt(1, pItemData->tblidx);
-					app->db->setInt(2, this->plr->pcProfile->charId);
-					app->db->setInt(3, ItemPos);
-					app->db->setInt(4, pItemData->byRank);
-					app->db->setInt(5, pItemData->byDurability);
-					app->db->execute();
-					app->db->execute("SELECT @unique_iID");
-					app->db->fetch();
-
-					CNtlPacket packet01(sizeof(sGU_ITEM_CREATE));
-					sGU_ITEM_CREATE * res01 = (sGU_ITEM_CREATE *)packet01.GetPacketData();
-
-					res01->bIsNew = true;
-					res01->wOpCode = GU_ITEM_CREATE;
-					res01->handle = app->db->getInt("@unique_iID");
-					res01->sItemData.charId = this->GetavatarHandle();
-					res01->sItemData.itemNo = pItemData->tblidx;
-					res01->sItemData.byStackcount = rew->arsDefRwd[i].dwRewardVal;
-					res01->sItemData.itemId = app->db->getInt("@unique_iID");
-					res01->sItemData.byPlace = 1;
-					res01->sItemData.byPosition = ItemPos;
-					res01->sItemData.byCurrentDurability = pItemData->byDurability;
-					res01->sItemData.byRank = pItemData->byRank;
-
-					packet01.SetPacketLen(sizeof(sGU_ITEM_CREATE));
-					packet0.SetPacketLen(sizeof(sGU_ITEM_PICK_RES));
-					g_pApp->Send(this->GetHandle(), &packet01);
-					g_pApp->Send(this->GetHandle(), &packet0);
 				}
-					break;
-				case eREWARD_TYPE_QUEST_ITEM:
-				{
-					rew->arsDefRwd[i].dwRewardIdx;
-					rew->arsDefRwd[i].dwRewardVal;
-					gsf->printOk("Reward Quest Item");
-				}
-					break;
-				case eREWARD_TYPE_EXP:
-				{
-					rew->arsDefRwd[i].dwRewardIdx;
-					rew->arsDefRwd[i].dwRewardVal;
-					CNtlPacket packet2(sizeof(sGU_UPDATE_CHAR_EXP));
-					sGU_UPDATE_CHAR_EXP * response = (sGU_UPDATE_CHAR_EXP*)packet2.GetPacketData();
-
-					response->dwAcquisitionExp = rew->arsDefRwd[i].dwRewardVal;
-					response->dwCurExp = this->plr->pcProfile->dwCurExp;
-					response->dwIncreasedExp = rew->arsDefRwd[i].dwRewardVal + rand() % this->plr->pcProfile->byLevel * 2;
-					response->dwBonusExp = (rew->arsDefRwd[i].dwRewardVal - response->dwIncreasedExp);
-					response->handle = this->plr->GetAvatarandle();
-					response->wOpCode = GU_UPDATE_CHAR_EXP;
-					this->plr->pcProfile->dwCurExp += response->dwIncreasedExp;
-					packet2.SetPacketLen(sizeof(sGU_UPDATE_CHAR_EXP));
-					g_pApp->Send(this->GetHandle(), &packet2);
-
-					gsf->printOk("Reward Experience");
-				}
-					break;
-				case eREWARD_TYPE_SKILL:
-				{
-					rew->arsDefRwd[i].dwRewardIdx;
-					rew->arsDefRwd[i].dwRewardVal;
-					gsf->printOk("Reward Skill");
-				}
-					break;
-				case eREWARD_TYPE_ZENY:
-				{					
-					CNtlPacket packet4(sizeof(sGU_ZENNY_PICK_RES));
-					sGU_ZENNY_PICK_RES* res4 = (sGU_ZENNY_PICK_RES*)packet4.GetPacketData();
-					
-					res4->bSharedInParty = false; //this->plr->isInParty();
-					res4->dwBonusZenny = 0;					
-					this->plr->pcProfile->dwZenny += (rew->arsDefRwd[i].dwRewardVal + res4->dwBonusZenny);
-					res4->dwZenny = this->plr->pcProfile->dwZenny;
-					res4->dwAcquisitionZenny = rew->arsDefRwd[i].dwRewardVal + res4->dwBonusZenny;
-					res4->wResultCode = ZENNY_CHANGE_TYPE_REWARD;
-					app->qry->SetPlusMoney(this->plr->pcProfile->charId, res4->dwAcquisitionZenny);
-					res4->wOpCode = GU_ZENNY_PICK_RES;
-
-					CNtlPacket packetUpd(sizeof(sGU_UPDATE_CHAR_ZENNY));
-					sGU_UPDATE_CHAR_ZENNY * res5 = (sGU_UPDATE_CHAR_ZENNY *)packetUpd.GetPacketData();
-					res5->dwZenny = this->plr->pcProfile->dwZenny;//by analazying this is the ammount...				
-					res5->bIsNew = true;
-					res5->handle = this->GetavatarHandle();
-					res5->byChangeType = ZENNY_CHANGE_TYPE_REWARD;//never mind
-					res5->wOpCode = GU_UPDATE_CHAR_ZENNY;
-					packet4.SetPacketLen(sizeof(sGU_ZENNY_PICK_RES));
-					packetUpd.SetPacketLen(sizeof(sGU_UPDATE_CHAR_ZENNY));
-					g_pApp->Send(this->GetHandle(), &packet4);
-					g_pApp->Send(this->GetHandle(), &packetUpd);					
-
-					gsf->printOk("Reward Zenny");
-				}
-					break;
-				case eREWARD_TYPE_CHANGE_CLASS:
-				{
-					rew->arsDefRwd[i].dwRewardIdx;
-					rew->arsDefRwd[i].dwRewardVal;
-					gsf->printOk("Reward Type Change Class");
-				}
-					break;
-				case eREWARD_TYPE_PROBABILITY:
-				{
-					rew->arsDefRwd[i].dwRewardIdx;
-					rew->arsDefRwd[i].dwRewardVal;
-					gsf->printOk("Reward Probability");
-				}
-					break;
-				case eREWARD_TYPE_REPUTATION:
-				{
-					rew->arsDefRwd[i].dwRewardIdx;
-					rew->arsDefRwd[i].dwRewardVal;
-					gsf->printOk("Reward Reputation");
-				}
-					break;
-				case eREWARD_TYPE_CHANGE_ADULT:
-				{
-					rew->arsDefRwd[i].dwRewardIdx;
-					rew->arsDefRwd[i].dwRewardVal;
-					gsf->printOk("Reward Change Adult");
-				}
-					break;
-				case eREWARD_TYPE_GET_CONVERT_CLASS_RIGHT:
-				{
-					rew->arsDefRwd[i].dwRewardIdx;
-					rew->arsDefRwd[i].dwRewardVal;
-					gsf->printOk("Reward Convert Class");
-				}
-					break;
-				default:
-				{
-					gsf->printError("Invalid Reward Type");
-				}
-					break;
-			}			
+			}
 		}
-	}
+		break;
+		case 1:
+		{
+			printf("Trigger Case\n");
+			CWorldTable* pWorldTable = app->g_pTableContainer->GetWorldTable();
+			CDungeonTable* pDungeonTbl = app->g_pTableContainer->GetDungeonTable();
+			CActionTable* pActTable = app->g_pTableContainer->GetActionTable();
+			CDynamicObjectTable* pDynamicObj = app->g_pTableContainer->GetDynamicObjectTable();
+			CGameManiaTimeTable* pGmMania = app->g_pTableContainer->GetGameManiaTimeTable();
+			CNewbieTable* pNwbTbale = app->g_pTableContainer->GetNewbieTable();
+			CWorldMapTable* pMapTable = app->g_pTableContainer->GetWorldMapTable();
+			sOBJECT_TBLDAT* pObjDat = reinterpret_cast<sOBJECT_TBLDAT*>(pObjTable->FindData(req->dwEventData));	
+			if ((pObjDat)&&(pObjDat->wFunction == eDBO_TRIGGER_OBJECT_FUNC_TIME_LEAP_QUEST))
+			{
+				CNtlPacket packet2(sizeof(sGU_TOBJECT_UPDATE_STATE));
+				sGU_TOBJECT_UPDATE_STATE* pUpd = (sGU_TOBJECT_UPDATE_STATE*)packet2.GetPacketData();
+				pUpd->handle = this->GetavatarHandle();
+				pUpd->tobjectBrief.objectID = req->dwEventData;
+				pUpd->tobjectState.byState = req->tcCurId;
+				pUpd->tobjectState.bySubStateFlag = req->tcNextId;
+				pUpd->wOpCode = GU_TOBJECT_UPDATE_STATE;
+				packet2.SetPacketLen(sizeof(sGU_TOBJECT_UPDATE_STATE));
+				g_pApp->Send(this->GetHandle(),&packet2);
+			}
+		}
+		break;
+		default:
+		{
+		   printf("Unhandled Type, Server and Client Didn't Recognize this Trigger Type");			   
+		}
+		break;
+	}	
 	//printf("res->byTsType = %d, res->dwParam = %d, res->tcCurId = %d, res->tcNextId = %d, res->tId = %d\n",res->byTsType, res->dwParam, res->tcCurId, res->tcNextId, res->tId); 
-	packet.SetPacketLen( sizeof(sGU_TS_CONFIRM_STEP_RES) );
-	g_pApp->Send( this->GetHandle() , &packet );
+	
 }
 void	CClientSession::SendZennyPickUpReq(CNtlPacket * pPacket, CGameServer * app)
 {
@@ -4587,4 +4629,135 @@ void CClientSession::SendBusLocation(CNtlPacket * pPacket, CGameServer * app)
 	res->vCurDir;
 	res->vCurLoc;
 	res->wOpCode;
+}
+//----------------------------------//
+//--ObjectVisit Luiz45
+//----------------------------------//
+void CClientSession::SendObjectVisitQuest(CNtlPacket * pPacket, CGameServer * app)
+{
+	sUG_QUEST_OBJECT_VISIT_REQ * req = (sUG_QUEST_OBJECT_VISIT_REQ*)pPacket->GetPacketData();
+	CNtlPacket packet(sizeof(sGU_QUEST_OBJECT_VISIT_RES));
+	sGU_QUEST_OBJECT_VISIT_RES* res = (sGU_QUEST_OBJECT_VISIT_RES*)packet.GetPacketData();
+	
+	res->byObjType = req->byObjType;
+	res->objectTblidx = req->objectTblidx;
+	res->qId = req->qId;
+	res->worldId = req->worldId;
+	res->wOpCode = GU_QUEST_OBJECT_VISIT_RES;
+	res->wResultCode = GAME_SUCCESS;
+
+	packet.SetPacketLen(sizeof(sGU_QUEST_OBJECT_VISIT_RES));
+	g_pApp->Send(this->GetHandle(), &packet);
+}
+//----------------------------------//
+//--TSUpdateState Luiz45
+//----------------------------------//
+void CClientSession::SendTSUpdateState(CNtlPacket * pPacket, CGameServer * app)
+{
+	printf("Sending TS_UPDATE_STATE");
+	sUG_TS_UPDATE_STATE* req = (sUG_TS_UPDATE_STATE*)pPacket->GetPacketData();
+
+	CNtlPacket packet(sizeof(sGU_TS_UPDATE_STATE));
+	sGU_TS_UPDATE_STATE* res = (sGU_TS_UPDATE_STATE*)packet.GetPacketData();
+	res->byTsType = req->byTsType;
+	res->byType = req->byType;
+	res->wTSState = req->wTSState;
+	res->tId = req->tId;
+	res->dwParam = req->dwParam;
+	res->wOpCode = GU_TS_UPDATE_STATE;
+	packet.SetPacketLen(sizeof(sGU_TS_UPDATE_STATE));
+	g_pApp->Send(this->GetHandle(), &packet);
+}
+//----------------------------------//
+//--Sending TimeQuestList Luiz45
+//----------------------------------//
+void CClientSession::SendTimeQuestList(CNtlPacket * pPacket, CGameServer * app)
+{
+	printf("Sending Time Quest List\n");
+
+	CNtlPacket packet(sizeof(sGU_TIMEQUEST_ROOM_LIST_RES));
+	sGU_TIMEQUEST_ROOM_LIST_RES* res = (sGU_TIMEQUEST_ROOM_LIST_RES*)packet.GetPacketData();
+	CTimeQuestTable* pTmqTable = app->g_pTableContainer->GetTimeQuestTable();	
+	res->sTMQInfo.byDifficult = this->gsf->GetTmqLevel(this->plr);
+	res->sTMQInfo.tmqTblidx = this->gsf->GetTmq(this->plr);
+	res->sTMQInfo.wWaitIndividualCount = 1;
+	res->sTMQInfo.wWaitPartyCount = 1;
+	res->wResultCode = GAME_SUCCESS;
+	res->wOpCode = GU_TIMEQUEST_ROOM_LIST_RES;
+	packet.SetPacketLen(sizeof(sGU_TIMEQUEST_ROOM_LIST_RES));
+	g_pApp->Send(this->GetHandle(), &packet);
+}
+//----------------------------------//
+//--Leaving Out TMQ Luiz45
+//----------------------------------//
+void CClientSession::LeaveTimeQuestRoom(CNtlPacket * pPacket, CGameServer * app)
+{
+	printf("Leaving Out TMQ Room\n");
+	CNtlPacket packet2(sizeof(sGU_TIMEQUEST_ROOM_LEAVE_NFY));
+	sGU_TIMEQUEST_ROOM_LEAVE_NFY* res2 = (sGU_TIMEQUEST_ROOM_LEAVE_NFY*)packet2.GetPacketData();	
+
+	CNtlPacket packet(sizeof(sGU_TIMEQUEST_ROOM_LEAVE_RES));
+	sGU_TIMEQUEST_ROOM_LEAVE_RES* res = (sGU_TIMEQUEST_ROOM_LEAVE_RES*)packet.GetPacketData();
+	
+	res->wOpCode = GU_TIMEQUEST_ROOM_LEAVE_RES;
+	res2->wOpCode = GU_TIMEQUEST_ROOM_LEAVE_NFY;
+	res->wResultCode = GAME_SUCCESS;
+
+	packet.SetPacketLen(sizeof(sGU_TIMEQUEST_ROOM_LEAVE_RES));
+	packet2.SetPacketLen(sizeof(sGU_TIMEQUEST_ROOM_LEAVE_NFY));
+
+	g_pApp->Send(this->GetHandle(), &packet);
+	g_pApp->Send(this->GetHandle(), &packet2);	
+	app->UserBroadcastothers(&packet2, this);
+}
+//----------------------------------//
+//--Join TMQ Luiz45
+//----------------------------------//
+void CClientSession::JoinTimeQuestRoom(CNtlPacket * pPacket, CGameServer * app)
+{
+	printf("Joining...\n");
+	sUG_TIMEQUEST_ROOM_JOIN_REQ* req = (sUG_TIMEQUEST_ROOM_JOIN_REQ*)pPacket->GetPacketData();
+
+	//Packets definition
+	CNtlPacket packet(sizeof(sGU_TIMEQUEST_ROOM_JOIN_RES));
+	sGU_TIMEQUEST_ROOM_JOIN_RES* res = (sGU_TIMEQUEST_ROOM_JOIN_RES*)packet.GetPacketData();
+
+	CNtlPacket packet2(sizeof(sGU_TIMEQUEST_ROOM_JOIN_NFY));
+	sGU_TIMEQUEST_ROOM_JOIN_NFY* res2 = (sGU_TIMEQUEST_ROOM_JOIN_NFY*)packet2.GetPacketData();
+	
+	CNtlPacket packet3(sizeof(sGU_TIMEQUEST_ROOM_SELECTION_NFY));
+	sGU_TIMEQUEST_ROOM_SELECTION_NFY* res3 = (sGU_TIMEQUEST_ROOM_SELECTION_NFY*)packet3.GetPacketData();
+
+	//Preparing Data
+	res->hTroubleMember = this->GetavatarHandle();
+	res->sJoinInfo.tmqTblidx = this->gsf->GetTmq(this->plr);
+	res->sJoinInfo.byDifficult = this->gsf->GetTmqLevel(this->plr);
+	res->sJoinInfo.byRoomState = TIMEQUEST_ROOM_STATE_WAITENTRY;
+	res->sJoinInfo.dwRemainTime = 5000;
+	res->sJoinInfo.byTimeQuestMode = req->byTimeQuestMode;	
+	res->wOpCode = GU_TIMEQUEST_ROOM_JOIN_RES;
+	res->wResultCode = GAME_SUCCESS;
+
+	res2->sJoinInfo.tmqTblidx = res->sJoinInfo.tmqTblidx;
+	res2->sJoinInfo.byDifficult = this->gsf->GetTmqLevel(this->plr);
+	res2->sJoinInfo.byRoomState = TIMEQUEST_ROOM_STATE_PREPARE_WORLD;
+	res2->sJoinInfo.byTimeQuestMode = req->byTimeQuestMode;
+	res2->sJoinInfo.dwRemainTime = 5000;
+	res2->wOpCode = GU_TIMEQUEST_ROOM_JOIN_NFY;
+
+	res3->bIsSecondWinner = true;
+	res3->uSelectionInfo.sEntryInfo.bHaveItem = true;
+	res3->uSelectionInfo.sEntryInfo.dwReaminEntryTime = 10000;	
+	res3->uSelectionInfo.sNextTmqInfo.tmqTblidx = this->gsf->GetTmq(this->plr);	
+	res3->wOpCode = GU_TIMEQUEST_ROOM_SELECTION_NFY;
+
+	//Finishing
+	packet.SetPacketLen(sizeof(sGU_TIMEQUEST_ROOM_JOIN_RES));
+	packet2.SetPacketLen(sizeof(sGU_TIMEQUEST_ROOM_JOIN_NFY));
+	packet3.SetPacketLen(sizeof(sGU_TIMEQUEST_ROOM_SELECTION_NFY));
+	g_pApp->Send(this->GetHandle(), &packet);
+	g_pApp->Send(this->GetHandle(), &packet3);
+	g_pApp->Send(this->GetHandle(), &packet2);
+	app->UserBroadcastothers(&packet3, this);
+	app->UserBroadcastothers(&packet2,this);
 }

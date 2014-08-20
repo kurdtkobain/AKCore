@@ -64,8 +64,11 @@ public:
   	int							GetTotalSlotSkill(int charID);
  	int							GetBattleResultEffect(int RpEffect);
 	//Quest
-	void						QuestStarted(RwUInt32 CharID, NTL_TS_TC_ID tIdQuest, NTL_TS_TC_ID tCurrentId,NTL_TS_TC_ID tNextAct, BYTE tsType, DWORD dwParam);
-	void						NewQuest(RwUInt32 CharID, NTL_TS_TC_ID tCurQuest, BYTE tsType, DWORD dwParam);
+	void						QuestStarted(RwUInt32 CharID, NTL_TS_T_ID tIdQuest, NTL_TS_TC_ID tCurrentId, NTL_TS_TC_ID tNextAct, BYTE tsType, DWORD dwParam);
+	void						NewQuest(RwUInt32 CharID, NTL_TS_T_ID tCurQuest, BYTE tsType, DWORD dwParam);
+	//Time Quest
+	TBLIDX						GetTmq(PlayerInfos *plr);
+	RwUInt8						GetTmqLevel(PlayerInfos *plr);
 	//MISC
 	void						SendItemEffect(CClientSession * pSession,TBLIDX effectTbl,TBLIDX ItemTbl);
 };

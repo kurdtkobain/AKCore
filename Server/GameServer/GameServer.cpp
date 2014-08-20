@@ -562,12 +562,13 @@ int CClientSession::OnDispatch(CNtlPacket * pPacket)
 			break;
 		case UG_TS_CONFIRM_STEP_REQ:
 		{
-			SendPlayerQuestReq(pPacket,app);
+			CClientSession::SendPlayerQuestReq(pPacket, app);
 		}
 			break;
 		case UG_TS_UPDATE_STATE:
 		{
 			printf("--- UG_TS_UPDATE_STATE --- \n");
+			CClientSession::SendTSUpdateState(pPacket, app);
 		}
 			break;
 		case UG_TS_EXCUTE_TRIGGER_OBJECT:
@@ -598,6 +599,7 @@ int CClientSession::OnDispatch(CNtlPacket * pPacket)
 		case UG_QUEST_OBJECT_VISIT_REQ:
 		{
 			printf("--- UG_QUEST_OBJECT_VISIT_REQ --- \n");
+			CClientSession::SendObjectVisitQuest(pPacket, app);
 		}
 			break;
 		case UG_FREEBATTLE_CHALLENGE_REQ:
@@ -699,6 +701,7 @@ int CClientSession::OnDispatch(CNtlPacket * pPacket)
 		case UG_TIMEQUEST_ROOM_LIST_REQ:
 		{
 			printf("--- UG_TIMEQUEST_ROOM_LIST_REQ --- \n");
+			CClientSession::SendTimeQuestList(pPacket, app);
 		}
 			break;
 		case UG_TIMEQUEST_ROOM_INFO_REQ:
@@ -709,11 +712,13 @@ int CClientSession::OnDispatch(CNtlPacket * pPacket)
 		case UG_TIMEQUEST_ROOM_JOIN_REQ:
 		{
 			printf("--- UG_TIMEQUEST_ROOM_JOIN_REQ --- \n");
+			CClientSession::JoinTimeQuestRoom(pPacket, app);
 		}
 			break;
 		case UG_TIMEQUEST_ROOM_LEAVE_REQ:
 		{
 			printf("--- UG_TIMEQUEST_ROOM_LEAVE_REQ --- \n");
+			CClientSession::LeaveTimeQuestRoom(pPacket, app);
 		}
 			break;
 		case UG_TIMEQUEST_ROOM_TELEPORT_REQ:
