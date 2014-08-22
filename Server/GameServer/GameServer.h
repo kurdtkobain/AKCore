@@ -208,6 +208,9 @@ public:
 	void						SendDisbandPartyReq(CNtlPacket * pPacket, CGameServer * app);
 	void						SendPartyLeaveReq(CNtlPacket * pPacket, CGameServer * app);
 	void						SendPartyResponse(CNtlPacket * pPacket, CGameServer * app);
+	void						SendPartyChangeDiff(CNtlPacket * pPacket, CGameServer * app);
+	void						SendPartyChangeZenny(CNtlPacket * pPacket, CGameServer * app);
+	void						SendPartyChangeItem(CNtlPacket * pPacket, CGameServer * app);
 	//Mail System
 	void						SendCharMailStart(CNtlPacket * pPacket, CGameServer * app);
 	void						SendCharMailLoadReq(CNtlPacket * pPacket, CGameServer * app);

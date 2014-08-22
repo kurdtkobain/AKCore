@@ -477,11 +477,13 @@ int CClientSession::OnDispatch(CNtlPacket * pPacket)
 		case UG_PARTY_CHANGE_ZENNY_LOOTING_METHOD_REQ:
 		{
 			printf("--- UG_PARTY_CHANGE_ZENNY_LOOTING_METHOD_REQ --- \n");
+			CClientSession::SendPartyChangeZenny(pPacket, app);
 		}
 			break;
 		case UG_PARTY_CHANGE_ITEM_LOOTING_METHOD_REQ:
 		{
 			printf("--- UG_PARTY_CHANGE_ITEM_LOOTING_METHOD_REQ --- \n");
+			CClientSession::SendPartyChangeItem(pPacket, app);
 		}
 			break;
 		case UG_PARTY_INVEST_ZENNY_REQ:
@@ -1161,6 +1163,7 @@ int CClientSession::OnDispatch(CNtlPacket * pPacket)
 		case UG_PARTY_DIFF_CHANGE_REQ:
 		{
 			printf("--- UG_PARTY_DIFF_CHANGE_REQ --- \n");
+			CClientSession::SendPartyChangeDiff(pPacket, app);
 		}
 			break;
 		case UG_PARTY_DUNGEON_INIT_REQ:

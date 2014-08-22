@@ -4793,3 +4793,62 @@ void CClientSession::SendInitPartyDungeon(CNtlPacket * pPacket, CGameServer * ap
 	packet.SetPacketLen(sizeof(sGU_PARTY_DUNGEON_INIT_RES));
 	g_pApp->Send(this->GetHandle(), &packet);
 }
+//----------------------------------//
+//--Party Dungeon Difficult Luiz45
+//----------------------------------//
+void CClientSession::SendPartyChangeDiff(CNtlPacket * pPacket, CGameServer * app)
+{
+	sUG_PARTY_DIFF_CHANGE_REQ* req = (sUG_PARTY_DIFF_CHANGE_REQ*)pPacket->GetPacketData();
+	
+	CNtlPacket packet(sizeof(sGU_PARTY_DUNGEON_DIFF_RES));
+	sGU_PARTY_DUNGEON_DIFF_RES* res = (sGU_PARTY_DUNGEON_DIFF_RES*)packet.GetPacketData();
+
+	CNtlPacket packet2(sizeof(sGU_PARTY_DUNGEON_DIFF_NFY));
+	sGU_PARTY_DUNGEON_DIFF_NFY* res2 = (sGU_PARTY_DUNGEON_DIFF_NFY*)packet2.GetPacketData();
+
+	res->eDiff = req->eDiff;
+	res->wOpCode = GU_PARTY_DUNGEON_DIFF_RES;
+	res->wResultCode = GAME_SUCCESS;
+
+	res2->eDiff = req->eDiff;
+	res2->wOpCode = GU_PARTY_DUNGEON_DIFF_NFY;
+
+	packet.SetPacketLen(sizeof(sGU_PARTY_DUNGEON_DIFF_RES));
+	packet2.SetPacketLen(sizeof(sGU_PARTY_DUNGEON_DIFF_NFY));
+	g_pApp->Send(this->GetHandle(), &packet);
+	g_pApp->Send(this->GetHandle(), &packet2);
+}
+//----------------------------------//
+//--Party Changing Zenny Method Luiz45
+//----------------------------------//
+void CClientSession::SendPartyChangeZenny(CNtlPacket * pPacket, CGameServer * app)
+{
+	sUG_PARTY_CHANGE_ZENNY_LOOTING_METHOD_REQ* req = (sUG_PARTY_CHANGE_ZENNY_LOOTING_METHOD_REQ*)pPacket->GetPacketData();
+
+	CNtlPacket packet(sizeof(sGU_PARTY_CHANGE_ZENNY_LOOTING_METHOD_RES));
+	sGU_PARTY_CHANGE_ZENNY_LOOTING_METHOD_RES* res = (sGU_PARTY_CHANGE_ZENNY_LOOTING_METHOD_RES*)packet.GetPacketData();
+
+	res->byNewLootingMethod = req->byLootingMethod;
+	res->wOpCode = GU_PARTY_CHANGE_ZENNY_LOOTING_METHOD_RES;
+	res->wResultCode = GAME_SUCCESS;
+
+	packet.SetPacketLen(sizeof(sGU_PARTY_CHANGE_ZENNY_LOOTING_METHOD_RES));
+	g_pApp->Send(this->GetHandle(), &packet);
+}
+//----------------------------------//
+//--Party Changing Items Method Luiz45
+//----------------------------------//
+void CClientSession::SendPartyChangeItem(CNtlPacket * pPacket, CGameServer * app)
+{
+	sUG_PARTY_CHANGE_ITEM_LOOTING_METHOD_REQ* req = (sUG_PARTY_CHANGE_ITEM_LOOTING_METHOD_REQ*)pPacket->GetPacketData();
+
+	CNtlPacket packet(sizeof(sGU_PARTY_CHANGE_ITEM_LOOTING_METHOD_RES));
+	sGU_PARTY_CHANGE_ITEM_LOOTING_METHOD_RES* res = (sGU_PARTY_CHANGE_ITEM_LOOTING_METHOD_RES*)packet.GetPacketData();
+
+	res->byNewLootingMethod = req->byLootingMethod;
+	res->wOpCode = GU_PARTY_CHANGE_ITEM_LOOTING_METHOD_RES;
+	res->wResultCode = GAME_SUCCESS;
+
+	packet.SetPacketLen(sizeof(sGU_PARTY_CHANGE_ITEM_LOOTING_METHOD_RES));
+	g_pApp->Send(this->GetHandle(), &packet);
+}
