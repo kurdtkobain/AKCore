@@ -284,10 +284,13 @@ public:
 	void						SendPlayerQuestReq(CNtlPacket * pPacket, CGameServer * app);
 	void						SendObjectVisitQuest(CNtlPacket * pPacket, CGameServer * app);
 	void						SendTSUpdateState(CNtlPacket * pPacket, CGameServer * app);
+	//Party Dungeon
+	void						SendInitPartyDungeon(CNtlPacket * pPacket, CGameServer * app);
 	//TIMEQUEST
 	void						SendTimeQuestList(CNtlPacket * pPacket, CGameServer * app);
 	void						LeaveTimeQuestRoom(CNtlPacket * pPacket, CGameServer * app);
 	void						JoinTimeQuestRoom(CNtlPacket * pPacket, CGameServer * app);
+	void						SendTimeQuestTeleport(CNtlPacket * pPacket, CGameServer * app);
 	// DUEL
 	void						SendFreeBattleReq(CNtlPacket * pPacket, CGameServer * app);
 	void						SendFreeBattleAccpetReq(CNtlPacket * pPacket, CGameServer * app);

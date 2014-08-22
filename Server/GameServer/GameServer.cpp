@@ -724,6 +724,7 @@ int CClientSession::OnDispatch(CNtlPacket * pPacket)
 		case UG_TIMEQUEST_ROOM_TELEPORT_REQ:
 		{
 			printf("--- UG_TIMEQUEST_ROOM_TELEPORT_REQ --- \n");
+			CClientSession::SendTimeQuestTeleport(pPacket, app);
 		}
 			break;
 		case UG_RANKBATTLE_INFO_REQ:
@@ -1165,6 +1166,7 @@ int CClientSession::OnDispatch(CNtlPacket * pPacket)
 		case UG_PARTY_DUNGEON_INIT_REQ:
 		{
 			printf("--- UG_PARTY_DUNGEON_INIT_REQ --- \n");
+			CClientSession::SendInitPartyDungeon(pPacket, app);
 		}
 			break;
 		case UG_SKILL_INIT_REQ:

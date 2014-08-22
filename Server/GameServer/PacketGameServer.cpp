@@ -4732,22 +4732,22 @@ void CClientSession::JoinTimeQuestRoom(CNtlPacket * pPacket, CGameServer * app)
 	res->hTroubleMember = this->GetavatarHandle();
 	res->sJoinInfo.tmqTblidx = this->gsf->GetTmq(this->plr);
 	res->sJoinInfo.byDifficult = this->gsf->GetTmqLevel(this->plr);
-	res->sJoinInfo.byRoomState = TIMEQUEST_ROOM_STATE_WAITENTRY;
-	res->sJoinInfo.dwRemainTime = 5000;
+	res->sJoinInfo.byRoomState = TIMEQUEST_ROOM_STATE_REGISTRAITION;
+	res->sJoinInfo.dwRemainTime = 60000;
 	res->sJoinInfo.byTimeQuestMode = req->byTimeQuestMode;	
 	res->wOpCode = GU_TIMEQUEST_ROOM_JOIN_RES;
 	res->wResultCode = GAME_SUCCESS;
 
 	res2->sJoinInfo.tmqTblidx = res->sJoinInfo.tmqTblidx;
 	res2->sJoinInfo.byDifficult = this->gsf->GetTmqLevel(this->plr);
-	res2->sJoinInfo.byRoomState = TIMEQUEST_ROOM_STATE_PREPARE_WORLD;
+	res2->sJoinInfo.byRoomState = TIMEQUEST_ROOM_STATE_WAITENTRY;
 	res2->sJoinInfo.byTimeQuestMode = req->byTimeQuestMode;
-	res2->sJoinInfo.dwRemainTime = 5000;
+	res2->sJoinInfo.dwRemainTime = 60000;
 	res2->wOpCode = GU_TIMEQUEST_ROOM_JOIN_NFY;
 
 	res3->bIsSecondWinner = true;
 	res3->uSelectionInfo.sEntryInfo.bHaveItem = true;
-	res3->uSelectionInfo.sEntryInfo.dwReaminEntryTime = 10000;	
+	res3->uSelectionInfo.sEntryInfo.dwReaminEntryTime = 60000;
 	res3->uSelectionInfo.sNextTmqInfo.tmqTblidx = this->gsf->GetTmq(this->plr);	
 	res3->wOpCode = GU_TIMEQUEST_ROOM_SELECTION_NFY;
 
@@ -4760,4 +4760,36 @@ void CClientSession::JoinTimeQuestRoom(CNtlPacket * pPacket, CGameServer * app)
 	g_pApp->Send(this->GetHandle(), &packet2);
 	app->UserBroadcastothers(&packet3, this);
 	app->UserBroadcastothers(&packet2,this);
+}
+//----------------------------------//
+//--Teleport to TMQ Luiz45
+//----------------------------------//
+void CClientSession::SendTimeQuestTeleport(CNtlPacket * pPacket, CGameServer * app)
+{
+	sUG_TIMEQUEST_ROOM_TELEPORT_REQ* req = (sUG_TIMEQUEST_ROOM_TELEPORT_REQ*)pPacket->GetPacketData();
+
+	CNtlPacket packet(sizeof(sGU_TIMEQUEST_ROOM_TELEPORT_RES));
+	sGU_TIMEQUEST_ROOM_TELEPORT_RES* res = (sGU_TIMEQUEST_ROOM_TELEPORT_RES*)packet.GetPacketData();
+
+	res->wOpCode = GU_TIMEQUEST_ROOM_TELEPORT_RES;
+	res->wResultCode = GAME_SUCCESS;
+
+	packet.SetPacketLen(sizeof(sGU_TIMEQUEST_ROOM_TELEPORT_RES));
+	g_pApp->Send(this->GetHandle(),&packet);
+}
+//----------------------------------//
+//--Party Dungeon Init/Cancel Luiz45
+//----------------------------------//
+void CClientSession::SendInitPartyDungeon(CNtlPacket * pPacket, CGameServer * app)
+{
+	sUG_PARTY_DUNGEON_INIT_REQ* req = (sUG_PARTY_DUNGEON_INIT_REQ*)pPacket->GetPacketData();
+
+	CNtlPacket packet(sizeof(sGU_PARTY_DUNGEON_INIT_RES));
+	sGU_PARTY_DUNGEON_INIT_RES* res = (sGU_PARTY_DUNGEON_INIT_RES*)packet.GetPacketData();
+	
+	res->wOpCode = GU_PARTY_DUNGEON_INIT_RES;
+	res->wResultCode = GAME_SUCCESS;
+
+	packet.SetPacketLen(sizeof(sGU_PARTY_DUNGEON_INIT_RES));
+	g_pApp->Send(this->GetHandle(), &packet);
 }
