@@ -362,3 +362,197 @@ RwUInt8	GsFunctionsClass::GetTmqLevel(PlayerInfos *plr)
 
 	return leastDifficult.byDifficult;
 }
+//-----------------------------------------------------------
+//CreateUpdateItem: this functions gonna do all the things like:
+//-Check if need Update our count of items
+//-If need create another item because he get the max stackCount
+//-If we are using and when get at zero we delete it
+//-Need Clean this whole code
+//Luiz45
+//-----------------------------------------------------------
+void	GsFunctionsClass::CreateUpdateItem(PlayerInfos *plr, int stackCount, TBLIDX itemID,bool deleteItem,HSESSION ClientSession,int place,int pos)
+{
+	CGameServer * app = (CGameServer*)NtlSfxGetApp();
+	CItemTable *itemTbl = app->g_pTableContainer->GetItemTable();
+	MySQLConnWrapper *db2 = new MySQLConnWrapper;
+	int iHandle = 0;
+	db2->setConfig(app->GetConfigFileHost(), app->GetConfigFileUser(), app->GetConfigFilePassword(), app->GetConfigFileDatabase());
+	db2->connect();
+	db2->switchDb(app->GetConfigFileDatabase());
+	if (deleteItem == true)
+	{
+		CNtlPacket packet2(sizeof(sGU_ITEM_DELETE));
+		sGU_ITEM_DELETE * res2 = (sGU_ITEM_DELETE *)packet2.GetPacketData();
+
+		CNtlPacket packet3(sizeof(sGU_ITEM_STACK_UPDATE));
+		sGU_ITEM_STACK_UPDATE * res3 = (sGU_ITEM_STACK_UPDATE *)packet3.GetPacketData();
+
+		//app->db->prepare("SELECT * FROM items WHERE owner_id = ? AND place = ? AND pos = ? ORDER BY pos ASC");
+		app->db->prepare("SELECT * FROM items WHERE owner_id = ? AND place = 1 AND pos = ? ORDER BY pos ASC");
+		app->db->setInt(1, plr->pcProfile->charId);
+		app->db->setInt(2, pos);
+		app->db->execute();
+		app->db->fetch();
+
+		iHandle = app->db->getInt("id");
+		int iCounter = app->db->getInt("count");		
+		if (iCounter > 1)
+		{
+			app->db->prepare("UPDATE items SET count = ? WHERE owner_id = ? AND id = ?");
+			app->db->setInt(1, (--iCounter));
+			app->db->setInt(2, plr->pcProfile->charId);
+			app->db->setInt(3, iHandle);
+			app->db->execute();
+
+			res3->bIsNew = false;
+			res3->byStack = iCounter;
+			res3->hItemHandle = iHandle;
+			res3->wOpCode = GU_ITEM_STACK_UPDATE;
+			packet3.SetPacketLen(sizeof(sGU_ITEM_STACK_UPDATE));
+			g_pApp->Send(ClientSession, &packet3);
+		}
+		else if (iCounter<=1)
+		{
+			app->db->prepare("DELETE FROM items WHERE owner_id = ? AND id = ?");
+			app->db->setInt(1, plr->pcProfile->charId);
+			app->db->setInt(2, iHandle);
+			app->db->execute();
+
+			res2->bySrcPlace = place;
+			res2->bySrcPos = pos;
+			res2->hSrcItem = iHandle;
+			res2->wOpCode = GU_ITEM_DELETE;
+			packet2.SetPacketLen(sizeof(sGU_ITEM_DELETE));
+			g_pApp->Send(ClientSession, &packet2);
+		}		
+	}
+	else
+	{
+		sITEM_TBLDAT* pItemData = (sITEM_TBLDAT*)itemTbl->FindData(itemID);
+		CNtlPacket packet2(sizeof(sGU_ITEM_CREATE));
+		sGU_ITEM_CREATE * res2 = (sGU_ITEM_CREATE *)packet2.GetPacketData();
+
+		CNtlPacket packet3(sizeof(sGU_ITEM_STACK_UPDATE));
+		sGU_ITEM_STACK_UPDATE * res3 = (sGU_ITEM_STACK_UPDATE *)packet3.GetPacketData();
+
+		int ItemPos = 0;
+
+		app->db->prepare("SELECT * FROM items WHERE owner_id = ? AND place=1 ORDER BY pos ASC");
+		app->db->setInt(1, plr->pcProfile->charId);
+		app->db->execute();
+		int k = 0;		
+		int pLastStack = stackCount;
+		int iMaxSlotSearch = NTL_MAX_ITEM_SLOT;
+		bool bHaveFreeSlot = false;
+		//Free Slots
+		while (NTL_MAX_ITEM_SLOT != 0)
+		{
+			iMaxSlotSearch--;
+			db2->prepare("SELECT id FROM items WHERE owner_id = ? AND place = 1 AND pos = ? ");
+			db2->setInt(1, plr->pcProfile->charId);
+			db2->setInt(2, iMaxSlotSearch);
+			db2->execute();
+			if (db2->rowsCount() != 0)
+				continue;			
+			else
+			{
+				ItemPos = iMaxSlotSearch;
+				bHaveFreeSlot = ((-1) * 1 == iMaxSlotSearch ? false : true);
+				delete db2;
+				break;
+			}
+		}
+		while (app->db->fetch())
+		{	
+			if (app->db->getInt("tblidx") == pItemData->tblidx)
+			{
+				int pItemCount = app->db->getInt("count");
+				iHandle = app->db->getInt("id");				
+				res2->bIsNew = false;
+				while (stackCount != 0)
+				{					
+					//if (pItemCount <= pItemData->byMax_Stack) max stack is only for buy
+					if (pItemCount<=99)
+					{
+						pItemCount++;
+						app->db->prepare("UPDATE items SET count = ? WHERE owner_id = ? AND id = ?");
+						app->db->setInt(1, pItemCount);
+						app->db->setInt(2, plr->pcProfile->charId);
+						app->db->setInt(3, iHandle);
+						app->db->execute();									
+						res3->byStack = pItemCount;
+						res3->hItemHandle = iHandle;
+						res3->wOpCode = GU_ITEM_STACK_UPDATE;
+						packet3.SetPacketLen(sizeof(sGU_ITEM_STACK_UPDATE));
+						g_pApp->Send(ClientSession, &packet3);
+						break;
+					}
+					else if (bHaveFreeSlot == true)
+					{
+						res2->bIsNew = true;
+						app->db->prepare("CALL BuyItemFromShop (?,?,?,?,?, @unique_iID)");
+						app->db->setInt(1, itemID);
+						app->db->setInt(2, plr->pcProfile->charId);
+						app->db->setInt(3, ItemPos);
+						app->db->setInt(4, pItemData->byRank);
+						app->db->setInt(5, pItemData->byDurability);
+						app->db->execute();
+						app->db->execute("SELECT @unique_iID");
+						app->db->fetch();
+						iHandle = app->db->getInt("@unique_iID");
+						app->qry->UpdateItemsCount(iHandle, stackCount);
+						res2->wOpCode = GU_ITEM_CREATE;
+						res2->handle = iHandle;
+						res2->sItemData.charId = plr->GetAvatarandle();
+						res2->sItemData.itemNo = pItemData->tblidx;
+						res2->sItemData.byStackcount = stackCount;
+						res2->sItemData.itemId = iHandle;
+						res2->sItemData.byPlace = 1;
+						res2->sItemData.byPosition = ItemPos;
+						res2->sItemData.byCurrentDurability = pItemData->byDurability;
+						res2->sItemData.byRank = pItemData->byRank;
+
+						packet2.SetPacketLen(sizeof(sGU_ITEM_CREATE));
+						g_pApp->Send(ClientSession, &packet2);
+						break;
+					}
+					stackCount--;
+				}						
+			}
+			else if (bHaveFreeSlot == true)
+			{
+				res2->bIsNew = true;
+				app->db->prepare("CALL BuyItemFromShop (?,?,?,?,?, @unique_iID)");
+				app->db->setInt(1, itemID);
+				app->db->setInt(2, plr->pcProfile->charId);
+				app->db->setInt(3, ItemPos);
+				app->db->setInt(4, pItemData->byRank);
+				app->db->setInt(5, pItemData->byDurability);
+				app->db->execute();
+				app->db->execute("SELECT @unique_iID");
+				app->db->fetch();
+				iHandle = app->db->getInt("@unique_iID");
+
+				app->qry->UpdateItemsCount(iHandle, stackCount);
+
+				res2->wOpCode = GU_ITEM_CREATE;
+				res2->handle = iHandle;
+				res2->sItemData.charId = plr->GetAvatarandle();
+				res2->sItemData.itemNo = pItemData->tblidx;
+				res2->sItemData.byStackcount = stackCount;
+				res2->sItemData.itemId = iHandle;
+				res2->sItemData.byPlace = 1;
+				res2->sItemData.byPosition = ItemPos;
+				res2->sItemData.byCurrentDurability = pItemData->byDurability;
+				res2->sItemData.byRank = pItemData->byRank;
+
+				packet2.SetPacketLen(sizeof(sGU_ITEM_CREATE));
+				g_pApp->Send(ClientSession, &packet2);
+
+				break;
+			}
+			else
+				continue;
+		}		
+	}
+}

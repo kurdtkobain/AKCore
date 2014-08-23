@@ -3077,7 +3077,7 @@ void CClientSession::SendShopBuyReq(CNtlPacket * pPacket, CGameServer * app)
 					{
 						if(req->sBuyData[l].byItemPos == j)
 						{
-							sITEM_TBLDAT* pItemData = (sITEM_TBLDAT*) itemTbl->FindData( pMerchantData->aitem_Tblidx[j] );
+							/*sITEM_TBLDAT* pItemData = (sITEM_TBLDAT*) itemTbl->FindData( pMerchantData->aitem_Tblidx[j] );
 							int ItemPos = 0;
 
 							app->db->prepare("SELECT * FROM items WHERE owner_ID = ? AND place=1 ORDER BY pos ASC");
@@ -3100,9 +3100,9 @@ void CClientSession::SendShopBuyReq(CNtlPacket * pPacket, CGameServer * app)
 							app->db->setInt(5, pItemData->byDurability);
 							app->db->execute();
 							app->db->execute("SELECT @unique_iID");
-							app->db->fetch();
-
-							CNtlPacket packet2(sizeof(sGU_ITEM_CREATE));
+							app->db->fetch();*/
+							
+							/*CNtlPacket packet2(sizeof(sGU_ITEM_CREATE));
 							sGU_ITEM_CREATE * res2 = (sGU_ITEM_CREATE *)packet2.GetPacketData();
 
 							res2->bIsNew = true;
@@ -3118,8 +3118,8 @@ void CClientSession::SendShopBuyReq(CNtlPacket * pPacket, CGameServer * app)
 							res2->sItemData.byRank = pItemData->byRank;
 
 							packet2.SetPacketLen( sizeof(sGU_ITEM_CREATE) );
-							g_pApp->Send( this->GetHandle(), &packet2 );
-
+							g_pApp->Send( this->GetHandle(), &packet2 );*/
+							this->gsf->CreateUpdateItem(this->plr, req->sBuyData[0].byStack, pMerchantData->aitem_Tblidx[j], false, this->GetHandle());
 							break;
 						}
 
@@ -3401,7 +3401,8 @@ void	CClientSession::SendDragonBallRewardReq(CNtlPacket * pPacket, CGameServer *
  				res4->itemTblidx = pItemData->tblidx;
  				res4->wOpCode = GU_ITEM_PICK_RES;
  				res4->wResultCode = GAME_SUCCESS;
- 				int ItemPos = 0;
+				this->gsf->CreateUpdateItem(this->plr, pItemData->byMax_Stack, pItemData->tblidx, false, this->GetHandle());
+ 				/*int ItemPos = 0;
  
  				app->db->prepare("SELECT * FROM items WHERE owner_ID = ? AND place=1 ORDER BY pos ASC");
  				app->db->setInt(1, this->plr->pcProfile->charId);
@@ -3439,11 +3440,11 @@ void	CClientSession::SendDragonBallRewardReq(CNtlPacket * pPacket, CGameServer *
  				res2->sItemData.byPlace = 1;
  				res2->sItemData.byPosition = ItemPos;
  				res2->sItemData.byCurrentDurability = pItemData->byDurability;
- 				res2->sItemData.byRank = pItemData->byRank;
+ 				res2->sItemData.byRank = pItemData->byRank;*/
  
- 				packet2.SetPacketLen(sizeof(sGU_ITEM_CREATE));
+ 				//packet2.SetPacketLen(sizeof(sGU_ITEM_CREATE));
  				packet4.SetPacketLen(sizeof(sGU_ITEM_PICK_RES));
- 				g_pApp->Send(this->GetHandle(), &packet2);
+ 				//g_pApp->Send(this->GetHandle(), &packet2);
  				g_pApp->Send(this->GetHandle(), &packet4);
  		}
  		break;
@@ -3774,7 +3775,8 @@ void CClientSession::SendPlayerQuestReq(CNtlPacket * pPacket, CGameServer * app)
 							res0->itemTblidx = pItemData->tblidx;
 							res0->wOpCode = GU_ITEM_PICK_RES;
 							res0->wResultCode = GAME_SUCCESS;
-							int ItemPos = 0;
+							this->gsf->CreateUpdateItem(this->plr, rew->arsDefRwd[i].dwRewardVal, pItemData->tblidx, false, this->GetHandle());
+							/*int ItemPos = 0;
 							app->db->prepare("SELECT * FROM items WHERE owner_ID = ? AND place=1 ORDER BY pos ASC");
 							app->db->setInt(1, this->plr->pcProfile->charId);
 							app->db->execute();
@@ -3813,9 +3815,9 @@ void CClientSession::SendPlayerQuestReq(CNtlPacket * pPacket, CGameServer * app)
 							res01->sItemData.byCurrentDurability = pItemData->byDurability;
 							res01->sItemData.byRank = pItemData->byRank;
 
-							packet01.SetPacketLen(sizeof(sGU_ITEM_CREATE));
+							packet01.SetPacketLen(sizeof(sGU_ITEM_CREATE));*/
 							packet0.SetPacketLen(sizeof(sGU_ITEM_PICK_RES));
-							g_pApp->Send(this->GetHandle(), &packet01);
+							//g_pApp->Send(this->GetHandle(), &packet01);
 							g_pApp->Send(this->GetHandle(), &packet0);
 						}
 							break;
@@ -4034,16 +4036,13 @@ void	CClientSession::SendFreeBattleAccpetReq(CNtlPacket * pPacket, CGameServer *
 	{
 		CNtlPacket packet2(sizeof(sGU_FREEBATTLE_START_NFY));
 		sGU_FREEBATTLE_START_NFY * res2 = (sGU_FREEBATTLE_START_NFY *)packet2.GetPacketData();
-
 		res2->hTarget = this->plr->GetAvatarandle();
 		res2->vRefreeLoc = this->plr->GetPosition();
 		res2->vRefreeLoc.x += rand() % 10 + 5;
 		res2->vRefreeLoc.z -= 2;
 		res2->wOpCode = GU_FREEBATTLE_START_NFY;
-
 		packet2.SetPacketLen( sizeof(sGU_FREEBATTLE_START_NFY) );
 		g_pApp->Send( this->GetHandle() , &packet2 );
-
 		app->UserBroadcastothers(&packet2, this);
 	}
 	else
@@ -4130,6 +4129,7 @@ void	CClientSession::SendItemUseReq(CNtlPacket * pPacket, CGameServer * app)
 		app->UserBroadcastothers(&packet4, this);
 	}	
 
+	this->gsf->CreateUpdateItem(this->plr, 0, itemTBL->tblidx, true, this->GetHandle(),req->byPlace,req->byPos);
 	//Validation by Effect Code for better read
 	this->gsf->SendItemEffect(this, itemUseTbl->aSystem_Effect[0], itemUseTbl->tblidx);
 }

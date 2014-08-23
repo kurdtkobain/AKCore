@@ -58,7 +58,7 @@ public:
 	void						printOk(const char* err);
 	void						printDebug(const char* dbg);	
   	//Items
- 
+	void						CreateUpdateItem(PlayerInfos *plr, int stackCount, TBLIDX itemID, bool deleteItem, HSESSION ClientSession,int place = 1,int pos = 0);
  	//Skills Like Debug
  	void						DebugSkillType(BYTE skillActType);
   	int							GetTotalSlotSkill(int charID);
