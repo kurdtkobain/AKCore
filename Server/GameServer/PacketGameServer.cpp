@@ -393,11 +393,51 @@ void CClientSession::SendCharRevivalReq(CNtlPacket * pPacket, CGameServer * app)
 	CNtlPacket packet(sizeof(sGU_CHAR_REVIVAL_RES));
 	sGU_CHAR_REVIVAL_RES * res = (sGU_CHAR_REVIVAL_RES *)packet.GetPacketData();
 
+	CNtlPacket packet2(sizeof(sGU_AVATAR_WORLD_INFO));
+	sGU_AVATAR_WORLD_INFO * res2 = (sGU_AVATAR_WORLD_INFO *)packet2.GetPacketData();
+
+	CNtlPacket packet3(sizeof(sGU_UPDATE_CHAR_STATE));
+	sGU_UPDATE_CHAR_STATE* pStand = (sGU_UPDATE_CHAR_STATE*)packet3.GetPacketData();
+
+	app->db->prepare("SELECT * FROM characters WHERE CharID = ?");
+	app->db->setInt(1, this->plr->pcProfile->charId);
+	app->db->execute();
+	app->db->fetch();
+
+	res2->wOpCode = GU_AVATAR_WORLD_INFO;
+	res2->worldInfo.tblidx = app->db->getInt("WorldTable");
+	res2->worldInfo.worldID = app->db->getInt("WorldID");
+	res2->worldInfo.hTriggerObjectOffset = 100000;
+	res2->worldInfo.sRuleInfo.byRuleType = GAMERULE_NORMAL;
+	res2->vCurLoc.x = app->db->getInt("CurLocX");
+	res2->vCurLoc.y = app->db->getInt("CurLocY");
+	res2->vCurLoc.z = app->db->getInt("CurLocZ");
+	res2->vCurDir.x = app->db->getInt("CurDirX");
+	res2->vCurDir.y = app->db->getInt("CurDirY");
+	res2->vCurDir.z = app->db->getInt("CurDirZ");
+	
+	this->plr->SetWorldID(app->db->getInt("WorldID"));
+	this->plr->SetWorldTableID(app->db->getInt("WorldTable"));
+
+	pStand->handle = this->GetavatarHandle();
+	pStand->wOpCode = GU_UPDATE_CHAR_STATE;
+	pStand->sCharState.sCharStateBase.byStateID = CHARSTATE_FLAG_STUNNED;
+	pStand->sCharState.sCharStateBase.vCurLoc.x = res2->vCurLoc.x;
+	pStand->sCharState.sCharStateBase.vCurLoc.y = res2->vCurLoc.y;
+	pStand->sCharState.sCharStateBase.vCurLoc.z = res2->vCurLoc.z;
+	pStand->sCharState.sCharStateBase.vCurDir.x = res2->vCurDir.x;
+	pStand->sCharState.sCharStateBase.vCurDir.y = res2->vCurDir.y;
+	pStand->sCharState.sCharStateBase.vCurDir.z = res2->vCurDir.z;
+
 	res->wOpCode = GU_CHAR_REVIVAL_RES;
 	res->wResultCode = GAME_SUCCESS;
 
 	packet.SetPacketLen(sizeof(sGU_CHAR_REVIVAL_RES));
-	g_pApp->Send(this->GetHandle(), &packet);
+	packet2.SetPacketLen(sizeof(sGU_AVATAR_WORLD_INFO));
+	packet3.SetPacketLen(sizeof(sGU_UPDATE_CHAR_STATE));
+	g_pApp->Send(this->GetHandle(), &packet2);
+	g_pApp->Send(this->GetHandle(), &packet);	
+	g_pApp->Send(this->GetHandle(), &packet3);
 }
 //		SendAvatarBuffInfo Luiz45
 //--------------------------------------------------------------------------------------//
@@ -2029,29 +2069,35 @@ void CClientSession::SendPortalTelReq(CNtlPacket * pPacket, CGameServer * app)
 	packet.SetPacketLen( sizeof(sGU_PORTAL_RES) );
 	packet2.SetPacketLen( sizeof(sGU_CHAR_TELEPORT_RES) );
 	packet3.SetPacketLen( sizeof(sGU_UPDATE_CHAR_STATE) );
-	
-	sPORTAL_TBLDAT* pPortalTblData = (sPORTAL_TBLDAT*)app->g_pTableContainer->GetPortalTable()->FindData(req->byPoint);
+	int iMyPortalID = req->byPoint;
+	iMyPortalID += 1;
+	CPortalTable* myPortalTbl = app->g_pTableContainer->GetPortalTable();	
+	sPORTAL_TBLDAT* pPortalTblData = reinterpret_cast<sPORTAL_TBLDAT*>(myPortalTbl->FindData(iMyPortalID));
 	if (pPortalTblData)
 	{
-		if (req->byPoint == pPortalTblData->tblidx)
+		if (iMyPortalID == pPortalTblData->tblidx)
 		{
 			//pPortalTblData->adwPointZenny;
 			//pPortalTblData->dwPointName;
 			//pPortalTblData->szPointNameText;
 			//pPortalTblData->vMap;
-			res->vDir = pPortalTblData->vDir;
-			res->vLoc = pPortalTblData->vLoc;
+			res->vDir.x = pPortalTblData->vDir.x;
+			res->vDir.y = pPortalTblData->vDir.y;
+			res->vDir.z = pPortalTblData->vDir.z;
+			res->vLoc.x = pPortalTblData->vLoc.x;
+			res->vLoc.y = pPortalTblData->vLoc.y;
+			res->vLoc.z = pPortalTblData->vLoc.z;
 			res->byPoint = pPortalTblData->tblidx;
 			res->worldID = pPortalTblData->worldId;
 			res->wOpCode = GU_PORTAL_RES;
 			res->wResultCode = GAME_SUCCESS;
-			res->hNpcHandle = this->GetTargetSerialId();
+			res->hNpcHandle = req->handle;//This need be our npc
 
 			res2->bIsToMoveAnotherServer = false;
 			//res2->sWorldInfo.sRuleInfo.byRuleType = GAMERULE_NORMAL;
 			//res2->sWorldInfo.hTriggerObjectOffset = 100000;
 			//res2->sWorldInfo.tblidx = this->plr->GetWorldTableID();
-			//res2->sWorldInfo.worldID = res->worldID;
+			res2->sWorldInfo.worldID = res->worldID;
 			res2->vNewDir.x = res->vDir.x;
 			res2->vNewDir.y = res->vDir.y;
 			res2->vNewDir.z = res->vDir.z;
