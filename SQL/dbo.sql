@@ -211,8 +211,8 @@ CREATE TABLE `charquestlist` (
   `currentStep` int(255) NOT NULL,
   `type` smallint(1) NOT NULL,
   `dwEventData` int(255) NOT NULL,
-  `nextStep` int(255) NOT NULL,
-  `timeRemaing` int(15) NOT NULL,
+  `nextStep` int(255) NOT NULL DEFAULT '2',
+  `timeRemaing` int(15) NOT NULL DEFAULT '255',
   PRIMARY KEY (`pkQtTable`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 
@@ -389,7 +389,7 @@ CREATE TABLE `skills` (
 -- ----------------------------
 DROP PROCEDURE IF EXISTS `AuthLogin`;
 DELIMITER ;;
-CREATE DEFINER=`root`@`%` PROCEDURE `AuthLogin`(IN m_szUserID VARCHAR(20), IN m_szUserPW VARCHAR(20), OUT m_dwAccountID INT, OUT m_nResultCode INT)
+CREATE DEFINER=`root`@`localhost` PROCEDURE `AuthLogin`(IN m_szUserID VARCHAR(20), IN m_szUserPW VARCHAR(20), OUT m_dwAccountID INT, OUT m_nResultCode INT)
 BEGIN
 
 	DECLARE dec_pw VARCHAR(100);
@@ -422,7 +422,7 @@ DELIMITER ;
 -- ----------------------------
 DROP PROCEDURE IF EXISTS `BuyItemFromShop`;
 DELIMITER ;;
-CREATE DEFINER=`root`@`%` PROCEDURE `BuyItemFromShop`(IN tblidx INT, IN CharID INT, IN pos INT,IN rank INT, IN durability INT, OUT unique_iID INT)
+CREATE DEFINER=`root`@`localhost` PROCEDURE `BuyItemFromShop`(IN tblidx INT, IN CharID INT, IN pos INT,IN rank INT, IN durability INT, OUT unique_iID INT)
 BEGIN
 
 
@@ -443,7 +443,7 @@ DELIMITER ;
 -- ----------------------------
 DROP PROCEDURE IF EXISTS `ChangeCharname`;
 DELIMITER ;;
-CREATE DEFINER=`root`@`%` PROCEDURE `ChangeCharname`(IN awchCharName VARCHAR(16), IN char_Id INT, OUT wResultCode INT)
+CREATE DEFINER=`root`@`localhost` PROCEDURE `ChangeCharname`(IN awchCharName VARCHAR(16), IN char_Id INT, OUT wResultCode INT)
 BEGIN
 
 		IF(SELECT EXISTS(SELECT 1 FROM characters WHERE CharName = awchCharName)) THEN
@@ -476,7 +476,7 @@ DELIMITER ;
 -- ----------------------------
 DROP PROCEDURE IF EXISTS `ChangeGuildMaster`;
 DELIMITER ;;
-CREATE DEFINER=`root`@`%` PROCEDURE `ChangeGuildMaster`(IN characterID INT, IN guildname VARCHAR(30), IN mastercharID INT, OUT wResultCode INT)
+CREATE DEFINER=`root`@`localhost` PROCEDURE `ChangeGuildMaster`(IN characterID INT, IN guildname VARCHAR(30), IN mastercharID INT, OUT wResultCode INT)
 BEGIN
 
 DECLARE issecguildmaster INT;
@@ -519,7 +519,7 @@ DELIMITER ;
 -- ----------------------------
 DROP PROCEDURE IF EXISTS `CharBind`;
 DELIMITER ;;
-CREATE DEFINER=`root`@`%` PROCEDURE `CharBind`(IN characterID INT, IN bindObjectTblidx INT, OUT currentWorldID INT)
+CREATE DEFINER=`root`@`localhost` PROCEDURE `CharBind`(IN characterID INT, IN bindObjectTblidx INT, OUT currentWorldID INT)
 BEGIN
 
 DECLARE currentWorldID INT;
@@ -546,7 +546,7 @@ DELIMITER ;
 -- Procedure structure for CharCreate
 -- ----------------------------
 DELIMITER ;;
-CREATE DEFINER=`root`@`%` PROCEDURE `CharCreate`(IN awchCharName VARCHAR(16), IN byRace INT, IN byClass INT, IN byGender INT, IN byFace INT, IN byHair INT, IN byHairColor INT, IN bySkinColor INT, IN account_id INT, OUT char_id INT, OUT wResultCode INT)
+CREATE DEFINER=`root`@`localhost` PROCEDURE `CharCreate`(IN awchCharName VARCHAR(16), IN byRace INT, IN byClass INT, IN byGender INT, IN byFace INT, IN byHair INT, IN byHairColor INT, IN bySkinColor INT, IN account_id INT, OUT char_id INT, OUT wResultCode INT)
 BEGIN
 
 		IF(SELECT EXISTS(SELECT 1 FROM characters WHERE CharName = awchCharName)) THEN
@@ -646,7 +646,7 @@ DELIMITER ;
 -- ----------------------------
 DROP PROCEDURE IF EXISTS `DisbandGuild`;
 DELIMITER ;;
-CREATE DEFINER=`root`@`%` PROCEDURE `DisbandGuild`(IN guild_name VARCHAR(30), IN characterID INT, OUT wResultCode INT)
+CREATE DEFINER=`root`@`localhost` PROCEDURE `DisbandGuild`(IN guild_name VARCHAR(30), IN characterID INT, OUT wResultCode INT)
 BEGIN
 
 	DECLARE guild_ID INT;
@@ -678,7 +678,7 @@ DELIMITER ;
 -- ----------------------------
 DROP PROCEDURE IF EXISTS `GuildCreate`;
 DELIMITER ;;
-CREATE DEFINER=`root`@`%` PROCEDURE `GuildCreate`(IN c_guild_name VARCHAR(30), IN characterID INT, OUT wResultCode INT, OUT cguildid INT, OUT charactername VARCHAR(30))
+CREATE DEFINER=`root`@`localhost` PROCEDURE `GuildCreate`(IN c_guild_name VARCHAR(30), IN characterID INT, OUT wResultCode INT, OUT cguildid INT, OUT charactername VARCHAR(30))
 BEGIN
 
 
@@ -748,7 +748,7 @@ DELIMITER ;
 -- ----------------------------
 DROP PROCEDURE IF EXISTS `GuildInfo`;
 DELIMITER ;;
-CREATE DEFINER=`root`@`%` PROCEDURE `GuildInfo`(IN characterID INT, OUT guild_id INT, OUT guild_name VARCHAR(30), OUT guild_master INT, OUT guild_notice VARCHAR(256), OUT guild_rep INT, OUT second_guild_master INT)
+CREATE DEFINER=`root`@`localhost` PROCEDURE `GuildInfo`(IN characterID INT, OUT guild_id INT, OUT guild_name VARCHAR(30), OUT guild_master INT, OUT guild_notice VARCHAR(256), OUT guild_rep INT, OUT second_guild_master INT)
 BEGIN
 
 DECLARE current_guild INT;
@@ -775,7 +775,7 @@ DELIMITER ;
 -- ----------------------------
 DROP PROCEDURE IF EXISTS `KickGuild`;
 DELIMITER ;;
-CREATE DEFINER=`root`@`%` PROCEDURE `KickGuild`(IN characterID INT, OUT wResultCode INT)
+CREATE DEFINER=`root`@`localhost` PROCEDURE `KickGuild`(IN characterID INT, OUT wResultCode INT)
 BEGIN
 
 DECLARE isgmaster INT;
@@ -813,7 +813,7 @@ DELIMITER ;
 -- ----------------------------
 DROP PROCEDURE IF EXISTS `LeaveGuild`;
 DELIMITER ;;
-CREATE DEFINER=`root`@`%` PROCEDURE `LeaveGuild`(IN characterID INT, OUT wResultCode INT)
+CREATE DEFINER=`root`@`localhost` PROCEDURE `LeaveGuild`(IN characterID INT, OUT wResultCode INT)
 BEGIN
 
 DECLARE isgmaster INT;
@@ -861,7 +861,7 @@ DELIMITER ;
 -- ----------------------------
 DROP PROCEDURE IF EXISTS `NewSecondGuildMaster`;
 DELIMITER ;;
-CREATE DEFINER=`root`@`%` PROCEDURE `NewSecondGuildMaster`(IN characterID INT, IN guild_name VARCHAR(30), OUT wResultCode INT)
+CREATE DEFINER=`root`@`localhost` PROCEDURE `NewSecondGuildMaster`(IN characterID INT, IN guild_name VARCHAR(30), OUT wResultCode INT)
 BEGIN
 
 IF(SELECT EXISTS(SELECT 1 FROM guild_members WHERE MemberID = characterID) )THEN
@@ -886,7 +886,7 @@ DELIMITER ;
 -- ----------------------------
 DROP PROCEDURE IF EXISTS `UpdateGuildNotice`;
 DELIMITER ;;
-CREATE DEFINER=`root`@`%` PROCEDURE `UpdateGuildNotice`(IN characterID INT,  IN awchNotice VARCHAR(256), OUT wResultCode INT)
+CREATE DEFINER=`root`@`localhost` PROCEDURE `UpdateGuildNotice`(IN characterID INT,  IN awchNotice VARCHAR(256), OUT wResultCode INT)
 BEGIN
 
 	IF(SELECT EXISTS(SELECT 1 FROM guilds WHERE GuildMaster = characterID OR GuildSecondMaster = characterID)) THEN

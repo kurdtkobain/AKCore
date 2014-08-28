@@ -18,7 +18,7 @@
 #include <cppconn/prepared_statement.h>
 
 
-#define	IP_SERVER_ALL "127.0.01"
+#define	IP_SERVER_ALL "127.0.0.1"
 using namespace std;
 
 class MySQLConnWrapper
