@@ -43,6 +43,7 @@ int CClientSession::OnDispatch(CNtlPacket * pPacket)
 	case UT_ENTER_CHAT:
 	{
 		CClientSession::SendEnterChat(pPacket, app);
+		CClientSession::SendFriendList(pPacket, app);
 		/*CClientSession::SendLoadGuildInfo(pPacket, app);
 		CClientSession::SendLoadGuildMember(pPacket, app);*/
 	}
@@ -120,26 +121,31 @@ int CClientSession::OnDispatch(CNtlPacket * pPacket)
 	case UT_FRIEND_ADD_REQ:
 	{
 		printf("UT_FRIEND_ADD_REQ");
+		CClientSession::SendAddFriend(pPacket, app);
 	}
 		break;
 	case UT_FRIEND_DEL_REQ:
 	{
 		printf("UT_FRIEND_DEL_REQ");
+		CClientSession::SendDelFriend(pPacket, app);
 	}
 		break;
 	case UT_FRIEND_MOVE_REQ:
 	{
 		printf("UT_FRIEND_MOVE_REQ");
+		CClientSession::SendMoveFriend(pPacket, app);
 	}
 		break;
 	case UT_FRIEND_BLACK_ADD_REQ:
 	{
 		printf("UT_FRIEND_BLACK_ADD_REQ");
+		CClientSession::SendBlackListAdd(pPacket, app);
 	}
 		break;
 	case UT_FRIEND_BLACK_DEL_REQ:
 	{
 		printf("UT_FRIEND_BLACK_DEL_REQ");
+		CClientSession::SendBlackListDel(pPacket, app);
 	}
 		break;
 	case UT_RANKBATTLE_RANK_LIST_REQ:

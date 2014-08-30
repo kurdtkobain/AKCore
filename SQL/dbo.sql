@@ -51,6 +51,26 @@ CREATE TABLE `bind` (
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 -- ----------------------------
+-- Table structure for `blacklist`
+-- ----------------------------
+DROP TABLE IF EXISTS `blacklist`;
+CREATE TABLE `blacklist` (
+  `pkID` int(11) NOT NULL AUTO_INCREMENT,
+  `owner_id` int(10) NOT NULL,
+  `target_id` int(10) NOT NULL,
+  PRIMARY KEY (`pkID`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
+-- ----------------------------
+-- Table structure for `buddylist`
+-- ----------------------------
+DROP TABLE IF EXISTS `buddylist`;
+CREATE TABLE `buddylist` (
+  `pkID` int(11) NOT NULL AUTO_INCREMENT,
+  `owner_id` int(10) NOT NULL,
+  `friend_id` int(10) NOT NULL,
+  `moveBlackList` int(1) NOT NULL DEFAULT '0',
+  PRIMARY KEY (`pkID`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 -- Table structure for characters
 -- ----------------------------
 DROP TABLE IF EXISTS `characters`;

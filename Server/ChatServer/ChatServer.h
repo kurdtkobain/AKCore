@@ -8,6 +8,7 @@
 
 #include "NtlPacketUT.h"
 #include "NtlPacketTU.h"
+#include "ChatFunctions.h"
 #include "ResultCode.h"
 
 #include <iostream>
@@ -97,6 +98,13 @@ public:
 	void						SendNewSecondGuildMaster(CNtlPacket * pPacket, CChatServer * app);
 	void						SendRemoveSecondGuildMaster(CNtlPacket * pPacket, CChatServer * app);
 	void						SendUpdateGuildMaster(CNtlPacket * pPacket, CChatServer * app);
+	//Friend and Blacklist functions
+	void						SendFriendList(CNtlPacket * pPacket, CChatServer * app);
+	void						SendAddFriend(CNtlPacket * pPacket, CChatServer * app);
+	void						SendDelFriend(CNtlPacket * pPacket, CChatServer * app);
+	void						SendMoveFriend(CNtlPacket * pPacket, CChatServer * app);
+	void						SendBlackListAdd(CNtlPacket * pPacket, CChatServer * app);
+	void						SendBlackListDel(CNtlPacket * pPacket, CChatServer * app);
 	// End Packet functions
 private:
 	CNtlPacketEncoder_RandKey	m_packetEncoder;
@@ -255,6 +263,7 @@ private:
 	sSERVERCONFIG				m_config;
 public:
 	MySQLConnWrapper *			db;
+	ChatFunctionsClass *		csf;
 public:
 	bool						AddUser(const char * lpszUserID, CClientSession * pSession)
 	{

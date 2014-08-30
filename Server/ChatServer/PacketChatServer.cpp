@@ -372,3 +372,212 @@ void CClientSession::SendUpdateGuildMaster(CNtlPacket * pPacket, CChatServer * a
 		rc = g_pApp->Send( this->GetHandle(), &packet2);
 	}
 }
+//---------------------------------------------
+//---Friend Add Luiz45
+//---------------------------------------------
+void CClientSession::SendAddFriend(CNtlPacket * pPacket, CChatServer * app)
+{
+	sUT_FRIEND_ADD_REQ* req = (sUT_FRIEND_ADD_REQ*)pPacket->GetPacketData();
+	
+	CNtlPacket packet(sizeof(sTU_FRIEND_ADD_RES));
+	sTU_FRIEND_ADD_RES* res = (sTU_FRIEND_ADD_RES*)packet.GetPacketData();
+	
+	char wsName[260];
+	char DefChar = ' ';
+	WideCharToMultiByte(CP_ACP, 0, req->wchName, -1, wsName, 260, &DefChar, NULL);
+
+	std::string charName(wsName);
+
+	int iCharId = 0;
+	app->db->prepare("SELECT * FROM characters WHERE CharName = ?");
+	app->db->setString(1, charName);
+	app->db->execute();
+	app->db->fetch();
+	if (app->db->rowsCount() != 0)
+	{
+		iCharId = app->db->getInt("CharID");
+		app->db->prepare("SELECT * FROM buddylist WHERE owner_id = ? AND friend_id = ? AND moveBlackList = 0");
+		app->db->setInt(1,this->GetCharacterId());
+		app->db->setInt(2,iCharId);
+		app->db->execute();
+		app->db->fetch();
+		if (app->db->rowsCount() != 0)
+		{
+			res->wOpCode = TU_FRIEND_ADD_RES;
+			res->wResultCode = COMMUNITY_FRIEND_CHAR_ARLEADY_ADDED;
+		}
+		else
+		{
+			app->csf->AddRemoveFriend(this->GetCharacterId(), iCharId, false);
+			wcscpy(res->wchName, req->wchName);
+			res->targetID = iCharId;
+			res->wOpCode = TU_FRIEND_ADD_RES;
+			res->wResultCode = CHAT_SUCCESS;			
+		}
+	}	
+	else
+	{
+		res->wOpCode = TU_FRIEND_ADD_RES;
+		res->wResultCode = COMMUNITY_FRIEND_CHAR_NOT_FOUND;
+	}
+	packet.SetPacketLen(sizeof(sTU_FRIEND_ADD_RES));
+	g_pApp->Send(this->GetHandle(), &packet);
+}
+//---------------------------------------------
+//---Friend Del Luiz45
+//---------------------------------------------
+void CClientSession::SendDelFriend(CNtlPacket * pPacket, CChatServer * app)
+{
+	sUT_FRIEND_DEL_REQ* req = (sUT_FRIEND_DEL_REQ*)pPacket->GetPacketData();
+
+	CNtlPacket packet(sizeof(sTU_FRIEND_DEL_RES));
+	sTU_FRIEND_DEL_RES* res = (sTU_FRIEND_DEL_RES*)packet.GetPacketData();
+
+	res->targetID = req->targetID;
+	res->wOpCode = TU_FRIEND_DEL_RES;
+	res->wResultCode = CHAT_SUCCESS;
+	
+	app->csf->AddRemoveFriend(this->GetCharacterId(), req->targetID, true);
+
+	packet.SetPacketLen(sizeof(sTU_FRIEND_DEL_RES));
+	g_pApp->Send(this->GetHandle(), &packet);
+}
+//---------------------------------------------
+//---Friend Move Luiz45
+//---------------------------------------------
+void CClientSession::SendMoveFriend(CNtlPacket * pPacket, CChatServer * app)
+{
+	sUT_FRIEND_MOVE_REQ* req = (sUT_FRIEND_MOVE_REQ*)pPacket->GetPacketData();
+
+	CNtlPacket packet(sizeof(sTU_FRIEND_MOVE_RES));
+	sTU_FRIEND_MOVE_RES* res = (sTU_FRIEND_MOVE_RES*)packet.GetPacketData();
+
+	app->csf->AddRemoveFriend(this->GetCharacterId(), req->targetID, false,true);
+	res->targetID = req->targetID;
+	res->wOpCode = TU_FRIEND_MOVE_RES;
+	res->wResultCode = CHAT_SUCCESS;
+
+	packet.SetPacketLen(sizeof(sTU_FRIEND_MOVE_RES));
+	g_pApp->Send(this->GetHandle(), &packet);
+}
+//---------------------------------------------
+//---Black List Add Luiz45
+//---------------------------------------------
+void CClientSession::SendBlackListAdd(CNtlPacket * pPacket, CChatServer * app)
+{
+	sUT_FRIEND_BLACK_ADD_REQ* req = (sUT_FRIEND_BLACK_ADD_REQ*)pPacket->GetPacketData();
+
+	CNtlPacket packet(sizeof(sTU_FRIEND_BLACK_ADD_RES));
+	sTU_FRIEND_BLACK_ADD_RES* res = (sTU_FRIEND_BLACK_ADD_RES*)packet.GetPacketData();
+
+	char wsName[260];
+	char DefChar = ' ';
+	WideCharToMultiByte(CP_ACP, 0, req->awchName, -1, wsName, 260, &DefChar, NULL);
+
+	std::string charName(wsName);
+
+	int iCharId = 0;
+	app->db->prepare("SELECT * FROM characters WHERE CharName = ?");
+	app->db->setString(1, charName);
+	app->db->execute();
+	app->db->fetch();
+	if (app->db->rowsCount() != 0)
+	{
+		iCharId = app->db->getInt("CharID");
+		app->db->prepare("SELECT * FROM blacklist WHERE owner_id = ? AND target_id = ?");
+		app->db->setInt(1, this->GetCharacterId());
+		app->db->setInt(2, iCharId);
+		app->db->execute();
+		app->db->fetch();
+		if (app->db->rowsCount() == 0)
+		{
+			app->csf->AddRemoveBlackList(this->GetCharacterId(), iCharId, false);
+			wcscpy(res->wchName, req->awchName);
+			res->targetID = iCharId;
+			res->wOpCode = TU_FRIEND_BLACK_ADD_RES;
+			res->wResultCode = CHAT_SUCCESS;
+		}
+		else
+		{
+			res->wOpCode = TU_FRIEND_BLACK_ADD_RES;
+			res->wResultCode = COMMUNITY_FRIEND_BLACK_CHAR_EXIST;
+		}
+	}
+	else
+	{
+		res->wOpCode = TU_FRIEND_BLACK_ADD_RES;
+		res->wResultCode = COMMUNITY_FRIEND_CHAR_NOT_FOUND;
+	}
+
+	packet.SetPacketLen(sizeof(sTU_FRIEND_BLACK_ADD_RES));
+	g_pApp->Send(this->GetHandle(), &packet);
+}
+//---------------------------------------------
+//---Black List Del Luiz45
+//---------------------------------------------
+void CClientSession::SendBlackListDel(CNtlPacket * pPacket, CChatServer * app)
+{
+	sUT_FRIEND_BLACK_DEL_REQ* req = (sUT_FRIEND_BLACK_DEL_REQ*)pPacket->GetPacketData();
+
+	CNtlPacket packet(sizeof(sTU_FRIEND_BLACK_DEL_RES));
+	sTU_FRIEND_BLACK_DEL_RES* res = (sTU_FRIEND_BLACK_DEL_RES*)packet.GetPacketData();
+
+	res->targetID = req->targetID;
+	res->wOpCode = TU_FRIEND_BLACK_DEL_RES;
+	res->wResultCode = CHAT_SUCCESS;
+
+	app->csf->AddRemoveBlackList(this->GetCharacterId(), req->targetID, true);
+
+	packet.SetPacketLen(sizeof(sTU_FRIEND_BLACK_DEL_RES));
+	g_pApp->Send(this->GetHandle(), &packet);
+}
+//---------------------------------------------
+//---Friend List Info Luiz45
+//---------------------------------------------
+void CClientSession::SendFriendList(CNtlPacket * pPacket, CChatServer * app)
+{
+	CNtlPacket packet(sizeof(sTU_FRIEND_LIST_INFO));
+	sTU_FRIEND_LIST_INFO* res = (sTU_FRIEND_LIST_INFO*)packet.GetPacketData();
+	MySQLConnWrapper *db2 = new MySQLConnWrapper;
+	db2->setConfig(app->GetConfigFileHost(), app->GetConfigFileUser(), app->GetConfigFilePassword(), app->GetConfigFileDatabase());
+	db2->connect();
+	db2->switchDb(app->GetConfigFileDatabase());
+
+	app->db->prepare("SELECT * FROM buddylist WHERE owner_id = ?");
+	app->db->setInt(1, this->GetCharacterId());
+	app->db->execute();
+	int iCounter = 0;
+	while (app->db->fetch())
+	{
+		db2->prepare("SELECT * FROM characters WHERE CharID = ?");
+		db2->setInt(1, app->db->getInt("friend_id"));
+		db2->execute();
+		while (db2->fetch())
+		{
+			res->asInfo[iCounter].bIsBlack = app->db->getInt("moveBlackList");
+			res->asInfo[iCounter].charID = app->db->getInt("friend_id");
+			wcscpy(res->asInfo[iCounter].wchName, s2ws(db2->getString("CharName")).c_str());
+			iCounter++;
+		}
+	}
+	app->db->prepare("SELECT * FROM blacklist WHERE owner_id = ?");
+	app->db->setInt(1, this->GetCharacterId());
+	app->db->execute();
+	while (app->db->fetch())
+	{
+		db2->prepare("SELECT * FROM characters WHERE CharID = ?");
+		db2->setInt(1, app->db->getInt("target_id"));
+		db2->execute();
+		while (db2->fetch())
+		{
+			res->asInfo[iCounter].bIsBlack = true;
+			res->asInfo[iCounter].charID = app->db->getInt("target_id");
+			wcscpy(res->asInfo[iCounter].wchName, s2ws(db2->getString("CharName")).c_str());
+			iCounter++;
+		}
+	}
+	res->byCount = iCounter;
+	res->wOpCode = TU_FRIEND_LIST_INFO;
+	packet.AdjustPacketLen(sizeof(sNTLPACKETHEADER)+(2 * sizeof(BYTE)) + (iCounter * (sizeof(sFRIEND_FULL_INFO))));
+	g_pApp->Send(this->GetHandle(), &packet);
+}

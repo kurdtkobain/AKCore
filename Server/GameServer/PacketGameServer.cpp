@@ -4898,3 +4898,17 @@ void CClientSession::SendPartyChangeItem(CNtlPacket * pPacket, CGameServer * app
 	packet.SetPacketLen(sizeof(sGU_PARTY_CHANGE_ITEM_LOOTING_METHOD_RES));
 	g_pApp->Send(this->GetHandle(), &packet);
 }
+//----------------------------------//
+//--NetPY ShopItem Method Luiz45
+//----------------------------------//
+void CClientSession::SendNetPyStart(CNtlPacket * pPacket, CGameServer * app)
+{
+	CNtlPacket packet(sizeof(sGU_SHOP_NETPYITEM_START_RES));
+	sGU_SHOP_NETPYITEM_START_RES* res = (sGU_SHOP_NETPYITEM_START_RES*)packet.GetPacketData();
+
+	res->byType = 0;
+	res->wOpCode = GU_SHOP_NETPYITEM_START_RES;
+	res->wResultCode = GAME_SUCCESS;
+	//packet.SetPacketLen(sizeof(sGU_SHOP_NETPYITEM_START_RES));
+	//g_pApp->Send(this->GetHandle(), &packet);
+}

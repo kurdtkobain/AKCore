@@ -1352,6 +1352,7 @@ int CClientSession::OnDispatch(CNtlPacket * pPacket)
 		case UG_SHOP_NETPYITEM_START_REQ:
 		{
 			printf("--- UG_SHOP_NETPYITEM_START_REQ --- \n");
+			CClientSession::SendNetPyStart(pPacket, app);
 		}
 			break;
 		case UG_SHOP_NETPYITEM_BUY_REQ:
