@@ -2097,7 +2097,7 @@ void CClientSession::SendPortalTelReq(CNtlPacket * pPacket, CGameServer * app)
 			//res2->sWorldInfo.sRuleInfo.byRuleType = GAMERULE_NORMAL;
 			//res2->sWorldInfo.hTriggerObjectOffset = 100000;
 			//res2->sWorldInfo.tblidx = this->plr->GetWorldTableID();
-			res2->sWorldInfo.worldID = res->worldID;
+			//res2->sWorldInfo.worldID = res->worldID;
 			res2->vNewDir.x = res->vDir.x;
 			res2->vNewDir.y = res->vDir.y;
 			res2->vNewDir.z = res->vDir.z;
