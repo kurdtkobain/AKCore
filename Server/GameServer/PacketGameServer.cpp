@@ -574,16 +574,33 @@ void CClientSession::SendWorldEnterReq(CNtlPacket * pPacket, CGameServer * app)
 	app->db->fetch();
 
 	res->wOpCode = GU_AVATAR_WORLD_INFO;
-	res->worldInfo.tblidx = app->db->getInt("WorldTable");
-	res->worldInfo.worldID = app->db->getInt("WorldID");
-	res->worldInfo.hTriggerObjectOffset = 100000;
-	res->worldInfo.sRuleInfo.byRuleType = GAMERULE_NORMAL;
-	res->vCurLoc.x = this->plr->GetPosition().x;
-	res->vCurLoc.y = this->plr->GetPosition().y;
-	res->vCurLoc.z = this->plr->GetPosition().z;
-	res->vCurDir.x = this->plr->GetDirection().x;
-	res->vCurDir.y = this->plr->GetDirection().y;
-	res->vCurDir.z = this->plr->GetDirection().z;
+	//Uncomment this if lines to see the first tutorial...not working for now
+	//if (app->db->getInt("TutorialFlag") == 1)
+	//{		
+		res->worldInfo.tblidx = app->db->getInt("WorldTable");
+		res->worldInfo.worldID = app->db->getInt("WorldID");
+		res->worldInfo.hTriggerObjectOffset = 100000;
+		res->worldInfo.sRuleInfo.byRuleType = GAMERULE_NORMAL;
+		res->vCurLoc.x = this->plr->GetPosition().x;
+		res->vCurLoc.y = this->plr->GetPosition().y;
+		res->vCurLoc.z = this->plr->GetPosition().z;
+		res->vCurDir.x = this->plr->GetDirection().x;
+		res->vCurDir.y = this->plr->GetDirection().y;
+		res->vCurDir.z = this->plr->GetDirection().z;
+	/*}
+	else
+	{
+		res->worldInfo.tblidx = app->db->getInt("WorldTable");
+		res->worldInfo.worldID = app->db->getInt("WorldID");
+		res->worldInfo.hTriggerObjectOffset = 100000;
+		res->worldInfo.sRuleInfo.byRuleType = GAMERULE_TUTORIAL;
+		res->vCurLoc.x = this->plr->GetPosition().x;
+		res->vCurLoc.y = this->plr->GetPosition().y;
+		res->vCurLoc.z = this->plr->GetPosition().z;
+		res->vCurDir.x = this->plr->GetDirection().x;
+		res->vCurDir.y = this->plr->GetDirection().y;
+		res->vCurDir.z = this->plr->GetDirection().z;
+	}*/
 
 	this->plr->SetWorldID(app->db->getInt("WorldID"));
 	this->plr->SetWorldTableID(app->db->getInt("WorldTable"));
@@ -4590,8 +4607,13 @@ void CClientSession::SendFogOfWarRes(CNtlPacket * pPacket, CGameServer * app)
 	res->handle = req->hObject;
 	res->wOpCode = GU_WAR_FOG_UPDATE_RES;
 	res->wResultCode = GAME_SUCCESS;
-	packet.SetPacketLen(sizeof(sGU_WAR_FOG_UPDATE_RES));;
+	packet.SetPacketLen(sizeof(sGU_WAR_FOG_UPDATE_RES));
 	g_pApp->Send(this->GetHandle(), &packet);
+
+	app->db->prepare("INSERT INTO warfoginfo (owner_id,hObject) VALUES(?,?)");
+	app->db->setInt(1, this->plr->pcProfile->charId);
+	app->db->setInt(2, req->hObject);
+	app->db->execute();
 }
 
 void CClientSession::SendRideOnBusRes(CNtlPacket * pPacket, CGameServer * app)
@@ -4911,4 +4933,142 @@ void CClientSession::SendNetPyStart(CNtlPacket * pPacket, CGameServer * app)
 	res->wResultCode = GAME_SUCCESS;
 	//packet.SetPacketLen(sizeof(sGU_SHOP_NETPYITEM_START_RES));
 	//g_pApp->Send(this->GetHandle(), &packet);
+}
+//----------------------------------//
+//--SendWarFogInfo Method Luiz45
+//----------------------------------//
+void CClientSession::SendAvatarWarFogInfo(CNtlPacket * pPacket, CGameServer * app)
+{
+	CNtlPacket packet(sizeof(sGU_WAR_FOG_INFO));
+	sGU_WAR_FOG_INFO* res = (sGU_WAR_FOG_INFO*)packet.GetPacketData();
+	app->db->prepare("SELECT * FROM warfoginfo WHERE owner_id = ?");
+	app->db->setInt(1, this->plr->pcProfile->charId);
+	app->db->execute();
+	int iPosition = 0;
+	CObjectTable* myObjTbl = app->g_pTableContainer->GetObjectTable(this->plr->GetWorldID());	
+	while (app->db->fetch())
+	{
+		sOBJECT_TBLDAT* pOBJECT_TBLDAT = reinterpret_cast<sOBJECT_TBLDAT*>(myObjTbl->FindData(app->db->getInt("hObject")));
+		res->abyWarFogInfo[iPosition] = (app->db->getInt("hObject")/8);//Next time i just load as 2
+		iPosition++;
+	}	
+	res->wOpCode = GU_WAR_FOG_INFO;	
+	
+	packet.SetPacketLen(sizeof(sGU_WAR_FOG_INFO));
+	g_pApp->Send(this->GetHandle(), &packet);
+}
+//----------------------------------//
+//--HoiPoi Job Method Luiz45
+//----------------------------------//
+void CClientSession::SendHoiPoiJob(CNtlPacket * pPacket, CGameServer * app)
+{
+	sUG_HOIPOIMIX_JOB_SET_REQ* req = (sUG_HOIPOIMIX_JOB_SET_REQ*)pPacket->GetPacketData();
+	CNtlPacket packet(sizeof(sGU_HOIPOIMIX_JOB_SET_RES));
+	sGU_HOIPOIMIX_JOB_SET_RES* res = (sGU_HOIPOIMIX_JOB_SET_RES*)packet.GetPacketData();
+	app->db->prepare("SELECT * FROM warfoginfo WHERE owner_id = ?");
+	app->db->setInt(1, this->plr->pcProfile->charId);
+	app->db->execute();
+	
+	res->byRecipeType = req->byRecipeType;
+	res->hNpchandle = req->hNpchandle;
+	res->wResultCode = GAME_SUCCESS;
+	res->wOpCode = GU_HOIPOIMIX_JOB_SET_RES;
+
+	packet.SetPacketLen(sizeof(sGU_HOIPOIMIX_JOB_SET_RES));
+	g_pApp->Send(this->GetHandle(), &packet);
+}
+//----------------------------------//
+//--HoiPoi Job Reset Method Luiz45
+//----------------------------------//
+void CClientSession::SendHoiPoiJobReset(CNtlPacket * pPacket, CGameServer * app)
+{
+	sUG_HOIPOIMIX_JOB_RESET_REQ* req = (sUG_HOIPOIMIX_JOB_RESET_REQ*)pPacket->GetPacketData();
+	CNtlPacket packet(sizeof(sGU_HOIPOIMIX_JOB_SET_RES));
+	sGU_HOIPOIMIX_JOB_RESET_RES* res = (sGU_HOIPOIMIX_JOB_RESET_RES*)packet.GetPacketData();
+
+	res->byRecipeType = req->byRecipeType;
+	res->hNpchandle = req->hNpchandle;
+	res->wResultCode = GAME_SUCCESS;
+	res->wOpCode = GU_HOIPOIMIX_JOB_RESET_RES;
+
+	packet.SetPacketLen(sizeof(sGU_HOIPOIMIX_JOB_RESET_RES));
+	g_pApp->Send(this->GetHandle(), &packet);
+}
+//----------------------------------//
+//--Tutorial play Method Luiz45
+//----------------------------------//
+void CClientSession::SendDirectPlay(CNtlPacket *pPacket, CGameServer * app)
+{
+	sUG_CHAR_DIRECT_PLAY_ACK* req = (sUG_CHAR_DIRECT_PLAY_ACK*)pPacket->GetPacketData();
+
+	CNtlPacket packet(sizeof(sGU_CHAR_DIRECT_PLAY));
+	sGU_CHAR_DIRECT_PLAY* res = (sGU_CHAR_DIRECT_PLAY*)packet.GetPacketData();
+
+	CDirectionLinkTable* pLinkTbl = app->g_pTableContainer->GetDirectionLinkTable();
+	sDIRECTION_LINK_TBLDAT *pLinkTblData = reinterpret_cast<sDIRECTION_LINK_TBLDAT*>(pLinkTbl->FindData(1000));
+
+ 	res->bSynchronize = true;	
+	res->byPlayMode = 1;	
+	res->directTblidx = 1000;
+	res->hSubject = this->GetavatarHandle();
+	res->wOpCode = GU_CHAR_DIRECT_PLAY;
+
+	packet.SetPacketLen(sizeof(sGU_CHAR_DIRECT_PLAY));
+	g_pApp->Send(this->GetHandle(), &packet);
+}
+//----------------------------------//
+//--Tutorial play Quit Method Luiz45
+//----------------------------------//
+void CClientSession::SendTutorialPlayQuit(CNtlPacket *pPacket, CGameServer * app)
+{
+	sUG_TUTORIAL_PLAY_QUIT_REQ* req = (sUG_TUTORIAL_PLAY_QUIT_REQ*)pPacket->GetPacketData();
+	
+	CNtlPacket packet(sizeof(sGU_TUTORIAL_PLAY_QUIT_RES));
+	sGU_TUTORIAL_PLAY_QUIT_RES* res = (sGU_TUTORIAL_PLAY_QUIT_RES*)packet.GetPacketData();
+
+	res->wOpCode = GU_TUTORIAL_PLAY_QUIT_RES;
+	res->wResultCode = GAME_SUCCESS;
+
+	packet.SetPacketLen(sizeof(sGU_TUTORIAL_PLAY_QUIT_RES));
+	g_pApp->Send(this->GetHandle(), &packet);
+}
+//----------------------------------//
+//--PrivateShop Create Method Luiz45
+//----------------------------------//
+void CClientSession::SendPrivateShopCreate(CNtlPacket *pPacket, CGameServer * app)
+{
+	sUG_PRIVATESHOP_CREATE_REQ* req = (sUG_PRIVATESHOP_CREATE_REQ*)pPacket->GetPacketData();
+	
+	CNtlPacket packet(sizeof(sGU_PRIVATESHOP_CREATE_RES));
+	sGU_PRIVATESHOP_CREATE_RES* res1 = (sGU_PRIVATESHOP_CREATE_RES*)packet.GetPacketData();
+
+	CNtlPacket packet2(sizeof(sGU_PRIVATESHOP_CREATE_NFY));
+	sGU_PRIVATESHOP_CREATE_NFY* res2 = (sGU_PRIVATESHOP_CREATE_NFY*)packet2.GetPacketData();
+
+	res1->sPrivateShopData.hOwner = this->GetavatarHandle();
+	res1->wOpCode = GU_PRIVATESHOP_CREATE_RES;
+	res1->wResultCode = GAME_SUCCESS;
+
+	res2->hOwner = this->GetavatarHandle();
+	res2->wOpCode = GU_PRIVATESHOP_CREATE_NFY;
+
+	packet.SetPacketLen(sizeof(sGU_PRIVATESHOP_CREATE_RES));
+	packet2.SetPacketLen(sizeof(sGU_PRIVATESHOP_CREATE_NFY));
+	g_pApp->Send(this->GetHandle(), &packet);
+	g_pApp->Send(this->GetHandle(), &packet2);
+}
+//----------------------------------//
+//--PrivateShop Exit Method Luiz45
+//----------------------------------//
+void CClientSession::SendPrivateShopExit(CNtlPacket *pPacket, CGameServer * app)
+{
+	sUG_PRIVATESHOP_EXIT_REQ* req = (sUG_PRIVATESHOP_EXIT_REQ*)pPacket->GetPacketData();
+	
+	CNtlPacket packet(sizeof(sGU_PRIVATESHOP_EXIT_RES));
+	sGU_PRIVATESHOP_EXIT_RES* res1 = (sGU_PRIVATESHOP_EXIT_RES*)packet.GetPacketData();
+
+	res1->wOpCode = GU_PRIVATESHOP_EXIT_RES;
+	res1->wResultCode = GAME_SUCCESS;
+	packet.SetPacketLen(sizeof(sGU_PRIVATESHOP_EXIT_RES));
+	g_pApp->Send(this->GetHandle(), &packet);
 }

@@ -284,10 +284,18 @@ public:
 	void						SendZennyPickUpReq(CNtlPacket * pPacket, CGameServer * app);
 	// LEVEL UP
 	void						SendPlayerLevelUpCheck(CGameServer * app, int exp);
+	// Wafog
+	void						SendAvatarWarFogInfo(CNtlPacket * pPacket, CGameServer * app);
 	// QUEST
 	void						SendPlayerQuestReq(CNtlPacket * pPacket, CGameServer * app);
 	void						SendObjectVisitQuest(CNtlPacket * pPacket, CGameServer * app);
 	void						SendTSUpdateState(CNtlPacket * pPacket, CGameServer * app);
+	//HoiPoi
+	void						SendHoiPoiJob(CNtlPacket * pPacket, CGameServer * app);
+	void						SendHoiPoiJobReset(CNtlPacket * pPacket, CGameServer * app);
+	//Tutorial
+	void						SendTutorialPlayQuit(CNtlPacket * pPacket, CGameServer * app);
+	void						SendDirectPlay(CNtlPacket * pPacket, CGameServer * app);
 	//Party Dungeon
 	void						SendInitPartyDungeon(CNtlPacket * pPacket, CGameServer * app);
 	//TIMEQUEST
@@ -295,6 +303,9 @@ public:
 	void						LeaveTimeQuestRoom(CNtlPacket * pPacket, CGameServer * app);
 	void						JoinTimeQuestRoom(CNtlPacket * pPacket, CGameServer * app);
 	void						SendTimeQuestTeleport(CNtlPacket * pPacket, CGameServer * app);
+	//Private Shop
+	void						SendPrivateShopCreate(CNtlPacket * pPacket, CGameServer * app);
+	void						SendPrivateShopExit(CNtlPacket * pPacket, CGameServer * app);
 	// DUEL
 	void						SendFreeBattleReq(CNtlPacket * pPacket, CGameServer * app);
 	void						SendFreeBattleAccpetReq(CNtlPacket * pPacket, CGameServer * app);

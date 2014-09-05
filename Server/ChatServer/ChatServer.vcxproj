@@ -172,6 +172,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="ChatFunctions.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="ChatServer.cpp" />
     <ClCompile Include="NtlPacketTU.cpp" />
@@ -185,6 +186,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ChatFunctions.h" />
     <ClInclude Include="main.h" />
     <ClInclude Include="ChatServer.h" />
     <ClInclude Include="NtlPacketTU.h" />

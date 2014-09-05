@@ -405,7 +405,18 @@ CREATE TABLE `skills` (
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
 
 -- ----------------------------
--- Procedure structure for AuthLogin
+-- ----------------------------
+-- Table structure for `warfoginfo`
+-- ----------------------------
+DROP TABLE IF EXISTS `warfoginfo`;
+CREATE TABLE `warfoginfo` (
+  `idFog` int(11) NOT NULL AUTO_INCREMENT,
+  `hObject` int(11) NOT NULL,
+  `owner_id` int(10) NOT NULL,
+  PRIMARY KEY (`idFog`)
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=latin1;
+-- ----------------------------
+-- Procedure structure for `AuthLogin`
 -- ----------------------------
 DROP PROCEDURE IF EXISTS `AuthLogin`;
 DELIMITER ;;

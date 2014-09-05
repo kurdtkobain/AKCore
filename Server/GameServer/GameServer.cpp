@@ -250,6 +250,7 @@ int CClientSession::OnDispatch(CNtlPacket * pPacket)
 		case UG_CHAR_DIRECT_PLAY_ACK:
 		{
 			printf("--- UG_CHAR_DIRECT_PLAY_ACK --- \n");
+			CClientSession::SendDirectPlay(pPacket, app);
 		}
 			break;
 		case UG_CHAR_KNOCKDOWN_RELEASE_NFY:
@@ -698,6 +699,7 @@ int CClientSession::OnDispatch(CNtlPacket * pPacket)
 		case UG_TUTORIAL_PLAY_QUIT_REQ:
 		{
 			printf("--- UG_TUTORIAL_PLAY_QUIT_REQ --- \n");
+			CClientSession::SendTutorialPlayQuit(pPacket, app);
 		}
 			break;
 		case UG_TIMEQUEST_ROOM_LIST_REQ:
@@ -787,11 +789,13 @@ int CClientSession::OnDispatch(CNtlPacket * pPacket)
 		case UG_PRIVATESHOP_CREATE_REQ:
 		{
 			printf("--- UG_PRIVATESHOP_CREATE_REQ --- \n");
+			CClientSession::SendPrivateShopCreate(pPacket, app);
 		}
 			break;
 		case UG_PRIVATESHOP_EXIT_REQ:
 		{
 			printf("--- UG_PRIVATESHOP_EXIT_REQ --- \n");
+			CClientSession::SendPrivateShopExit(pPacket, app);
 		}
 			break;
 		case UG_PRIVATESHOP_OPEN_REQ:
@@ -1245,15 +1249,15 @@ int CClientSession::OnDispatch(CNtlPacket * pPacket)
 		case UG_HOIPOIMIX_JOB_SET_REQ:
 		{
 			printf("--- UG_HOIPOIMIX_JOB_SET_REQ --- \n");
+			CClientSession::SendHoiPoiJob(pPacket, app);
 		}
 			break;
 		case UG_HOIPOIMIX_JOB_RESET_REQ:
 		{
 			printf("--- UG_HOIPOIMIX_JOB_RESET_REQ --- \n");
+			CClientSession::SendHoiPoiJobReset(pPacket, app);
 		}
 			break;
-
-
 		case UG_VEHICLE_DIRECT_PLAY_CANCEL_NFY:
 		{
 			printf("--- UG_VEHICLE_DIRECT_PLAY_CANCEL_NFY --- \n");
