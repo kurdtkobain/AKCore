@@ -444,6 +444,13 @@ void	GsFunctionsClass::CreateUpdateItem(PlayerInfos *plr, int stackCount, TBLIDX
 		int pLastStack = stackCount;
 		int iMaxSlotSearch = NTL_MAX_ITEM_SLOT;
 		bool bHaveFreeSlot = false;
+		bool bAnyItemInBag;
+		//Check if have any item in the bag
+		if (app->db->rowsCount() != 0)
+			bAnyItemInBag = true;
+		else
+			bAnyItemInBag = false;
+
 		//Free Slots
 		while (NTL_MAX_ITEM_SLOT != 0)
 		{
@@ -553,6 +560,36 @@ void	GsFunctionsClass::CreateUpdateItem(PlayerInfos *plr, int stackCount, TBLIDX
 			}
 			else
 				continue;
-		}		
+		}
+		//Only Added to see if already have any item in our Bag's
+		if (!bAnyItemInBag)
+		{
+			res2->bIsNew = true;
+			app->db->prepare("CALL BuyItemFromShop (?,?,?,?,?, @unique_iID)");
+			app->db->setInt(1, itemID);
+			app->db->setInt(2, plr->pcProfile->charId);
+			app->db->setInt(3, ItemPos);
+			app->db->setInt(4, pItemData->byRank);
+			app->db->setInt(5, pItemData->byDurability);
+			app->db->execute();
+			app->db->execute("SELECT @unique_iID");
+			app->db->fetch();
+			iHandle = app->db->getInt("@unique_iID");
+			app->qry->UpdateItemsCount(iHandle, stackCount);
+			res2->wOpCode = GU_ITEM_CREATE;
+			res2->handle = iHandle;
+			res2->sItemData.charId = plr->GetAvatarandle();
+			res2->sItemData.itemNo = pItemData->tblidx;
+			res2->sItemData.byStackcount = stackCount;
+			res2->sItemData.itemId = iHandle;
+			res2->sItemData.byPlace = 1;
+			res2->sItemData.byPosition = ItemPos;
+			res2->sItemData.byCurrentDurability = pItemData->byDurability;
+			res2->sItemData.byRank = pItemData->byRank;
+
+			packet2.SetPacketLen(sizeof(sGU_ITEM_CREATE));
+			g_pApp->Send(ClientSession, &packet2);
+		}
+
 	}
 }
