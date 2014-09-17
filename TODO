@@ -62,3 +62,6 @@ DONE:
 -DONE Load FriendList
 -DONE Hoipoi Job Start/Reset
 -DONE PrivateShop Start/Leave Reqs
+-FIXED Procedure for create char
+-FIXED Char create
+-ADDED levelUp check in quest

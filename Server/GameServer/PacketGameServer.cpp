@@ -587,24 +587,28 @@ void CClientSession::SendWorldEnterReq(CNtlPacket * pPacket, CGameServer * app)
 		res->vCurDir.x = this->plr->GetDirection().x;
 		res->vCurDir.y = this->plr->GetDirection().y;
 		res->vCurDir.z = this->plr->GetDirection().z;
+		this->plr->SetWorldID(app->db->getInt("WorldID"));
+		this->plr->SetWorldTableID(app->db->getInt("WorldTable"));
 	/*}
 	else
 	{
-		res->worldInfo.tblidx = app->db->getInt("WorldTable");
-		res->worldInfo.worldID = app->db->getInt("WorldID");
+		CNewbieTable* pNewBieTable = app->g_pTableContainer->GetNewbieTable();	
+		sNEWBIE_TBLDAT* pNewbieTbldat = reinterpret_cast<sNEWBIE_TBLDAT*>(pNewBieTable->GetNewbieTbldat(app->db->getInt("Race"),app->db->getInt("Class")));
+		res->worldInfo.tblidx = pNewbieTbldat->tutorialWorld;
+		res->worldInfo.worldID = pNewbieTbldat->world_Id;
 		res->worldInfo.hTriggerObjectOffset = 100000;
-		res->worldInfo.sRuleInfo.byRuleType = GAMERULE_TUTORIAL;
-		res->vCurLoc.x = this->plr->GetPosition().x;
-		res->vCurLoc.y = this->plr->GetPosition().y;
-		res->vCurLoc.z = this->plr->GetPosition().z;
-		res->vCurDir.x = this->plr->GetDirection().x;
-		res->vCurDir.y = this->plr->GetDirection().y;
-		res->vCurDir.z = this->plr->GetDirection().z;
+		res->worldInfo.sRuleInfo.byRuleType = GAMERULE_TUTORIAL;		
+		//Hard Coded
+		res->vCurLoc.x = (-1)*78.90;
+		res->vCurLoc.y = 46.95;
+		res->vCurLoc.z = (-1) * 168.35;
+		res->vCurDir.x = (-1) * 0.95;
+		res->vCurDir.y = 0;
+		res->vCurDir.z = 0.30;
+		this->plr->SetWorldID(pNewbieTbldat->world_Id);
+		this->plr->SetWorldTableID(pNewbieTbldat->tutorialWorld);
 	}*/
-
-	this->plr->SetWorldID(app->db->getInt("WorldID"));
-	this->plr->SetWorldTableID(app->db->getInt("WorldTable"));
-
+		
 	packet.SetPacketLen( sizeof(sGU_AVATAR_WORLD_INFO) );
 	g_pApp->Send( this->GetHandle(), &packet );
 
@@ -1985,7 +1989,7 @@ void CClientSession::SendExcuteTriggerObject(CNtlPacket * pPacket, CGameServer *
 	sGU_TS_EXCUTE_TRIGGER_OBJECT_RES * res = (sGU_TS_EXCUTE_TRIGGER_OBJECT_RES *)packet.GetPacketData();
 
 	res->wOpCode = GU_TS_EXCUTE_TRIGGER_OBJECT_RES;
-	res->wResultCode = RESULT_SUCCESS;
+	res->wResultCode = GAME_SUCCESS;
 	res->hTriggerObject = req->hTarget;
 	packet.SetPacketLen( sizeof(sGU_TS_EXCUTE_TRIGGER_OBJECT_RES) );
 	app->UserBroadcastothers(&packet, this);
@@ -2927,7 +2931,7 @@ void CClientSession::SendItemMoveReq(CNtlPacket * pPacket, CGameServer * app)
 			{
 				res->wResultCode = GAME_SUCCESS;
 				app->qry->UpdateItemPlaceAndPos(uniqueID, req->byDestPlace, req->byDestPos);
-				if(req->byDestPlace == 7)
+				if ((req->byDestPlace >= CONTAINER_TYPE_BAG1) || (req->byDestPlace <=CONTAINER_TYPE_BAG5))
 				{
 				eq->byPos = req->byDestPos;
 				eq->handle = this->plr->GetAvatarandle();
@@ -3748,13 +3752,14 @@ void CClientSession::SendPlayerLevelUpCheck(CGameServer * app, int exp)
 	}*/
 	CNtlPacket packet(sizeof(sGU_UPDATE_CHAR_EXP));	
 	sGU_UPDATE_CHAR_EXP * response = (sGU_UPDATE_CHAR_EXP*)packet.GetPacketData();
-	response->dwAcquisitionExp = exp;
-	response->dwCurExp = this->plr->pcProfile->dwCurExp;
+
 	response->dwIncreasedExp = exp + rand() % this->plr->pcProfile->byLevel * 2;
+	this->plr->pcProfile->dwCurExp += response->dwIncreasedExp;
+	response->dwAcquisitionExp = exp;
+	response->dwCurExp = this->plr->pcProfile->dwCurExp;	
 	response->dwBonusExp = (exp - response->dwIncreasedExp);
 	response->handle = this->plr->GetAvatarandle();
-	response->wOpCode = GU_UPDATE_CHAR_EXP;
-	this->plr->pcProfile->dwCurExp += response->dwIncreasedExp;
+	response->wOpCode = GU_UPDATE_CHAR_EXP;	
 	if (this->plr->pcProfile->dwCurExp >= this->plr->pcProfile->dwMaxExpInThisLevel)
 	{
 		CNtlPacket packet2(sizeof(sGU_UPDATE_CHAR_SP));
@@ -3813,6 +3818,12 @@ void CClientSession::SendPlayerQuestReq(CNtlPacket * pPacket, CGameServer * app)
 		case 0:
 		{
 			printf("Quest Case\n");
+			//Adding Special Quests like in the client to spawn some monster
+			//Special quest have the range about 11000~14000
+			if (((res->tId >= eQUEST_ID_RANGE_SPECIAL_QUEST_MIN) || (res->tId <= eQUEST_ID_RANGE_SPECIAL_QUEST_MAX)) && (res->tcNextId == 254))
+			{
+				//TODO: Add mob here USING this->plr->GetWorldID() because tutorial world is not "1"
+			}
 			if ((res->tcNextId == 254) && (!pObjDat))
 			{
 				this->gsf->printError("We need to add the reward");
@@ -3822,8 +3833,12 @@ void CClientSession::SendPlayerQuestReq(CNtlPacket * pPacket, CGameServer * app)
 				CQuestRewardTable* pQstRewTable = app->g_pTableContainer->GetQuestRewardTable();
 				
 				//Poor way to get Reward TBLIDX
-				sQUEST_REWARD_TBLDAT *rew = reinterpret_cast<sQUEST_REWARD_TBLDAT*>(pQstRewTable->FindData(((res->tId * 100) + 1)));
-				
+				sQUEST_REWARD_TBLDAT *rew;
+				if (res->tId<1000)
+					rew = reinterpret_cast<sQUEST_REWARD_TBLDAT*>(pQstRewTable->FindData(((res->tId * 100) + 1)));
+				else
+					rew = reinterpret_cast<sQUEST_REWARD_TBLDAT*>(pQstRewTable->FindData(res->tId + 1));
+
 				printf("%d %d %d %d\n%d %d %d %d\n%d\n", rew->arsDefRwd[0], rew->arsDefRwd[1], rew->arsDefRwd[2], rew->arsDefRwd[3], rew->arsSelRwd[0], rew->arsSelRwd[1], rew->arsSelRwd[2], rew->arsSelRwd[3], rew->tblidx);
 				for (int i = 0; i <= QUEST_REWARD_DEF_MAX_CNT; i++)
 				{
@@ -3839,48 +3854,7 @@ void CClientSession::SendPlayerQuestReq(CNtlPacket * pPacket, CGameServer * app)
 							res0->wOpCode = GU_ITEM_PICK_RES;
 							res0->wResultCode = GAME_SUCCESS;
 							this->gsf->CreateUpdateItem(this->plr, rew->arsDefRwd[i].dwRewardVal, pItemData->tblidx, false, this->GetHandle());
-							/*int ItemPos = 0;
-							app->db->prepare("SELECT * FROM items WHERE owner_ID = ? AND place=1 ORDER BY pos ASC");
-							app->db->setInt(1, this->plr->pcProfile->charId);
-							app->db->execute();
-							int k = 0;
-							//Need a right loop 
-							while (app->db->fetch())
-							{
-								if (app->db->getInt("pos") < NTL_MAX_ITEM_SLOT)
-									ItemPos = app->db->getInt("pos") + 1;
-								else
-									ItemPos = app->db->getInt("pos");
-								k++;
-							}
-							app->db->prepare("CALL BuyItemFromShop (?,?,?,?,?, @unique_iID)");//this basicaly a insert into...
-							app->db->setInt(1, pItemData->tblidx);
-							app->db->setInt(2, this->plr->pcProfile->charId);
-							app->db->setInt(3, ItemPos);
-							app->db->setInt(4, pItemData->byRank);
-							app->db->setInt(5, pItemData->byDurability);
-							app->db->execute();
-							app->db->execute("SELECT @unique_iID");
-							app->db->fetch();
-
-							CNtlPacket packet01(sizeof(sGU_ITEM_CREATE));
-							sGU_ITEM_CREATE * res01 = (sGU_ITEM_CREATE *)packet01.GetPacketData();
-
-							res01->bIsNew = true;
-							res01->wOpCode = GU_ITEM_CREATE;
-							res01->handle = app->db->getInt("@unique_iID");
-							res01->sItemData.charId = this->GetavatarHandle();
-							res01->sItemData.itemNo = pItemData->tblidx;
-							res01->sItemData.byStackcount = rew->arsDefRwd[i].dwRewardVal;
-							res01->sItemData.itemId = app->db->getInt("@unique_iID");
-							res01->sItemData.byPlace = 1;
-							res01->sItemData.byPosition = ItemPos;
-							res01->sItemData.byCurrentDurability = pItemData->byDurability;
-							res01->sItemData.byRank = pItemData->byRank;
-
-							packet01.SetPacketLen(sizeof(sGU_ITEM_CREATE));*/
 							packet0.SetPacketLen(sizeof(sGU_ITEM_PICK_RES));
-							//g_pApp->Send(this->GetHandle(), &packet01);
 							g_pApp->Send(this->GetHandle(), &packet0);
 						}
 							break;
@@ -3895,18 +3869,9 @@ void CClientSession::SendPlayerQuestReq(CNtlPacket * pPacket, CGameServer * app)
 						{
 							rew->arsDefRwd[i].dwRewardIdx;
 							rew->arsDefRwd[i].dwRewardVal;
-							CNtlPacket packet2(sizeof(sGU_UPDATE_CHAR_EXP));
-							sGU_UPDATE_CHAR_EXP * response = (sGU_UPDATE_CHAR_EXP*)packet2.GetPacketData();
 
-							response->dwAcquisitionExp = rew->arsDefRwd[i].dwRewardVal;
-							response->dwCurExp = this->plr->pcProfile->dwCurExp;
-							response->dwIncreasedExp = rew->arsDefRwd[i].dwRewardVal + rand() % this->plr->pcProfile->byLevel * 2;
-							response->dwBonusExp = (rew->arsDefRwd[i].dwRewardVal - response->dwIncreasedExp);
-							response->handle = this->plr->GetAvatarandle();
-							response->wOpCode = GU_UPDATE_CHAR_EXP;
-							this->plr->pcProfile->dwCurExp += response->dwIncreasedExp;
-							packet2.SetPacketLen(sizeof(sGU_UPDATE_CHAR_EXP));
-							g_pApp->Send(this->GetHandle(), &packet2);
+							if (this->plr->pcProfile->byLevel < 50)
+								CClientSession::SendPlayerLevelUpCheck(app, rew->arsDefRwd[i].dwRewardVal);
 
 							gsf->printOk("Reward Experience");
 						}
@@ -3990,25 +3955,22 @@ void CClientSession::SendPlayerQuestReq(CNtlPacket * pPacket, CGameServer * app)
 		case 1:
 		{
 			printf("Trigger Case\n");
-			CWorldTable* pWorldTable = app->g_pTableContainer->GetWorldTable();
-			CDungeonTable* pDungeonTbl = app->g_pTableContainer->GetDungeonTable();
-			CActionTable* pActTable = app->g_pTableContainer->GetActionTable();
-			CDynamicObjectTable* pDynamicObj = app->g_pTableContainer->GetDynamicObjectTable();
-			CGameManiaTimeTable* pGmMania = app->g_pTableContainer->GetGameManiaTimeTable();
-			CNewbieTable* pNwbTbale = app->g_pTableContainer->GetNewbieTable();
-			CWorldMapTable* pMapTable = app->g_pTableContainer->GetWorldMapTable();
 			sOBJECT_TBLDAT* pObjDat = reinterpret_cast<sOBJECT_TBLDAT*>(pObjTable->FindData(req->dwEventData));	
+			CWorldTable* pWorldTable = app->g_pTableContainer->GetWorldTable();
+			CDungeonTable* pDungeonTable = app->g_pTableContainer->GetDungeonTable();
 			if ((pObjDat)&&(pObjDat->wFunction == eDBO_TRIGGER_OBJECT_FUNC_TIME_LEAP_QUEST))
 			{
-				CNtlPacket packet2(sizeof(sGU_TOBJECT_UPDATE_STATE));
-				sGU_TOBJECT_UPDATE_STATE* pUpd = (sGU_TOBJECT_UPDATE_STATE*)packet2.GetPacketData();
-				pUpd->handle = this->GetavatarHandle();
-				pUpd->tobjectBrief.objectID = req->dwEventData;
-				pUpd->tobjectState.byState = req->tcCurId;
-				pUpd->tobjectState.bySubStateFlag = req->tcNextId;
-				pUpd->wOpCode = GU_TOBJECT_UPDATE_STATE;
-				packet2.SetPacketLen(sizeof(sGU_TOBJECT_UPDATE_STATE));
-				g_pApp->Send(this->GetHandle(),&packet2);
+				//Nothing to do here...
+				CNtlPacket packet(sizeof(sGU_TS_TRIGGER_OBJECT_DIALOG_NFY));
+				sGU_TS_TRIGGER_OBJECT_DIALOG_NFY* res = (sGU_TS_TRIGGER_OBJECT_DIALOG_NFY*)packet.GetPacketData();
+
+				res->hTriggerObject = req->dwEventData;
+				res->textTblidx;
+				res->byDialogType = 1;
+				res->wOpCode = GU_TS_TRIGGER_OBJECT_DIALOG_NFY;
+
+				packet.SetPacketLen(sizeof(sGU_TS_TRIGGER_OBJECT_DIALOG_NFY));
+				g_pApp->Send(this->GetHandle(), &packet);
 			}
 		}
 		break;
@@ -4135,7 +4097,16 @@ void	CClientSession::SendItemUseReq(CNtlPacket * pPacket, CGameServer * app)
 
 	CNtlPacket packet4(sizeof(sGU_BUFF_REGISTERED));
 	sGU_BUFF_REGISTERED * pItemBuff = (sGU_BUFF_REGISTERED*)packet4.GetPacketData();
+	//VehiclePackets
+	CNtlPacket packet5(sizeof(sGU_VEHICLE_START_NFY));
+	sGU_VEHICLE_START_NFY* pVehicleStart = (sGU_VEHICLE_START_NFY*)packet5.GetPacketData();
+	
+	CNtlPacket packet6(sizeof(sGU_UPDATE_CHAR_STATE));
+	sGU_UPDATE_CHAR_STATE* pVehicleAspcStateUpd = (sGU_UPDATE_CHAR_STATE*)packet6.GetPacketData();
 
+	CNtlPacket packet7(sizeof(sGU_UPDATE_CHAR_ASPECT_STATE));
+	sGU_UPDATE_CHAR_ASPECT_STATE* pVehicleAspect = (sGU_UPDATE_CHAR_ASPECT_STATE*)packet7.GetPacketData();
+	//------------------------------------------------------------------------------------------------//
  	app->db->prepare("SELECT * FROM items WHERE owner_id = ? AND place = ? AND pos = ?");
  	app->db->setInt(1, this->plr->pcProfile->charId);
  	app->db->setInt(2, req->byPlace);
@@ -4147,54 +4118,91 @@ void	CClientSession::SendItemUseReq(CNtlPacket * pPacket, CGameServer * app)
 	CItemTable * pItemTable = app->g_pTableContainer->GetItemTable();
 	CUseItemTable * pItemUseTable = app->g_pTableContainer->GetUseItemTable();	
 	CSystemEffectTable * pEffectTable = app->g_pTableContainer->GetSystemEffectTable();
+	CVehicleTable* pVehicleTable = app->g_pTableContainer->GetVehicleTable();	
 	sITEM_TBLDAT * itemTBL = reinterpret_cast<sITEM_TBLDAT*>(pItemTable->FindData(app->db->getInt("tblidx")));
+	sVEHICLE_TBLDAT* pVehicleTbl = reinterpret_cast<sVEHICLE_TBLDAT*>(pVehicleTable->FindData(app->db->getInt("tblidx")));
 	sUSE_ITEM_TBLDAT * itemUseTbl = reinterpret_cast<sUSE_ITEM_TBLDAT*>(pItemUseTable->FindData(itemTBL->Use_Item_Tblidx));
 	sSYSTEM_EFFECT_TBLDAT * pEffectTbl = reinterpret_cast<sSYSTEM_EFFECT_TBLDAT*>(pEffectTable->FindData(itemUseTbl->aSystem_Effect[0]));
-
-	pItemAct->handle = this->GetavatarHandle();
-	pItemAct->itemTblidx = itemTBL->tblidx;
-	pItemAct->aSkillResult[0].hTarget = this->GetavatarHandle();
-	pItemAct->aSkillResult[0].effectResult1.fResultValue = itemUseTbl->afSystem_Effect_Value[0];
-	pItemAct->aSkillResult[0].effectResult1.eResultType = DBO_SYSTEM_EFFECT_RESULT_TYPE_GENERAL;
-	pItemAct->aSkillResult[0].effectResult2.fResultValue = itemUseTbl->afSystem_Effect_Value[1];
-	pItemAct->aSkillResult[0].effectResult2.eResultType = DBO_SYSTEM_EFFECT_RESULT_TYPE_GENERAL;
-	pItemAct->wOpCode = GU_CHAR_ACTION_ITEM;
-	pItemAct->wResultCode = GAME_SUCCESS;
-	pItemAct->bySkillResultCount = 1;
 	
-	//Item buff is only to display on the Top
-	pItemBuff->tblidx = itemTBL->tblidx;
-	pItemBuff->hHandle = this->GetavatarHandle();
-	pItemBuff->bySourceType = DBO_OBJECT_SOURCE_ITEM;
-	pItemBuff->dwInitialDuration = itemUseTbl->dwCoolTimeInMilliSecs;
-	pItemBuff->dwTimeRemaining = itemUseTbl->dwKeepTimeInMilliSecs;
-	pItemBuff->wOpCode = GU_BUFF_REGISTERED;
-
 	//Prepared Item Response	
 	res->byPlace = req->byPlace;
 	res->byPos = req->byPos;
- 	res->tblidxItem = itemTBL->tblidx;
- 	res->wOpCode = GU_ITEM_USE_RES;
- 	res->wResultCode = GAME_SUCCESS;
+	res->tblidxItem = itemTBL->tblidx;
+	res->wOpCode = GU_ITEM_USE_RES;
+	res->wResultCode = GAME_SUCCESS;
 
- 	packet.SetPacketLen(sizeof(sGU_ITEM_USE_RES));
-	packet2.SetPacketLen(sizeof(sGU_CHAR_ACTION_ITEM));
-	
-	
- 	g_pApp->Send(this->GetHandle(), &packet);
-	g_pApp->Send(this->GetHandle(), &packet2);
-	app->UserBroadcastothers(&packet, this);
-	app->UserBroadcastothers(&packet2, this);
-	if ((pEffectTbl->effectCode == ACTIVE_HEAL_OVER_TIME) || (pEffectTbl->effectCode == ACTIVE_EP_OVER_TIME))
+	if (!pVehicleTbl)
 	{
-		packet4.SetPacketLen(sizeof(sGU_BUFF_REGISTERED));
-		g_pApp->Send(this->GetHandle(), &packet4);
-		app->UserBroadcastothers(&packet4, this);
-	}	
+		pItemAct->handle = this->GetavatarHandle();
+		pItemAct->itemTblidx = itemTBL->tblidx;
+		pItemAct->aSkillResult[0].hTarget = this->GetavatarHandle();
+		pItemAct->aSkillResult[0].effectResult1.fResultValue = itemUseTbl->afSystem_Effect_Value[0];
+		pItemAct->aSkillResult[0].effectResult1.eResultType = DBO_SYSTEM_EFFECT_RESULT_TYPE_GENERAL;
+		pItemAct->aSkillResult[0].effectResult2.fResultValue = itemUseTbl->afSystem_Effect_Value[1];
+		pItemAct->aSkillResult[0].effectResult2.eResultType = DBO_SYSTEM_EFFECT_RESULT_TYPE_GENERAL;
+		pItemAct->wOpCode = GU_CHAR_ACTION_ITEM;
+		pItemAct->wResultCode = GAME_SUCCESS;
+		pItemAct->bySkillResultCount = 1;
 
-	this->gsf->CreateUpdateItem(this->plr, 0, itemTBL->tblidx, true, this->GetHandle(),req->byPlace,req->byPos);
-	//Validation by Effect Code for better read
-	this->gsf->SendItemEffect(this, itemUseTbl->aSystem_Effect[0], itemUseTbl->tblidx);
+		//Item buff is only to display on the Top
+		pItemBuff->tblidx = itemTBL->tblidx;
+		pItemBuff->hHandle = this->GetavatarHandle();
+		pItemBuff->bySourceType = DBO_OBJECT_SOURCE_ITEM;
+		pItemBuff->dwInitialDuration = itemUseTbl->dwCoolTimeInMilliSecs;
+		pItemBuff->dwTimeRemaining = itemUseTbl->dwKeepTimeInMilliSecs;
+		pItemBuff->wOpCode = GU_BUFF_REGISTERED;
+
+		packet.SetPacketLen(sizeof(sGU_ITEM_USE_RES));
+		packet2.SetPacketLen(sizeof(sGU_CHAR_ACTION_ITEM));
+
+		g_pApp->Send(this->GetHandle(), &packet);
+		g_pApp->Send(this->GetHandle(), &packet2);
+		app->UserBroadcastothers(&packet, this);
+		app->UserBroadcastothers(&packet2, this);
+		if ((pEffectTbl->effectCode == ACTIVE_HEAL_OVER_TIME) || (pEffectTbl->effectCode == ACTIVE_EP_OVER_TIME))
+		{
+			packet4.SetPacketLen(sizeof(sGU_BUFF_REGISTERED));
+			g_pApp->Send(this->GetHandle(), &packet4);
+			app->UserBroadcastothers(&packet4, this);
+		}
+
+		this->gsf->CreateUpdateItem(this->plr, 0, itemTBL->tblidx, true, this->GetHandle(), req->byPlace, req->byPos);
+		//Validation by Effect Code for better read
+		this->gsf->SendItemEffect(this, itemUseTbl->aSystem_Effect[0], itemUseTbl->tblidx);
+	}
+	else
+	{
+		pVehicleStart->hDriverHandle = this->GetavatarHandle();
+		pVehicleStart->hVehicleItem = app->db->getInt("id");
+		pVehicleStart->idVehicleItemTblidx = pVehicleTbl->tblidx;				
+		pVehicleStart->wOpCode = GU_VEHICLE_START_NFY;
+
+		pVehicleAspcStateUpd->handle = this->GetavatarHandle();
+		pVehicleAspcStateUpd->sCharState.sCharStateBase.aspectState.sAspectStateBase.byAspectStateId = ASPECTSTATE_VEHICLE;
+		pVehicleAspcStateUpd->sCharState.sCharStateBase.aspectState.sAspectStateDetail.sVehicle.bIsEngineOn = false;
+		pVehicleAspcStateUpd->sCharState.sCharStateBase.aspectState.sAspectStateDetail.sVehicle.idVehicleTblidx = pVehicleTbl->tblidx;
+		pVehicleAspcStateUpd->sCharState.sCharStateBase.vCurDir = this->plr->GetDirection();
+		pVehicleAspcStateUpd->sCharState.sCharStateBase.vCurLoc = this->plr->GetPosition();
+		pVehicleAspcStateUpd->sCharState.sCharStateBase.byStateID = CHARSTATE_RIDEON;
+		pVehicleAspcStateUpd->sCharState.sCharStateDetail.sCharStateRideOn.hTarget = app->db->getInt("id");
+		pVehicleAspcStateUpd->wOpCode = GU_UPDATE_CHAR_STATE;
+
+		pVehicleAspect->aspectState.sAspectStateBase.byAspectStateId = ASPECTSTATE_VEHICLE;
+		pVehicleAspect->aspectState.sAspectStateDetail.sVehicle.bIsEngineOn = false;
+		pVehicleAspect->aspectState.sAspectStateDetail.sVehicle.idVehicleTblidx = pVehicleTbl->tblidx;
+		pVehicleAspect->handle = this->GetavatarHandle();
+		pVehicleAspect->wOpCode = GU_UPDATE_CHAR_ASPECT_STATE;
+
+		packet.SetPacketLen(sizeof(sGU_ITEM_USE_RES));
+		//packet5.SetPacketLen(sizeof(sGU_VEHICLE_START_NFY));
+		packet6.SetPacketLen(sizeof(sGU_UPDATE_CHAR_STATE));
+		packet7.SetPacketLen(sizeof(sGU_UPDATE_CHAR_ASPECT_STATE));
+
+		g_pApp->Send(this->GetHandle(), &packet);
+		//app->UserBroadcastothers(&packet5, this);
+		g_pApp->Send(this->GetHandle(), &packet6);
+		g_pApp->Send(this->GetHandle(), &packet7);
+	}
 }
  //---------------------------------------------------------------------//
  //------------------Skill Transform Cancel - Luiz45--------------------//
@@ -4692,6 +4700,30 @@ void CClientSession::SendBusLocation(CNtlPacket * pPacket, CGameServer * app)
 	CNtlPacket packet(sizeof(sGU_BUS_LOCATION_NFY));
 	sGU_BUS_LOCATION_NFY * res = (sGU_BUS_LOCATION_NFY *)packet.GetPacketData();
 
+	CNPCTable* busNpc = app->g_pTableContainer->GetNpcTable();	
+	CSpawnTable* pSpawnTbl = app->g_pTableContainer->GetNpcSpawnTable(this->plr->GetWorldID());
+	CObjectTable* objTbl = app->g_pTableContainer->GetObjectTable(this->plr->GetWorldID());
+	/*for (CTable::TABLEIT npcTbl = busNpc->Begin(); npcTbl != busNpc->End(); ++npcTbl)
+	{
+		sNPC_TBLDAT* pBusTblDat = (sNPC_TBLDAT*)npcTbl->second;		
+		if (pBusTblDat)
+		{
+			if ((pBusTblDat->byJob == NPC_JOB_BUS) && ((strcmp(pBusTblDat->szModel, "N_BUS_A1") == 0) || 
+				(strcmp(pBusTblDat->szModel, "N_BUS_C1") == 0) || (strcmp(pBusTblDat->szModel, "N_BUS_B1") == 0)))
+			{
+				
+				res->busTblidx = pBusTblDat->tblidx;
+				res->vCurDir.x = this->plr->GetDirection().x;
+				res->vCurDir.z = this->plr->GetDirection().z;
+				res->vCurLoc.x = this->plr->GetPosition().x;
+				res->vCurLoc.z = this->plr->GetPosition().z;
+				res->hSubject = AcquireSerialId();
+				res->wOpCode = GU_BUS_LOCATION_NFY;
+				packet.SetPacketLen(sizeof(sGU_BUS_LOCATION_NFY));
+				g_pApp->Send(this->GetHandle(), &packet);
+			}
+		}
+	}*/
 	res->busTblidx;
 	res->hSubject;
 	res->vCurDir;

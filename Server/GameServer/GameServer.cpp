@@ -47,6 +47,7 @@ int CClientSession::OnDispatch(CNtlPacket * pPacket)
 			CClientSession::SendAvatarQuestList(pPacket, app);// Only uncomment when we get quests id
 			CClientSession::SendSlotInfo(pPacket, app);
 			CClientSession::SendAvatarInfoEnd(pPacket);
+			//CClientSession::SendBusLocation(pPacket, app);
 		}
 			break;
 		case UG_GAME_LEAVE_REQ:

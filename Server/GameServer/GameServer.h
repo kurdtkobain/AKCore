@@ -36,12 +36,14 @@
 #include "PortalTable.h"
 #include "MerchantTable.h"
 #include "ItemTable.h"
+#include "NewbieTable.h" // For Tutorial
 #include "UseItemTable.h" //Added for use items
 #include "SystemEffectTable.h" //Added for use some Effects validations and buffs
 #include "TimeQuestTable.h"
 #include "FormulaTable.h"
 #include "ItemMixMachineTable.h"
 #include "ExpTable.h"
+#include "VehicleTable.h"//Added to use Vehicle -Luiz45
 #include "QuestRewardTable.h"
 #include "EachDropTable.h"
 #include "ExcellentDropTable.h"

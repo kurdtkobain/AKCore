@@ -601,7 +601,7 @@ BEGIN
 					VALUES(char_id);
 					INSERT INTO items (`owner_id`, `tblidx`, `place`, `pos`, `count`, `rank`, `durability`)
 					VALUES(char_id, 19901, 0, 0, 0, 1, 10),
-						    (char_id, 17001, 1, 3, 1, 1, 100);
+						    (char_id, 17001, 7, 5, 1, 1, 100);
 
 
 					IF (byRace = 0) THEN
@@ -609,13 +609,15 @@ BEGIN
 							INSERT INTO skills (`skill_id`, `owner_id`, RpBonusAuto, `RpBonusType`, `SlotID`, `TimeRemaining`, `Exp`)
 							VALUES (10111,char_id,0,0,1,0,0);
 							INSERT INTO items (`owner_id`, `tblidx`, `place`, `pos`, `count`, `rank`, `durability`)
-							VALUES(char_id,  14001, 7, 2, 1, 1, 100),
-							    (char_id,  14002, 7, 3, 1, 1, 100),
+							VALUES (char_id,  10045, 7, 0, 1, 1, 100),
+									(char_id,  14001, 7, 2, 1, 1, 100),
+							    (char_id,  14002, 7, 3, 1, 1, 100),									
 						    	(char_id,  14003, 7, 4, 1, 1, 100);
 						END IF;
 						IF (byClass = 1) THEN
 						INSERT INTO items (`owner_id`, `tblidx`, `place`, `pos`, `count`, `rank`, `durability`)
-							VALUES(char_id,  14301, 7, 2, 1, 1, 100),
+							VALUES (char_id, 10001, 7, 0, 1, 1, 100),
+									(char_id,  14301, 7, 2, 1, 1, 100),
 							    (char_id,  14302, 7, 3, 1, 1, 100),
 						    	(char_id,  14303, 7, 4, 1, 1, 100);
 						INSERT INTO skills (`skill_id`, `owner_id`, `SlotID`)
@@ -630,13 +632,15 @@ BEGIN
 							INSERT INTO skills (`skill_id`, `owner_id`, RpBonusAuto, `RpBonusType`, `SlotID`, `TimeRemaining`, `Exp`)
 							VALUES (310111,char_id,0,0,1,0,0);
 							INSERT INTO items (`owner_id`, `tblidx`, `place`, `pos`, `count`, `rank`, `durability`)
-							VALUES(char_id,  23001, 7, 2, 1, 1, 100),
-								(char_id,  23002, 7, 3, 1, 1, 100),
-								(char_id,  23003, 7, 4, 1, 1, 100);
+							VALUES (char_id,  500045, 7, 0, 1, 1, 100),
+								(char_id,  13001, 7, 2, 1, 1, 100),
+								(char_id,  13002, 7, 3, 1, 1, 100),
+								(char_id,  13003, 7, 4, 1, 1, 100);
 							END IF;
 						IF (byClass = 4) THEN
 							INSERT INTO items (`owner_id`, `tblidx`, `place`, `pos`, `count`, `rank`, `durability`)
-							VALUES(char_id,  13301, 7, 2, 1, 1, 100),
+							VALUES(char_id,  10101, 7, 0, 1, 1, 100),
+								(char_id,  13301, 7, 2, 1, 1, 100),
 								(char_id,  13302, 7, 3, 1, 1, 100),
 						    	(char_id,  13303, 7, 4, 1, 1, 100);
 							INSERT INTO skills (`skill_id`, `owner_id`, `SlotID`)
@@ -648,7 +652,8 @@ BEGIN
 							INSERT INTO skills (`skill_id`, `owner_id`, RpBonusAuto, `RpBonusType`, `SlotID`, `TimeRemaining`, `Exp`)
 							VALUES (510111,char_id,0,0,1,0,0);
 							INSERT INTO items (`owner_id`, `tblidx`, `place`, `pos`, `count`, `rank`, `durability`)
-							VALUES(char_id,  15001, 7, 2, 1, 1, 100),
+							VALUES(char_id,  500081, 7, 0, 1, 1, 100),
+									(char_id,  15001, 7, 2, 1, 1, 100),
 							    (char_id,  15002, 7, 3, 1, 1, 100),
 						    	(char_id,  15003, 7, 4, 1, 1, 100);
 						END IF;
@@ -656,7 +661,8 @@ BEGIN
 							INSERT INTO skills (`skill_id`, `owner_id`, RpBonusAuto, `RpBonusType`, `SlotID`, `TimeRemaining`, `Exp`)
 							VALUES (610111,char_id,0,0,1,0,0);
 							INSERT INTO items (`owner_id`, `tblidx`, `place`, `pos`, `count`, `rank`, `durability`)
-							VALUES(char_id,  15301, 7, 2, 1, 1, 100),
+							VALUES(char_id,  500001, 7, 0, 1, 1, 100),
+									(char_id,  15301, 7, 2, 1, 1, 100),
 							    (char_id,  15302, 7, 3, 1, 1, 100),
 						    	(char_id,  15303, 7, 4, 1, 1, 100);
 						END IF;

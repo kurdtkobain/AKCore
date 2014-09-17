@@ -215,6 +215,24 @@ void CClientSession::SendCharCreateReq(CNtlPacket * pPacket, CCharServer * app)
 	res->sPcDataSummary.bySkinColor = req->bySkinColor;
 	res->sPcDataSummary.byLevel = 1;
 	res->sPcDataSummary.worldId = 1;
+	for (int j = 0; j < NTL_MAX_EQUIP_ITEM_SLOT; j++)
+	{
+		//Get items which the characters is wearing
+		app->db2->prepare("select * from items WHERE place=7 AND pos=? AND owner_id=?");
+		app->db2->setInt(1, j);
+		app->db2->setInt(2, app->db->getInt("@charId"));
+		app->db2->execute();
+		app->db2->fetch();
+		if (app->db2->rowsCount() == 0)
+		{
+			res->sPcDataSummary.sItem[j].tblidx = INVALID_TBLIDX;
+		}
+		else
+		{
+			res->sPcDataSummary.sItem[j].tblidx = app->db2->getInt("tblidx");
+		}
+
+	}
 
 	packet.SetPacketLen( sizeof(sCU_CHARACTER_ADD_RES) );
 	int rc = g_pApp->Send( this->GetHandle(), &packet );
