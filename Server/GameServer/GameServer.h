@@ -325,12 +325,14 @@ public:
 	int		IsMonsterIDInsideList(TBLIDX MonsterSpawnID)
 	{
 		MyMonsterList * mymonsterlist;
-		for( MYMONSTERLISTIT it = my_monsterList.begin(); it != my_monsterList.end(); it++ )
-		{
-			mymonsterlist = (*it);
-			if(mymonsterlist->MonsterID == MonsterSpawnID)
+		if (my_monsterList.empty() == false) {
+			for( MYMONSTERLISTIT it = my_monsterList.begin(); it != my_monsterList.end(); it++ )
 			{
-				return mymonsterlist->MobTBLIDX;
+				mymonsterlist = (*it);
+				if(mymonsterlist->MonsterID == MonsterSpawnID)
+				{
+					return mymonsterlist->MobTBLIDX;
+				}
 			}
 		}
 		return 0;
@@ -338,12 +340,14 @@ public:
 	bool		IsMonsterInsideList(TBLIDX MonsterSpawnID)
 	{
 		MyMonsterList * mymonsterlist;
-		for( MYMONSTERLISTIT it = my_monsterList.begin(); it != my_monsterList.end(); it++ )
-		{
-			mymonsterlist = (*it);
-			if(mymonsterlist->MonsterID == MonsterSpawnID)
+		if (my_monsterList.empty() == false) {
+			for( MYMONSTERLISTIT it = my_monsterList.begin(); it != my_monsterList.end(); it++ )
 			{
-				return true;
+				mymonsterlist = (*it);
+				if(mymonsterlist->MonsterID == MonsterSpawnID)
+				{
+					return true;
+				}
 			}
 		}
 		return false;

@@ -64,6 +64,7 @@ public:
 	int							OnDispatch(CNtlPacket * pPacket);
 	// Packet functions
 	void						SendCharServerReq(CNtlPacket * pPacket);
+	void						SendServerListReq(CNtlPacket * pPacket);
 	void						SendServerListOneReq(CNtlPacket * pPacket);
 	void						SendCharLoadReq(CNtlPacket * pPacket, CCharServer * app);
 	void						SendCharCreateReq(CNtlPacket * pPacket, CCharServer * app);
