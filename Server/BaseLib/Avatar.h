@@ -435,6 +435,8 @@ public:
 	// (Attribute data -> sAVATAR_ATTRIBUTE)
 	//
 	static bool FillAvatarAttribute(sAVATAR_ATTRIBUTE_LINK* pAttributeDataLink, sAVATAR_ATTRIBUTE* pAttributeData);
+    //Convert Attributes - Luiz45
+	static sAVATAR_ATTRIBUTE_LINK ConvertAttributeToAttributeLink(sAVATAR_ATTRIBUTE* pAttribute);
 
 protected:
 	static sATTRIBUTE_LOGIC m_attributeLogic[ATTRIBUTE_TO_UPDATE_COUNT];

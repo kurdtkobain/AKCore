@@ -238,7 +238,7 @@ public:
 		this->isSsj = false;
 		this->isMajin = false;
 		this->isGreatNamek = false;
-		this->pcProfile->avatarAttribute.fLastRunSpeed = 6;
+
 		this->sCharState->sCharStateBase.aspectState.sAspectStateDetail.sKaioken.byRepeatingCount = 0;
 	};
 	void		UpdateRP();

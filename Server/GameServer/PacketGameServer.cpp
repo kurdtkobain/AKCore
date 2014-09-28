@@ -180,7 +180,7 @@ void CClientSession::SendAvatarCharInfo(CNtlPacket * pPacket, CGameServer * app)
 	this->plr->SetPlayerName(app->db->getString("CharName"));
 	this->plr->SetPosition(res->sCharState.sCharStateBase.vCurLoc, res->sCharState.sCharStateBase.vCurDir);
 	this->plr->setPlayerStat(&res->sPcProfile, &res->sCharState);
-	this->plr->calculeMyStat(app);
+	//this->plr->calculeMyStat(app);
 
 	res->sPcProfile.avatarAttribute.byLastCon = app->db->getInt("LastCon");
 	res->sPcProfile.avatarAttribute.byLastStr = app->db->getInt("LastStr");

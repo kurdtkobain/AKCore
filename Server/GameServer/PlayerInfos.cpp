@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "GameServer.h"
+#include "Avatar.h"
 
 void		PlayerInfos::SendPlayerLifeAndEP()
 {
@@ -472,9 +473,28 @@ void		PlayerInfos::calculeMyStat(CGameServer * app)
 void PlayerInfos::UpdateAttribute(RwUInt32 Handle, RwUInt32 Attribute, RwUInt32 Amount)
 {
         CNtlPacket packet(sizeof(sGU_AVATAR_ATTRIBUTE_UPDATE));
-        sGU_AVATAR_ATTRIBUTE_UPDATE * res = (sGU_AVATAR_ATTRIBUTE_UPDATE *)packet.GetPacketData();
+        sGU_AVATAR_ATTRIBUTE_UPDATE * res = (sGU_AVATAR_ATTRIBUTE_UPDATE *)packet.GetPacketData();	
+		
+		sAVATAR_ATTRIBUTE_LINK avtLink = CNtlAvatar::GetInstance()->ConvertAttributeToAttributeLink(&this->pcProfile->avatarAttribute);
+		DWORD buffer[1024];//Thanks Daneos
+		DWORD datasize;
 
-		res->abyFlexibleField[Attribute] = Amount;
+		CNtlBitFlagManager changedFlag;
+		changedFlag.Create(&this->pcProfile->avatarAttribute,ATTRIBUTE_TO_UPDATE_COUNT);
+		
+		for (BYTE byIndex = ATTRIBUTE_TO_UPDATE_FIRST; byIndex <= ATTRIBUTE_TO_UPDATE_LAST; byIndex++)
+		{
+			changedFlag.Set(byIndex);
+		}
+		
+		if (CNtlAvatar::GetInstance()->SaveAvatarAttribute(&changedFlag, &avtLink, &buffer, &datasize) == true)
+		{
+			printf("SAVED");
+		}
+		sAVATAR_ATTRIBUTE poas;
+		CNtlAvatar::GetInstance()->FillAvatarAttribute(&avtLink, &poas);
+		memcpy(res->abyFlexibleField, &avtLink, ((UCHAR_MAX - 1) / 8 + 1) + sizeof(sAVATAR_ATTRIBUTE));
+
 		res->byAttributeTotalCount = 101;
 		res->hHandle = Handle;
 		res->wOpCode = GU_AVATAR_ATTRIBUTE_UPDATE;		
