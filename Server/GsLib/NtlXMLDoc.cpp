@@ -1,9 +1,16 @@
 #include "stdafx.h"
 #include <comdef.h>
-#include <atlbase.h>
+//#include <atlbase.h>
 #include "NtlXMLDoc.h"
 //#include "NtlAssert.h"
 
+LPCWSTR MultiCharToUniChar(char* mbString)
+{
+    int len = strlen(mbString) + 1;
+    wchar_t *ucString = new wchar_t[len];
+    mbstowcs(ucString, mbString, len);
+    return (LPCWSTR)ucString;
+}
 
 class CCoInit
 {
@@ -195,12 +202,12 @@ bool CNtlXMLDoc::Load(char* pszFileName)
 
 bool CNtlXMLDoc::LoadXML( char* szXMLBuffer ) 
 {
-	USES_CONVERSION;
+	//USES_CONVERSION;
 
 	if(false != m_bIsFileLoaded)
 		return false;
 
-	return LoadXML(A2W(szXMLBuffer));
+	return LoadXML((WCHAR*)MultiCharToUniChar(szXMLBuffer));
 }
 
 bool CNtlXMLDoc::LoadXML( WCHAR* wszXMLBuffer ) 
@@ -482,9 +489,9 @@ bool CNtlXMLDoc::GetDataWithXPath(char* pszXPath, char* pszResultData, int nBuff
 }
 
 /**
-* XML ÆÄÀÏÀÇ ÇüÅÂ¸¦ TabÀ» ÀÌ¿ëÇØ¼­ º¸±â ÁÁ°Ô Á¤·ÄÇÑ´Ù.
-* \param szIndentFileName Á¤·Ä¿¡ »ç¿ëÇÒ ½ºÅ¸ÀÏ ½ÃÆ® ÆÄÀÏ¸í
-* return ¼º°ø À¯¹«
+* XML íŒŒì¼ì˜ í˜•íƒœë¥¼ Tabì„ ì´ìš©í•´ì„œ ë³´ê¸° ì¢‹ê²Œ ì •ë ¬í•œë‹¤.
+* \param szIndentFileName ì •ë ¬ì— ì‚¬ìš©í•  ìŠ¤íƒ€ì¼ ì‹œíŠ¸ íŒŒì¼ëª…
+* return ì„±ê³µ ìœ ë¬´
 */
 bool CNtlXMLDoc::SetIndent(WCHAR* szIndentFileName)
 {
