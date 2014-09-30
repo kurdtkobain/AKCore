@@ -2,7 +2,27 @@
 #include "NtlFileSerializer.h"
 #include "NtlStringHandler.h"
 #include "NtlCipher.h"
-#include <atlbase.h>
+//#include <atlbase.h>
+
+char* ConvertLPWSTRToLPSTR(LPWSTR lpwszStrIn)
+{
+	LPSTR pszOut = NULL;
+	if (lpwszStrIn != NULL)
+	{
+		int nInputStrLen = wcslen(lpwszStrIn);
+
+		// Double NULL Termination
+		int nOutputStrLen = WideCharToMultiByte(CP_ACP, 0, lpwszStrIn, nInputStrLen, NULL, 0, 0, 0) + 2;
+		pszOut = new char[nOutputStrLen];
+
+		if (pszOut)
+		{
+			memset(pszOut, 0x00, nOutputStrLen);
+			WideCharToMultiByte(CP_ACP, 0, lpwszStrIn, nInputStrLen, pszOut, nOutputStrLen, 0, 0);
+		}
+	}
+	return pszOut;
+}
 
 CNtlFileSerializer::CNtlFileSerializer() :
 							CNtlSerializer()
@@ -84,9 +104,9 @@ bool CNtlFileSerializer::SaveFile(char* pszFullPathFileName, bool bCrypt /* = FA
 
 bool CNtlFileSerializer::SaveFile(WCHAR* pwszFullPathFileName, bool bCrypt /* = FALSE */, WCHAR* szCryptPassword /* = NULL */)
 {
-	USES_CONVERSION;
+	//USES_CONVERSION;
 
-	return SaveFile(W2A(pwszFullPathFileName), bCrypt, W2A(szCryptPassword));
+	return SaveFile(ConvertLPWSTRToLPSTR(pwszFullPathFileName), bCrypt, ConvertLPWSTRToLPSTR(szCryptPassword));
 }
 
 bool CNtlFileSerializer::LoadFile(char* pszFullPathFileName, bool bCrypt /* = FALSE */, char* szCryptPassword /* = NULL */)
@@ -186,7 +206,7 @@ bool CNtlFileSerializer::LoadFile(char* pszBuffer, int nSize, bool bCrypt /*= FA
 
 bool CNtlFileSerializer::LoadFile(WCHAR* pwszFullPathFileName, bool bCrypt /* = FALSE */, WCHAR* szCryptPassword /* = NULL */)
 {
-	USES_CONVERSION;
+	//USES_CONVERSION;
 
-	return LoadFile(W2A(pwszFullPathFileName), bCrypt, W2A(szCryptPassword));
+	return LoadFile(ConvertLPWSTRToLPSTR(pwszFullPathFileName), bCrypt, ConvertLPWSTRToLPSTR(szCryptPassword));
 }
