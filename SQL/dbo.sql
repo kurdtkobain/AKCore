@@ -80,7 +80,7 @@ CREATE TABLE `characters` (
   `AccountID` int(10) DEFAULT NULL,
   `Level` tinyint(3) DEFAULT '1',
   `Exp` int(10) DEFAULT '0',
-  `MaxExpInThisLevel` int(10) DEFAULT '1000',
+  `MaxExpInThisLevel` int(10) DEFAULT '200',
   `Race` tinyint(1) DEFAULT NULL,
   `Class` tinyint(2) DEFAULT NULL,
   `ChangeClass` bit(1) DEFAULT b'0',
@@ -227,8 +227,8 @@ CREATE TABLE `charquestlist` (
   `pkQtTable` int(11) NOT NULL AUTO_INCREMENT,
   `charId` int(10) NOT NULL,
   `questID` int(100) NOT NULL,
-  `isCompleted` smallint(1) NOT NULL,
-  `currentStep` int(255) NOT NULL,
+  `isCompleted` smallint(1) NOT NULL DEFAULT '0',
+  `currentStep` int(255) NOT NULL DEFAULT '255',
   `type` smallint(1) NOT NULL,
   `dwEventData` int(255) NOT NULL,
   `nextStep` int(255) NOT NULL DEFAULT '2',
@@ -469,6 +469,26 @@ END
 ;;
 DELIMITER ;
 
+-- ----------------------------
+-- Procedure structure for CreateItem
+-- ----------------------------
+DROP PROCEDURE IF EXISTS `CreateItem`;
+DELIMITER ;;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `CreateItem`(IN tblidx INT, IN CharID INT, IN pos INT,IN Place INT, OUT unique_iID INT)
+BEGIN
+
+
+
+  INSERT INTO items (tblidx,owner_id,place,pos)
+  VALUES
+  (tblidx ,CharID ,Place,pos);
+
+  SET unique_iID = LAST_INSERT_ID();
+
+
+END
+;;
+DELIMITER ;
 -- ----------------------------
 -- Procedure structure for ChangeCharname
 -- ----------------------------

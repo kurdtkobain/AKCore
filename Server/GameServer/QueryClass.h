@@ -26,6 +26,7 @@ public:
 	bool						UpdateItemOwnerIdWithUniqueID(RwUInt32 NewOwnerID, RwUInt32 UniqueID);
 	bool						SetMinusMoney(RwUInt32 CharID, int Money);
 	bool						SetPlusMoney(RwUInt32 CharID, int Money);
+	bool						SetBankMoney(RwUInt32 CharID, int Money);
 	bool						SetMailRead(RwUInt32 MailID);
 	bool						DeleteFromMailByID(RwUInt32 MailID);
 	bool						ChangeItemOwnerByUIdPlacePos(RwUInt32 NewOwnerID, RwUInt32 UniqueID, RwUInt32 Place, RwUInt32 Pos);

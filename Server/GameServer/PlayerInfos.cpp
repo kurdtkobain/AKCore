@@ -496,9 +496,51 @@ void PlayerInfos::UpdateAttribute(RwUInt32 Handle, RwUInt32 Attribute, RwUInt32 
 		memcpy(res->abyFlexibleField, &avtLink, ((UCHAR_MAX - 1) / 8 + 1) + sizeof(sAVATAR_ATTRIBUTE));
 
 		res->byAttributeTotalCount = 101;
+		res->abyFlexibleField[Attribute] = Amount;
 		res->hHandle = Handle;
 		res->wOpCode = GU_AVATAR_ATTRIBUTE_UPDATE;		
 
         packet.SetPacketLen(sizeof(sGU_AVATAR_ATTRIBUTE_UPDATE));
 		g_pApp->Send(this->MySession, &packet);
 }
+
+DWORD PlayerInfos::GetMoney()
+{
+	return this->pcProfile->dwZenny;
+}
+
+int PlayerInfos::GetBankMoney()
+{
+	app->db->prepare("SELECT MoneyBank FROM characters WHERE CharID = ?");
+	app->db->setInt(1, this->pcProfile->charId);
+	app->db->execute();
+	app->db->fetch();
+	int bankmoney = app->db->getInt("MoneyBank");
+	return bankmoney;
+}
+
+
+void PlayerInfos::SetBankMoney(int Amount)
+{
+	app->db->prepare("UPDATE characters SET MoneyBank = ? WHERE CharID = ?");
+	app->db->setInt(1, Amount);
+	app->db->setInt(2, this->pcProfile->charId);
+	app->db->execute();
+}
+
+void PlayerInfos::SetMoney(int Amount)
+{
+	DWORD currentMoney = this->GetMoney();
+
+	if ((int)currentMoney <= Amount)
+	{
+		currentMoney = 0;
+	}
+	else
+	{
+		currentMoney = Amount;
+	}
+
+}
+
+

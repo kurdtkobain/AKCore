@@ -118,13 +118,11 @@ int CClientSession::OnDispatch(CNtlPacket * pPacket)
 			break;
 		case UG_CHAR_DASH_KEYBOARD:
 		{
-			printf("--- UG_CHAR_DASH_KEYBOARD --- \n");
 			CClientSession::SendCharDashKeyBoard(pPacket, app);
 		}
 			break;
 		case UG_CHAR_DASH_MOUSE:
 		{
-			printf("--- UG_CHAR_DASH_MOUSE --- \n");
 			CClientSession::SendCharDashMouse(pPacket, app);
 		}
 			break;
@@ -193,7 +191,6 @@ int CClientSession::OnDispatch(CNtlPacket * pPacket)
 			break;
 		case UG_CHAR_CHARGE:
 		{
-			printf("---  UG_CHAR_CHARGE --- \n");
 			CClientSession::SendRpCharge(pPacket, app);
 		}
 			break;
@@ -214,7 +211,6 @@ int CClientSession::OnDispatch(CNtlPacket * pPacket)
 			break;
 		case UG_CHAR_REVIVAL_REQ:
 		{
-			printf("---  UG_CHAR_REVIVAL_REQ --- \n");
 			CClientSession::SendCharRevivalReq(pPacket, app);
 		}
 			break;
@@ -250,7 +246,6 @@ int CClientSession::OnDispatch(CNtlPacket * pPacket)
 			break;
 		case UG_CHAR_DIRECT_PLAY_ACK:
 		{
-			printf("--- UG_CHAR_DIRECT_PLAY_ACK --- \n");
 			CClientSession::SendDirectPlay(pPacket, app);
 		}
 			break;
@@ -281,31 +276,26 @@ int CClientSession::OnDispatch(CNtlPacket * pPacket)
 			break;
 		case UG_HTB_START_REQ:
 		{
-			printf("--- UG_HTB_START_REQ --- \n");
 			CClientSession::SendHTBStartReq(pPacket, app);
 		}
 			break;
 		case UG_HTB_LEARN_REQ:
 		{
-			printf("--- UG_HTB_LEARN_REQ --- \n");
 			CClientSession::SendCharSkillHTBLearn(pPacket, app);
 		}
 			break;
 		case UG_HTB_FORWARD_REQ:
 		{
-			printf("--- UG_HTB_FORWARD_REQ --- \n");
 			CClientSession::SendHTBFoward(pPacket, app);
 		}
 			break;
 		case UG_HTB_RP_BALL_USE_REQ:
 		{
-			printf("--- UG_HTB_RP_BALL_USE_REQ --- \n");
 			CClientSession::SendHTBRpBall(pPacket,app);
 		}
 			break;
 		case UG_BUFF_DROP_REQ:
 		{
-			printf("--- UG_BUFF_DROP_REQ --- \n");
 			CClientSession::SendCharSkillBuffDrop(pPacket, app);
 		}
 			break;
@@ -341,7 +331,6 @@ int CClientSession::OnDispatch(CNtlPacket * pPacket)
 			break;
 		case UG_ITEM_USE_REQ:
 		{
-			printf("--- UG_ITEM_USE_REQ --- \n");
 			CClientSession::SendItemUseReq(pPacket, app);
 		}
 			break;
@@ -478,13 +467,11 @@ int CClientSession::OnDispatch(CNtlPacket * pPacket)
 			break;
 		case UG_PARTY_CHANGE_ZENNY_LOOTING_METHOD_REQ:
 		{
-			printf("--- UG_PARTY_CHANGE_ZENNY_LOOTING_METHOD_REQ --- \n");
 			CClientSession::SendPartyChangeZenny(pPacket, app);
 		}
 			break;
 		case UG_PARTY_CHANGE_ITEM_LOOTING_METHOD_REQ:
 		{
-			printf("--- UG_PARTY_CHANGE_ITEM_LOOTING_METHOD_REQ --- \n");
 			CClientSession::SendPartyChangeItem(pPacket, app);
 		}
 			break;
@@ -510,12 +497,12 @@ int CClientSession::OnDispatch(CNtlPacket * pPacket)
 			break;
 		case UG_BANK_MOVE_REQ:
 		{
-			printf("--- UG_BANK_MOVE_REQ --- \n");
+			CClientSession::SendBankMoveReq(pPacket, app);
 		}
 			break;
 		case UG_BANK_MOVE_STACK_REQ:
 		{
-			printf("--- UG_BANK_MOVE_STACK_REQ --- \n");
+			CClientSession::SendBankStackReq(pPacket, app);
 		}
 			break;
 		case UG_BANK_END_REQ:
@@ -525,7 +512,7 @@ int CClientSession::OnDispatch(CNtlPacket * pPacket)
 			break;
 		case UG_BANK_ZENNY_REQ:
 		{
-			printf("--- UG_BANK_ZENNY_REQ --- \n");
+			CClientSession::SendBankMoneyReq(pPacket, app);
 		}
 			break;
 		case UG_BANK_BUY_REQ:
@@ -535,7 +522,7 @@ int CClientSession::OnDispatch(CNtlPacket * pPacket)
 			break;
 		case UG_BANK_ITEM_DELETE_REQ:
 		{
-			printf("--- UG_BANK_ITEM_DELETE_REQ --- \n");
+			CClientSession::SendBankDeleteReq(pPacket, app);
 		}
 			break;
 		case UG_SCOUTER_INDICATOR_REQ:
@@ -571,7 +558,6 @@ int CClientSession::OnDispatch(CNtlPacket * pPacket)
 			break;
 		case UG_TS_UPDATE_STATE:
 		{
-			printf("--- UG_TS_UPDATE_STATE --- \n");
 			CClientSession::SendTSUpdateState(pPacket, app);
 		}
 			break;
@@ -602,7 +588,6 @@ int CClientSession::OnDispatch(CNtlPacket * pPacket)
 			break;
 		case UG_QUEST_OBJECT_VISIT_REQ:
 		{
-			printf("--- UG_QUEST_OBJECT_VISIT_REQ --- \n");
 			CClientSession::SendObjectVisitQuest(pPacket, app);
 		}
 			break;
@@ -699,13 +684,11 @@ int CClientSession::OnDispatch(CNtlPacket * pPacket)
 			break;
 		case UG_TUTORIAL_PLAY_QUIT_REQ:
 		{
-			printf("--- UG_TUTORIAL_PLAY_QUIT_REQ --- \n");
 			CClientSession::SendTutorialPlayQuit(pPacket, app);
 		}
 			break;
 		case UG_TIMEQUEST_ROOM_LIST_REQ:
 		{
-			printf("--- UG_TIMEQUEST_ROOM_LIST_REQ --- \n");
 			CClientSession::SendTimeQuestList(pPacket, app);
 		}
 			break;
@@ -716,19 +699,16 @@ int CClientSession::OnDispatch(CNtlPacket * pPacket)
 			break;
 		case UG_TIMEQUEST_ROOM_JOIN_REQ:
 		{
-			printf("--- UG_TIMEQUEST_ROOM_JOIN_REQ --- \n");
 			CClientSession::JoinTimeQuestRoom(pPacket, app);
 		}
 			break;
 		case UG_TIMEQUEST_ROOM_LEAVE_REQ:
 		{
-			printf("--- UG_TIMEQUEST_ROOM_LEAVE_REQ --- \n");
 			CClientSession::LeaveTimeQuestRoom(pPacket, app);
 		}
 			break;
 		case UG_TIMEQUEST_ROOM_TELEPORT_REQ:
 		{
-			printf("--- UG_TIMEQUEST_ROOM_TELEPORT_REQ --- \n");
 			CClientSession::SendTimeQuestTeleport(pPacket, app);
 		}
 			break;
@@ -789,7 +769,6 @@ int CClientSession::OnDispatch(CNtlPacket * pPacket)
 			break;
 		case UG_PRIVATESHOP_CREATE_REQ:
 		{
-			printf("--- UG_PRIVATESHOP_CREATE_REQ --- \n");
 			CClientSession::SendPrivateShopCreate(pPacket, app);
 		}
 			break;

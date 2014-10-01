@@ -268,7 +268,12 @@ void CClientSession::SendSlotInfo(CNtlPacket * pPacket, CGameServer * app)
 	
 	while (i < 48)
 	{
+
+#if _MSC_VER == 1600
 		query = "slotId_" + std::to_string((double long)i);
+#elif _MSC_VER == 1800
+		query = "slotId_" + std::to_string(i);
+#endif
 		SkillOrItem = app->db->getInt(query.c_str());
 		res->asQuickSlotData[slotID].bySlot = 255;
 		res->asQuickSlotData[slotID].tblidx = 0;		
@@ -3656,21 +3661,33 @@ void CClientSession::SendCharSkillUpgrade(CNtlPacket * pPacket, CGameServer * ap
  		g_pApp->Send(this->GetHandle(), &packet2);
 	}
 }
-void		CClientSession::SendBankStartReq(CNtlPacket * pPacket, CGameServer * app)
+//-------------------------------------------------//
+//--		BANK FUNCTION BY DANEOS START		-- //
+//-------------------------------------------------//
+//--------------------------------------------------------------------------------------//
+//		BANK START
+//--------------------------------------------------------------------------------------//
+void CClientSession::SendBankStartReq(CNtlPacket * pPacket, CGameServer * app)
 {
+	printf("START BANK \n");
 	sUG_BANK_START_REQ * req = (sUG_BANK_START_REQ*)pPacket->GetPacketData();
+
 	CNtlPacket packet(sizeof(sGU_BANK_START_RES));
 	sGU_BANK_START_RES * res = (sGU_BANK_START_RES *)packet.GetPacketData();
 
-	res->handle = req->handle;
 	res->wOpCode = GU_BANK_START_RES;
 	res->wResultCode = GAME_SUCCESS;
+	res->handle = req->handle;
 
 	packet.SetPacketLen(sizeof(sGU_BANK_START_RES));
 	g_pApp->Send(this->GetHandle(), &packet);
 }
-void		CClientSession::SendBankEndReq(CNtlPacket * pPacket, CGameServer * app)
+//--------------------------------------------------------------------------------------//
+//		BANK END
+//--------------------------------------------------------------------------------------//
+void CClientSession::SendBankEndReq(CNtlPacket * pPacket, CGameServer * app)
 {
+	printf("END BANK \n");
 	CNtlPacket packet(sizeof(sGU_BANK_END_RES));
 	sGU_BANK_END_RES * res = (sGU_BANK_END_RES *)packet.GetPacketData();
 
@@ -3678,32 +3695,294 @@ void		CClientSession::SendBankEndReq(CNtlPacket * pPacket, CGameServer * app)
 	res->wResultCode = GAME_SUCCESS;
 
 	packet.SetPacketLen(sizeof(sGU_BANK_END_RES));
- 	g_pApp->Send(this->GetHandle(), &packet);
+	g_pApp->Send(this->GetHandle(), &packet);
 }
-void		CClientSession::SendBankBuyReq(CNtlPacket * pPacket, CGameServer * app)
+//--------------------------------------------------------------------------------------//
+//		BANK LOAD
+//--------------------------------------------------------------------------------------//
+void CClientSession::SendBankLoadReq(CNtlPacket * pPacket, CGameServer * app)
 {
-	sUG_BANK_BUY_REQ * req = (sUG_BANK_BUY_REQ*)pPacket->GetPacketData();
-	CNtlPacket packet(sizeof(sGU_BANK_BUY_RES));
-	sGU_BANK_BUY_RES * res = (sGU_BANK_BUY_RES *)packet.GetPacketData();
-
-	res->hItemhandle;
-	res->hNpchandle;
-	res->sData;
-	res->wOpCode = GU_BANK_BUY_RES;
-	res->wResultCode = GAME_SUCCESS;
-}
-void	CClientSession::SendBankLoadReq(CNtlPacket * pPacket, CGameServer * app)
-{
+	printf("LOAD BANK \n");
 	sUG_BANK_LOAD_REQ * req = (sUG_BANK_LOAD_REQ*)pPacket->GetPacketData();
+
 	CNtlPacket packet(sizeof(sGU_BANK_LOAD_RES));
 	sGU_BANK_LOAD_RES * res = (sGU_BANK_LOAD_RES *)packet.GetPacketData();
 
-	res->handle = req->handle;
 	res->wOpCode = GU_BANK_LOAD_RES;
 	res->wResultCode = GAME_SUCCESS;
-	
+	res->handle = req->handle;
+
+	CNtlPacket packet2(sizeof(sGU_BANK_ITEM_INFO));
+	sGU_BANK_ITEM_INFO * res2 = (sGU_BANK_ITEM_INFO *)packet2.GetPacketData();
+
+
+	app->db->prepare("SELECT * FROM items WHERE owner_id = ?");
+	app->db->setInt(1, this->plr->pcProfile->charId);
+	app->db->execute();
+
+	res2->wOpCode = GU_BANK_ITEM_INFO;
+	res2->byBeginCount = 0;
+	res2->byItemCount = app->db->rowsCount();
+
+	while (app->db->fetch())
+	{
+		res2->aBankProfile->handle = app->db->getInt("id");
+		res2->aBankProfile->tblidx = app->db->getInt("tblidx");
+		res2->aBankProfile->byPlace = app->db->getInt("place");
+		res2->aBankProfile->byPos = app->db->getInt("pos");
+		res2->aBankProfile->byStackcount = app->db->getInt("count");
+		res2->aBankProfile->byRank = app->db->getInt("rank");
+		res2->aBankProfile->byCurDur = app->db->getInt("durability");
+
+		packet2.AdjustPacketLen(sizeof(sNTLPACKETHEADER) + (2 * sizeof(BYTE)) + (res2->byItemCount * sizeof(sITEM_PROFILE)));
+		g_pApp->Send(this->GetHandle(), &packet2);
+	}
+
+	CNtlPacket packet3(sizeof(sGU_BANK_ZENNY_INFO));
+	sGU_BANK_ZENNY_INFO * res3 = (sGU_BANK_ZENNY_INFO *)packet3.GetPacketData();
+	res3->dwZenny = this->plr->GetBankMoney();
+	res3->wOpCode = GU_BANK_ZENNY_INFO;
+	packet3.SetPacketLen(sizeof(sGU_BANK_ZENNY_INFO));
+	g_pApp->Send(this->GetHandle(), &packet3);
+
+
 	packet.SetPacketLen(sizeof(sGU_BANK_LOAD_RES));
- 	g_pApp->Send(this->GetHandle(), &packet);
+	g_pApp->Send(this->GetHandle(), &packet);
+}
+//--------------------------------------------------------------------------------------//
+//		BANK BUY
+//--------------------------------------------------------------------------------------//
+void CClientSession::SendBankBuyReq(CNtlPacket * pPacket, CGameServer * app)
+{
+	int result = 501;
+	sUG_BANK_BUY_REQ * req = (sUG_BANK_BUY_REQ*)pPacket->GetPacketData();
+
+	CNtlPacket packet(sizeof(sGU_BANK_BUY_RES));
+	sGU_BANK_BUY_RES * res = (sGU_BANK_BUY_RES *)packet.GetPacketData();
+
+	res->wOpCode = GU_BANK_BUY_RES;
+	res->hNpchandle = req->hNpchandle;
+	printf("%i %i \n", req->byMerchantTab, req->byPos);
+
+	if (this->plr->GetMoney() >= 3000){
+		if (req->byMerchantTab == 0 && req->byPos == 1){
+			app->db->prepare("CALL CreateItem (?,?,?,?, @unique_iID)");
+			app->db->setInt(1, 19992);
+			app->db->setInt(2, this->plr->pcProfile->charId);
+			app->db->setInt(3, 9);
+			app->db->setInt(4, 1);
+			app->db->execute();
+			app->db->execute("SELECT @unique_iID");
+			app->db->fetch();
+			res->sData.charId = this->GetavatarHandle();
+			res->sData.itemNo = 19992;
+			res->sData.itemId = app->db->getInt("@unique_iID");
+			res->sData.byPlace = 9;
+			res->sData.byPosition = 1;
+		}
+		else if (req->byMerchantTab == 0 && req->byPos == 2){
+			app->db->prepare("CALL CreateItem (?,?,?,?, @unique_iID)");
+			app->db->setInt(1, 19993);
+			app->db->setInt(2, this->plr->pcProfile->charId);
+			app->db->setInt(3, 9);
+			app->db->setInt(4, 2);
+			app->db->execute();
+			app->db->execute("SELECT @unique_iID");
+			app->db->fetch();
+			res->sData.charId = this->GetavatarHandle();
+			res->sData.itemNo = 19993;
+			res->sData.itemId = app->db->getInt("@unique_iID");
+			res->sData.byPlace = 9;
+			res->sData.byPosition = 2;
+		}
+		result = 500;
+		res->hItemhandle = app->db->getInt("@unique_iID");
+		this->plr->SetMoney(this->plr->GetMoney() - 3000);
+		app->qry->SetMinusMoney(this->plr->pcProfile->charId, 3000);
+		this->gsf->UpdateCharMoney(pPacket, this, 11, this->plr->GetMoney(), this->GetavatarHandle());
+	}
+	res->wResultCode = result;
+
+	packet.SetPacketLen(sizeof(sGU_BANK_BUY_RES));
+	g_pApp->Send(this->GetHandle(), &packet);
+}
+//--------------------------------------------------------------------------------------//
+//		BANK MONEY
+//--------------------------------------------------------------------------------------//
+void CClientSession::SendBankMoneyReq(CNtlPacket * pPacket, CGameServer * app)
+{
+	int result = 501;
+	sUG_BANK_ZENNY_REQ * req = (sUG_BANK_ZENNY_REQ*)pPacket->GetPacketData();
+
+	CNtlPacket packet(sizeof(sGU_BANK_ZENNY_RES));
+	sGU_BANK_ZENNY_RES * res = (sGU_BANK_ZENNY_RES *)packet.GetPacketData();
+
+	res->wOpCode = GU_BANK_ZENNY_RES;
+	res->bIsSave = req->bIsSave;
+	res->dwZenny = req->dwZenny;
+	res->handle = req->handle;
+
+	if (req->bIsSave == TRUE) {
+		if (this->plr->GetMoney() >= req->dwZenny){
+			this->plr->SetBankMoney(this->plr->GetBankMoney() + req->dwZenny);
+			app->qry->SetBankMoney(this->plr->pcProfile->charId, this->plr->GetBankMoney());
+			//REMOVE MONEY FROM INVENTORY
+			this->plr->SetMoney(this->plr->GetMoney() - req->dwZenny);
+			app->qry->SetMinusMoney(this->plr->pcProfile->charId, req->dwZenny);
+			this->gsf->UpdateCharMoney(pPacket, this, 11, this->plr->GetMoney(), this->GetavatarHandle());
+
+			result = 500;
+		}
+	}
+	else if (req->bIsSave == FALSE) {
+		if (this->plr->GetBankMoney() >= req->dwZenny){
+			this->plr->SetBankMoney(this->plr->GetBankMoney() - req->dwZenny);
+			app->qry->SetBankMoney(this->plr->pcProfile->charId, this->plr->GetBankMoney());
+			//ADD MONEY TO INVENTORY
+			this->plr->SetMoney(this->plr->GetMoney() + req->dwZenny);
+			app->qry->SetPlusMoney(this->plr->pcProfile->charId, req->dwZenny);
+			this->gsf->UpdateCharMoney(pPacket, this, 11, this->plr->GetMoney(), this->GetavatarHandle());
+
+			result = 500;
+		}
+	}
+
+	res->wResultCode = result;
+
+	packet.SetPacketLen(sizeof(sGU_BANK_ZENNY_RES));
+	g_pApp->Send(this->GetHandle(), &packet);
+}
+//--------------------------------------------------------------------------------------//
+//		BANK MOVE ITEM
+//--------------------------------------------------------------------------------------//
+void CClientSession::SendBankMoveReq(CNtlPacket * pPacket, CGameServer * app)
+{
+	printf("bank move item \n");
+	sUG_BANK_MOVE_REQ * req = (sUG_BANK_MOVE_REQ*)pPacket->GetPacketData();
+
+	CNtlPacket packet(sizeof(sGU_BANK_MOVE_RES));
+	sGU_BANK_MOVE_RES * res = (sGU_BANK_MOVE_RES *)packet.GetPacketData();
+
+	app->db->prepare("SELECT * FROM items WHERE owner_id=? AND place=? AND pos=?");
+	app->db->setInt(1, this->plr->pcProfile->charId);
+	app->db->setInt(2, req->bySrcPlace);
+	app->db->setInt(3, req->bySrcPos);
+	app->db->execute();
+	app->db->fetch();
+	RwUInt32 uniqueID = app->db->getInt("id");
+
+	if (app->qry->CheckIfCanMoveItemThere(this->plr->pcProfile->charId, req->byDestPlace, req->byDestPos) == false){
+		res->wResultCode = GAME_MOVE_CANT_GO_THERE;
+	}
+	else {
+		app->qry->UpdateItemPlaceAndPos(uniqueID, req->byDestPlace, req->byDestPos);
+		res->wResultCode = GAME_SUCCESS;
+	}
+
+	res->wOpCode = GU_BANK_MOVE_RES;
+	res->hSrcItem = uniqueID;
+	res->bySrcPlace = req->bySrcPlace;
+	res->bySrcPos = req->bySrcPos;
+	res->hDstItem = -1;
+	res->byDestPlace = req->byDestPlace;
+	res->byDestPos = req->byDestPos;
+	res->handle = req->handle;
+
+	packet.SetPacketLen(sizeof(sGU_BANK_MOVE_RES));
+	g_pApp->Send(this->GetHandle(), &packet);
+
+}
+//--------------------------------------------------------------------------------------//
+//		BANK STACK ITEM
+//--------------------------------------------------------------------------------------//
+void CClientSession::SendBankStackReq(CNtlPacket * pPacket, CGameServer * app)
+{
+	sUG_BANK_MOVE_STACK_REQ * req = (sUG_BANK_MOVE_STACK_REQ*)pPacket->GetPacketData();
+
+	// GET DATA FROM MYSQL
+	app->db->prepare("SELECT id,tblidx FROM items WHERE owner_id=? AND place=? AND pos=?");
+	app->db->setInt(1, this->plr->pcProfile->charId);
+	app->db->setInt(2, req->bySrcPlace);
+	app->db->setInt(3, req->bySrcPos);
+	app->db->execute();
+	app->db->fetch();
+	RwUInt32 uniqueID = app->db->getInt("id");
+	RwUInt32 Src_Item_ID = app->db->getInt("tblidx");
+
+	app->db->prepare("SELECT id,tblidx,count FROM items WHERE owner_id=? AND place=? AND pos=?");
+	app->db->setInt(1, this->plr->pcProfile->charId);
+	app->db->setInt(2, req->byDestPlace);
+	app->db->setInt(3, req->byDestPos);
+	app->db->execute();
+	app->db->fetch();
+	RwUInt32 uniqueID2 = app->db->getInt("id");
+
+	RwUInt32 result_code;
+
+	if (Src_Item_ID == app->db->getInt("tblidx")) {
+		result_code = 500;
+	}
+	else {
+		result_code = 805;
+	}
+
+	// UPDATE ITEMS
+	CNtlPacket packet(sizeof(sGU_BANK_MOVE_STACK_RES));
+	sGU_BANK_MOVE_STACK_RES * res = (sGU_BANK_MOVE_STACK_RES *)packet.GetPacketData();
+
+	res->wOpCode = GU_BANK_MOVE_STACK_RES;
+	res->bySrcPlace = req->bySrcPlace;
+	res->bySrcPos = req->bySrcPos;
+	res->byDestPlace = req->byDestPlace;
+	res->byDestPos = req->byDestPos;
+	res->hSrcItem = uniqueID;
+	res->hDestItem = uniqueID2;
+	res->byStackCount1 = req->byStackCount;
+	res->byStackCount2 = req->byStackCount + app->db->getInt("count");
+	res->handle = req->handle;
+	res->wResultCode = result_code;
+
+	// Send packet to client
+	packet.SetPacketLen(sizeof(sGU_BANK_MOVE_STACK_RES));
+	g_pApp->Send(this->GetHandle(), &packet);
+
+	// UPDATE AND DELETE
+	if (result_code == 500){
+		app->qry->UpdateItemsCount(uniqueID2, res->byStackCount2);
+		app->qry->DeleteItemById(uniqueID);
+		this->gsf->DeleteItemByUIdPlacePos(pPacket, this, uniqueID, req->bySrcPlace, req->bySrcPos);
+	}
+
+}
+//--------------------------------------------------------------------------------------//
+//		BANK DELETE ITEM
+//--------------------------------------------------------------------------------------//
+void CClientSession::SendBankDeleteReq(CNtlPacket * pPacket, CGameServer * app)
+{
+	// GET DELETE ITEM
+	sUG_BANK_ITEM_DELETE_REQ * req = (sUG_BANK_ITEM_DELETE_REQ*)pPacket->GetPacketData();
+
+	CNtlPacket packet(sizeof(sGU_BANK_ITEM_DELETE_RES));
+	sGU_BANK_ITEM_DELETE_RES * res = (sGU_BANK_ITEM_DELETE_RES *)packet.GetPacketData();
+
+	app->db->prepare("SELECT id FROM items WHERE owner_id=? AND place=? AND pos=?");
+	app->db->setInt(1, this->plr->pcProfile->charId);
+	app->db->setInt(2, req->byPlace);
+	app->db->setInt(3, req->byPos);
+	app->db->execute();
+	app->db->fetch();
+	RwUInt32 u_itemid = app->db->getInt("id");
+
+	res->wOpCode = GU_BANK_ITEM_DELETE_RES;
+	res->wResultCode = GAME_SUCCESS;
+
+	packet.SetPacketLen(sizeof(sGU_BANK_ITEM_DELETE_RES));
+	g_pApp->Send(this->GetHandle(), &packet);
+
+	// DELETE ITEM
+	app->qry->DeleteItemById(u_itemid);
+	this->gsf->DeleteItemByUIdPlacePos(pPacket, this, u_itemid, req->byPlace, req->byPos);
+
 }
 
 //-------------------------------------------------

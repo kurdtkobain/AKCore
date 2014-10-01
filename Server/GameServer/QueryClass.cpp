@@ -124,6 +124,18 @@ bool	QueryClass::SetPlusMoney(RwUInt32 CharID, int Money)
 
 	return true;
 }
+
+bool	QueryClass::SetBankMoney(RwUInt32 CharID, int Money)
+{
+	CGameServer * app = (CGameServer*)NtlSfxGetApp();
+
+	app->db->prepare("UPDATE characters SET MoneyBank=? WHERE CharID=?");
+	app->db->setInt(1, Money);
+	app->db->setInt(2, CharID);
+	app->db->execute();
+
+	return true;
+}
 bool	QueryClass::SetMailRead(RwUInt32 MailID)
 {
 	CGameServer * app = (CGameServer*) NtlSfxGetApp();

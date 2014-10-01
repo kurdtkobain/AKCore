@@ -281,6 +281,11 @@ public:
 	void						SendBankEndReq(CNtlPacket * pPacket, CGameServer * app);
 	void						SendBankBuyReq(CNtlPacket * pPacket, CGameServer * app);
 	void						SendBankLoadReq(CNtlPacket * pPacket, CGameServer * app);
+	void						SendBankMoneyReq(CNtlPacket * pPacket, CGameServer * app);
+	void						SendBankMoveReq(CNtlPacket * pPacket, CGameServer * app);
+	void						SendBankStackReq(CNtlPacket * pPacket, CGameServer * app);
+	void						SendBankDeleteReq(CNtlPacket * pPacket, CGameServer * app);
+
 	// LOOT
 	void						SendMobLoot(CNtlPacket * pPacket, CGameServer * app, RwUInt32 m_uiTargetSerialId);
 	void						SendZennyPickUpReq(CNtlPacket * pPacket, CGameServer * app);

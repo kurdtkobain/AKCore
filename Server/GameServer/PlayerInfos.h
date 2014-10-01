@@ -253,6 +253,10 @@ public:
 private:
 	MySQLConnWrapper			*db;
 public:
+DWORD		GetMoney();
+int			GetBankMoney();
+void		SetMoney(int Amount);
+void		SetBankMoney(int Amount);
 void		SaveMe();
 void		SavePlayerData();
 HANDLE		Charging_Thread;
